@@ -1,0 +1,120 @@
+{"id": "t001", "brief": "cute kawaii seamless pattern of sushi characters for wrapping paper", "expected": "illustration"}
+{"id": "t002", "brief": "animate a hummingbird hovering at a flower, 2 second loop", "expected": "video"}
+{"id": "t003", "brief": "skincare jar on a white backdrop, leave the label blank, our designer adds the logo later", "expected": "product", "note": "No legible text is required in the image, so rule 3 does not apply and rule 4 (product) decides."}
+{"id": "t004", "brief": "cheap placeholder image of a forest path for a wireframe, will be replaced later", "expected": "fast-draft"}
+{"id": "t005", "brief": "street photography vibe, rainy night at a busy city crossing, umbrellas everywhere, headlights reflecting on wet asphalt", "expected": "photoreal"}
+{"id": "t006", "brief": "wedding invitation card, names 'Lena & Tom', date 'Sept 9 2027', elegant script", "expected": "typography"}
+{"id": "t007", "brief": "ok so this is for a childrens book i'm writing, the spread where a big gentle whale carries a tiny lighthouse on its back across a starry sea at night, and the lighthouse beam is like sweeping over the waves. soft gouache, kind of muted blues and warm yellow light, dreamy, no text at all please, landscape double page", "expected": "illustration"}
+{"id": "t008", "brief": "sticker sheet with 12 different hand-drawn camping items", "expected": "illustration", "note": "These are many drawn objects rather than a single hero object, so rule 4 does not apply and rule 6 (illustration) decides."}
+{"id": "t009", "brief": "flat vector explainer animation, 30 seconds, how compound interest grows over time", "expected": "video", "note": "The style is flat vector illustration, but the output is an animation, so rule 1 (video) beats rule 6."}
+{"id": "t010", "brief": "candid photo of grandparents laughing at a backyard bbq, golden hour", "expected": "photoreal"}
+{"id": "t011", "brief": "Editorial portrait of a female surgeon in scrubs in a hospital corridor, soft window light, shallow depth of field, 4:5 for a magazine feature on night shift workers", "expected": "photoreal"}
+{"id": "t012", "brief": "static thumbnail for a cooking video, big text 'ONE PAN, 10 MIN' next to a skillet", "expected": "typography", "note": "The image is for a video but is itself static, so rule 1 does not apply and rule 3 (typography) decides."}
+{"id": "t013", "brief": "cereal box front with a mascot and the name 'Oat Rockets' big and readable, on white for the pitch deck", "expected": "typography", "note": "A single packaged object on white, but the brand name must be legible, so rule 3 (typography) beats rule 4."}
+{"id": "t014", "brief": "Exploring directions for a game level and honestly i just need volume right now. generate like 50 rough low-detail variations of a swamp village, stilt houses, lanterns, fog, whatever, use the fastest cheapest setting, nobody outside the team sees these, we pick 3 and then do proper art later", "expected": "fast-draft"}
+{"id": "t015", "brief": "poster that says 'NIGHT MARKET' in bold condensed letters, red and black", "expected": "typography"}
+{"id": "t016", "brief": "a single still that looks like a frame from an indie film: diner booth, two friends arguing, tungsten light", "expected": "photoreal", "note": "It is a single still with no motion, so rule 1 does not apply and rule 5 (photoreal) decides."}
+{"id": "t017", "brief": "mobile app onboarding screen mockup with the heading 'Track every sip' and a 'Get started' button", "expected": "typography"}
+{"id": "t018", "brief": "our wireless earbuds being used by a guy jogging along the beach at sunrise, realistic, for social ads", "expected": "photoreal", "note": "The product appears in a real-world lifestyle scene rather than on a clean backdrop, so rule 5 (photoreal) decides."}
+{"id": "t019", "brief": "a single wooden chess knight on a grey seamless, moody studio light, catalog", "expected": "product"}
+{"id": "t020", "brief": "Need a 10 second establishing shot for the opening of a short documentary about a mountain village: drone slowly flying forward over a misty valley at dawn, sun just breaking over the ridge, mist rolling between the pines, cinematic grade, 4k 24fps, smooth steady motion, no cuts, it fades in from black so start a little dark", "expected": "video"}
+{"id": "t021", "brief": "painterly scene of a crowded old-town market, people and stalls, loose brushwork, clearly a painting and not a photo", "expected": "illustration", "note": "The subject is a real-world scene but the output is explicitly painted, so rule 5 does not fit and rule 6 (illustration) decides."}
+{"id": "t022", "brief": "anime style tavern interior, the signboards can be gibberish, they're just decoration", "expected": "illustration", "note": "Text need not be legible, so rule 3 does not apply and rule 6 (illustration) decides."}
+{"id": "t023", "brief": "amber glass serum dropper bottle, seamless beige backdrop, high end cosmetics lighting", "expected": "product"}
+{"id": "t024", "brief": "short animation of a paper plane flying through an open-plan office, 6 sec", "expected": "video"}
+{"id": "t025", "brief": "Infographic for a personal finance blog: '3 rules for an emergency fund' with three numbered points, clean flat layout, 1080x1350", "expected": "typography"}
+{"id": "t026", "brief": "logo for a bakery called 'Crumb & Co' with a little wheat icon", "expected": "typography"}
+{"id": "t027", "brief": "just give me 30 cheap variations of a mountain landscape so i can pick a direction", "expected": "fast-draft"}
+{"id": "t028", "brief": "low effort draft of a birthday card that says 'Happy 30th Dana', just testing, don't sweat the quality", "expected": "fast-draft", "note": "The card needs text, but quality is explicitly traded for low stakes, so rule 2 (fast-draft) beats rule 3."}
+{"id": "t029", "brief": "a looping background video of lava lamp blobs for a music stream, 20s seamless", "expected": "video"}
+{"id": "t030", "brief": "photorealistic shot of a cast iron pan, isolated on white, no kitchen, no hands", "expected": "product", "note": "It is realistic but a single object on a clean backdrop with no lifestyle scene, so rule 4 (product) decides before rule 5."}
+{"id": "t031", "brief": "5 second clip of waves rolling onto a beach at sunset", "expected": "video"}
+{"id": "t032", "brief": "foggy pine forest, realistic", "expected": "photoreal"}
+{"id": "t033", "brief": "anime style character with a speech bubble saying 'leave it to me!'", "expected": "typography", "note": "The style is anime illustration but the bubble text must be legible, so rule 3 (typography) beats rule 6."}
+{"id": "t034", "brief": "Book cover, title 'The Salt Orchard', author line 'M. R. Vance', literary fiction, muted greens", "expected": "typography"}
+{"id": "t035", "brief": "animated title card with the words 'Season Two' sliding in, 3 seconds", "expected": "video", "note": "The text must be legible but the output moves, so rule 1 (video) beats rule 3."}
+{"id": "t036", "brief": "storefront window banner reading 'GRAND OPENING - 30% OFF' for a shoe shop, 3m wide", "expected": "typography"}
+{"id": "t037", "brief": "wedding couple dancing in a barn with string lights, film photo look", "expected": "photoreal"}
+{"id": "t038", "brief": "watercolor botanical study of wild herbs, several sprigs scattered, vintage field guide feel", "expected": "illustration"}
+{"id": "t039", "brief": "minimal shot of a running shoe insole, white background, for a product spec sheet", "expected": "product"}
+{"id": "t040", "brief": "dark fantasy concept art, a ruined cathedral overgrown with glowing fungi, painterly", "expected": "illustration"}
+{"id": "t041", "brief": "rough animatic, quick and cheap, 20 seconds, a kid finding a puppy in a cardboard box", "expected": "video", "note": "Speed is traded for quality but the output must move, so rule 1 (video) beats rule 2."}
+{"id": "t042", "brief": "Final ecommerce shots, quality matters here not speed: leather wallet on light grey seamless, 3 angles", "expected": "product", "note": "Quality is explicitly prioritised over speed, so rule 2 does not apply and rule 4 (product) decides."}
+{"id": "t043", "brief": "flat vector illustration of a kitchen counter crowded with appliances and plants, for a home goods blog", "expected": "illustration", "note": "It shows many objects in a drawn scene rather than a single hero object on a clean backdrop, so rule 6 (illustration) decides over rule 4."}
+{"id": "t044", "brief": "brainstorming mode: 20 loose compositions of a lighthouse in a storm, quality doesnt matter", "expected": "fast-draft"}
+{"id": "t045", "brief": "Studio shot of a single sneaker floating on a pastel peach background, crisp rim light, 2000x2000 for the shop", "expected": "product"}
+{"id": "t046", "brief": "Gaming mouse with a soft rgb glow on a black background, reflection on a glossy floor, tech product hero", "expected": "product"}
+{"id": "t047", "brief": "3d clay-style render of a cute toaster, centered on a flat lilac background, studio lighting", "expected": "product", "note": "It is stylized but shows a single hero object on a clean backdrop, so rule 4 (product) decides before rule 6."}
+{"id": "t048", "brief": "final print-ready flyer, not a draft, headline 'Spring Clean Drive' with 'Saturday 10am' underneath", "expected": "typography", "note": "It is explicitly not a draft so rule 2 does not apply, and the legible headline makes rule 3 (typography) decide."}
+{"id": "t049", "brief": "low poly stylized backpack, one object only, on a soft gradient backdrop, for a product card", "expected": "product", "note": "Despite the low poly style it is a single hero object on a clean backdrop, so rule 4 (product) decides over rule 6."}
+{"id": "t050", "brief": "realistic cinemagraph of a fisherman at dawn, only the water ripples move", "expected": "video", "note": "A photoreal real-world scene, but a cinemagraph moves, so rule 1 (video) beats rule 5."}
+{"id": "t051", "brief": "looping dancing cactus gif", "expected": "video"}
+{"id": "t052", "brief": "anime style girl on a rooftop at sunset, wind in her hair", "expected": "illustration"}
+{"id": "t053", "brief": "neon sign that reads 'open late' on a brick wall", "expected": "typography"}
+{"id": "t054", "brief": "lots of fast rough options of a modern kitchen interior, realistic-ish is fine, we're just picking a vibe", "expected": "fast-draft", "note": "A realistic interior, but speed and volume are explicitly prioritised over quality, so rule 2 (fast-draft) beats rule 5."}
+{"id": "t055", "brief": "rapid draft pls - spaceship interior, rough is fine", "expected": "fast-draft"}
+{"id": "t056", "brief": "need it by friday but it's the final cover art so take your time on quality: a dragon curled around a mountain, ink and watercolor, no title", "expected": "illustration", "note": "There is a deadline but no quality trade-off, so rule 2 does not apply and rule 6 (illustration) decides."}
+{"id": "t057", "brief": "quick low-res test of a logo reveal animation for 'Northpine', just checking timing", "expected": "video", "note": "It trades quality for speed and has a legible name, but it moves, so rule 1 (video) beats rules 2 and 3."}
+{"id": "t058", "brief": "rough photoreal-ish drafts of a couple walking a dog in a park, speed matters more than quality, it's for an internal review", "expected": "fast-draft", "note": "A real-world scene with people, but quality is explicitly traded for speed, so rule 2 (fast-draft) beats rule 5."}
+{"id": "t059", "brief": "flat vector illustration of a fox reading under a tree, autumn palette", "expected": "illustration"}
+{"id": "t060", "brief": "Low stakes, just need a fast rough of a castle on a hill for my tabletop game notes", "expected": "fast-draft"}
+{"id": "t061", "brief": "kids plush dinosaur toy centered on a solid mint background, soft even lighting, marketplace-style listing", "expected": "product"}
+{"id": "t062", "brief": "packshot of a matte black water bottle on pure white, soft shadow, ecommerce", "expected": "product"}
+{"id": "t063", "brief": "t-shirt print with the words 'BORN TO NAP' in retro bubble letters", "expected": "typography"}
+{"id": "t064", "brief": "anime style but just quick cheap rough versions of a mecha design, 8 of them", "expected": "fast-draft", "note": "The anime style fits illustration, but the user explicitly wants cheap rough volume, so rule 2 (fast-draft) decides."}
+{"id": "t065", "brief": "editorial illustration for an article about burnout, a figure made of matches, half burnt, muted risograph colors", "expected": "illustration"}
+{"id": "t066", "brief": "over-ear headphones on a clean white cyc, 3/4 angle, product page main image", "expected": "product"}
+{"id": "t067", "brief": "rough draft, dont care about details: underwater coral garden", "expected": "fast-draft"}
+{"id": "t068", "brief": "Looping animation of a coffee cup steaming, 4s loop, 1080x1920 for vertical stories", "expected": "video"}
+{"id": "t069", "brief": "ten second clip, city traffic at night with light trails, camera slowly pushing in", "expected": "video"}
+{"id": "t070", "brief": "restaurant menu board with 5 dishes and prices, chalk style, all text legible", "expected": "typography"}
+{"id": "t071", "brief": "Ceramic coffee dripper on white, overhead studio light, for a marketplace listing 1:1", "expected": "product"}
+{"id": "t072", "brief": "woman sipping from a ceramic travel mug on a commuter train, morning light, lifestyle shot for the mug's product page", "expected": "photoreal", "note": "A product shown in a lifestyle setting with a person lands on rule 5 (photoreal), not rule 4."}
+{"id": "t073", "brief": "Client brief: hero visual for the launch of a new smartwatch. Single watch, face angled slightly toward camera, on a deep charcoal to black gradient backdrop. Dramatic product lighting with a thin rim light tracing the case, subtle reflection underneath, screen dark. Deliverables 3000x2000 and 1:1 crop, background must be clean enough to cut out.", "expected": "product"}
+{"id": "t074", "brief": "Low-res throwaway draft for a mood board, sunset over a desert, speed over quality", "expected": "fast-draft"}
+{"id": "t075", "brief": "a single ripe peach with one water droplet on it, clean white backdrop, natural-looking", "expected": "product", "note": "A natural-looking food subject, but as a single hero object on a clean backdrop rule 4 (product) decides before rule 5."}
+{"id": "t076", "brief": "testing the pipeline, any image of a bowl of fruit, lowest cost", "expected": "fast-draft"}
+{"id": "t077", "brief": "fast cheap drafts of a perfume bottle on white, 15 options, just exploring shapes", "expected": "fast-draft", "note": "A single object on a clean backdrop, but speed and volume are explicitly prioritised, so rule 2 (fast-draft) beats rule 4."}
+{"id": "t078", "brief": "Retro 70s style illustration of a family camping by a lake, warm oranges and browns, for a blog header", "expected": "illustration"}
+{"id": "t079", "brief": "pair of leather boots on a wooden porch next to a sleeping dog, autumn leaves, natural light", "expected": "photoreal", "note": "The boots sit in a real-world lifestyle scene rather than on a clean backdrop, so rule 5 (photoreal) decides over rule 4."}
+{"id": "t080", "brief": "seamless loop of snow falling past a cabin window", "expected": "video"}
+{"id": "t081", "brief": "one static hero frame of a bluetooth speaker on a white sweep, the animated version comes later, this is just the still", "expected": "product", "note": "Only a still is requested now, so rule 1 does not apply and rule 4 (product) decides."}
+{"id": "t082", "brief": "need this asap for tomorrows pitch but it has to look real, not a draft: nurse comforting an elderly patient, warm natural light", "expected": "photoreal", "note": "The deadline is tight but quality is not traded away, so rule 2 does not apply and rule 5 (photoreal) decides."}
+{"id": "t083", "brief": "Flat illustration for a health app: people doing yoga in a park, friendly rounded shapes, pastel palette", "expected": "illustration"}
+{"id": "t084", "brief": "Hero image for a small travel agency homepage. We want a turquoise lagoon seen from a high cliff with two hikers in the foreground looking out over the water, backpacks on, real midday sun, no filters, should feel like an actual vacation photo someone took, not a render. Ultra wide 21:9, keep the left side calm for our nav.", "expected": "photoreal"}
+{"id": "t085", "brief": "quick rough layout ideas for a gig poster saying 'Static Bloom live', just to see composition, doesn't need to be polished", "expected": "fast-draft", "note": "Text is requested but the user explicitly trades quality for speed, so rule 2 (fast-draft) beats rule 3."}
+{"id": "t086", "brief": "360 degree turntable spin of a ceramic vase on a white backdrop, 6s loop for the product page", "expected": "video", "note": "A single hero object on a clean backdrop, but the output moves, so rule 1 (video) beats rule 4."}
+{"id": "t087", "brief": "watercolor style animated loop of koi fish swimming in a pond, 5s", "expected": "video", "note": "The style is painted, but the output moves, so rule 1 (video) beats rule 6."}
+{"id": "t088", "brief": "quick n dirty image of a pizza for a slide nobody will look at closely", "expected": "fast-draft"}
+{"id": "t089", "brief": "storybook illustration of a messy kids bedroom at night with toys coming alive, leave the top third empty for the title, no lettering in the image", "expected": "illustration", "note": "The title is added later and no text appears in the image, so rule 3 does not apply and rule 6 (illustration) decides."}
+{"id": "t090", "brief": "12 rough storyboard panels, quick and dirty, pencil style, kid opening a lunchbox", "expected": "fast-draft", "note": "Static drawn panels with quality explicitly traded for speed, so rule 2 (fast-draft) beats rule 6."}
+{"id": "t091", "brief": "Clip of a chef flipping a pancake in slow motion, 3 seconds, 24fps", "expected": "video"}
+{"id": "t092", "brief": "as fast as possible, a floating city above clouds, any quality", "expected": "fast-draft"}
+{"id": "t093", "brief": "quick rough idea, doesn't need to be good: cat on a skateboard", "expected": "fast-draft"}
+{"id": "t094", "brief": "glass perfume bottle with pink liquid, splash of water around it, studio, white bg", "expected": "product"}
+{"id": "t095", "brief": "photo of a busy farmers market stall with chalkboard signs in the background, signs can be blurry, nobody needs to read them", "expected": "photoreal", "note": "Text is present but explicitly need not be legible, so rule 3 does not apply and rule 5 (photoreal) decides."}
+{"id": "t096", "brief": "oil painting of a war horse standing in a stormy field, dramatic brushwork", "expected": "illustration"}
+{"id": "t097", "brief": "make the leaves in this autumn scene move gently in the wind, subtle loop", "expected": "video"}
+{"id": "t098", "brief": "watercolor illustrated poster for a kids library reading week, big title 'Read Away Week' across the top", "expected": "typography", "note": "The style is illustrated but the title must be legible, so rule 3 (typography) beats rule 6."}
+{"id": "t099", "brief": "comic panel style, superhero cat leaping between rooftops", "expected": "illustration"}
+{"id": "t100", "brief": "15s vertical video, timelapse of clouds rolling over mountain peaks", "expected": "video"}
+{"id": "t101", "brief": "single bar of handmade oatmeal soap on a slate tile, clean studio backdrop", "expected": "product"}
+{"id": "t102", "brief": "aerial view photo of terraced rice fields after rain", "expected": "photoreal"}
+{"id": "t103", "brief": "studio packshot of a hot sauce bottle with the label clearly reading 'Ember Lane Hot Sauce'", "expected": "typography", "note": "A single hero object on a clean backdrop, but the brand name must be legible, so rule 3 (typography) beats rule 4."}
+{"id": "t104", "brief": "realistic photo of a corner cafe at night, the awning must clearly say 'Moth & Lamp'", "expected": "typography", "note": "A real-world scene, but the sign text must be legible, so rule 3 (typography) beats rule 5."}
+{"id": "t105", "brief": "photoreal interior of a cozy scandinavian living room, morning sun through linen curtains, for a real estate listing", "expected": "photoreal"}
+{"id": "t106", "brief": "realistic photo of a toddler splashing in a puddle wearing yellow rain boots", "expected": "photoreal"}
+{"id": "t107", "brief": "Pls make a clean shot of a stainless steel chef knife on a light grey backdrop, no props", "expected": "product"}
+{"id": "t108", "brief": "isometric pixel art of a cozy game shop interior for our indie game", "expected": "illustration"}
+{"id": "t109", "brief": "need a realistc pic of a teenage boy studying at a kitchen table late at night under a desk lamp", "expected": "photoreal"}
+{"id": "t110", "brief": "one still keyframe for a future animated short: a paper boat sailing down a flooded street, painterly", "expected": "illustration", "note": "Only a single still is requested, so rule 1 does not apply and rule 6 (illustration) decides."}
+{"id": "t111", "brief": "square social quote card: 'Rest is productive too' in a soft serif on beige", "expected": "typography"}
+{"id": "t112", "brief": "marathon runners crossing a bridge, crowd cheering, overcast", "expected": "photoreal"}
+{"id": "t113", "brief": "line art map of a made-up island with mountains, forests and a harbor, ink on parchment look, no labels", "expected": "illustration"}
+{"id": "t114", "brief": "slow motion clip of paint drops hitting water, 120fps look, 8 seconds", "expected": "video"}
+{"id": "t115", "brief": "Corporate headshot style photo, middle aged man, grey suit, blurred office background, for our team page", "expected": "photoreal"}
+{"id": "t116", "brief": "a farmer holding fresh carrots in a muddy field, documentary style, natural overcast light", "expected": "photoreal"}
+{"id": "t117", "brief": "fast thumbnail sketches, any style, of a robot gardener. quantity over polish", "expected": "fast-draft"}
+{"id": "t118", "brief": "dashboard ui mockup for a fitness app, big stat reading 'Weekly steps 42,180'", "expected": "typography"}
+{"id": "t119", "brief": "photo of a kid's crayon drawing taped to a fridge, shot in a real kitchen, natural light", "expected": "photoreal", "note": "The subject is a drawing but the output is a real-world photo, so rule 5 (photoreal) decides before rule 6."}
+{"id": "t120", "brief": "Event poster for a small outdoor jazz festival. Headline 'Blue Hours Festival' at the top, date line 'June 14-16' and 'Riverside Park' below it, everything must be readable from across the street. A2 portrait, deep navy with brass gold accents, art deco feel, leave the bottom strip free for sponsor logos we add ourselves.", "expected": "typography"}
