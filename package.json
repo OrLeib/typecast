@@ -8,7 +8,8 @@
     "route": "node --env-file=.env --experimental-strip-types src/cli.ts",
     "eval": "node --env-file=.env --experimental-strip-types src/eval.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "compare": "node --experimental-strip-types src/compare.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

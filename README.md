@@ -1,6 +1,6 @@
 # Typecast
 
-Pick the right image model for a creative brief — in ~150ms, with a confidence you can trust.
+Pick the right image model for a creative brief — in ~200ms, with a confidence you can trust.
 
 Built on decision models (TypeSafe's Jev and Jev-compatible open models) that return typed,
 calibrated choices instead of text.
@@ -13,7 +13,9 @@ calibrated choices instead of text.
 cp .env.example .env        # add your TYPESAFE_API_KEY
 npm install
 npm run route -- "Hero image for a spring sneaker campaign, studio lighting"
-npm run eval                # runs data/briefs.jsonl, prints accuracy + calibration
+npm run eval                # runs data/dev.jsonl, prints accuracy + calibration
+npm run eval -- --data data/test.jsonl --variant baseline --repeats 3
+npm run compare -- runs/<baseline>.json runs/<candidate>.json   # paired deltas + CIs
 ```
 
 Point `TYPESAFE_BASE_URL` at a local Jev-compatible server (Kev, Laya, ...) to run without
@@ -27,7 +29,7 @@ the hosted API.
 | p50 / p95 latency | How fast in practice? |
 | Cost per 1,000 routes | What does it cost? |
 
-Latest run (2026-10-31, `jev-1.14.0`, 120 briefs in `data/briefs.jsonl`, 44 of them deliberately borderline):
+Latest run (2026-10-31, `jev-1.14.0`, 120 briefs in `data/dev.jsonl`, 44 of them deliberately borderline):
 
 | Metric | Result |
 |---|---|

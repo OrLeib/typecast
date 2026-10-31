@@ -41,3 +41,33 @@ export function percentile(values: number[], p: number): number {
   const idx = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
   return sorted[Math.max(0, idx)];
 }
+
+export type ProbPrediction = Prediction & { probabilities: Record<string, number> };
+
+/**
+ * Jev reports probabilities to 2 decimals, so a reported 0 means < 0.005. Clip there instead of at
+ * a tiny epsilon, or a single rounded-to-zero miss would dominate the mean.
+ */
+export const PROB_FLOOR = 0.005;
+
+/** Log-loss (cross-entropy) of the expected label: mean -ln p(expected). Lower is better. */
+export function logLoss(preds: ProbPrediction[]): number {
+  if (preds.length === 0) return 0;
+  return preds.reduce((s, p) => s - Math.log(Math.max(PROB_FLOOR, p.probabilities[p.expected] ?? 0)), 0) / preds.length;
+}
+
+/** Multi-class Brier score: mean over predictions of sum_k (p_k - y_k)^2. 0 is perfect, 2 is worst. */
+export function brier(preds: ProbPrediction[]): number {
+  if (preds.length === 0) return 0;
+  return preds.reduce((s, p) => {
+    const keys = new Set([...Object.keys(p.probabilities), p.expected]);
+    let sum = 0;
+    for (const k of keys) sum += ((p.probabilities[k] ?? 0) - (k === p.expected ? 1 : 0)) ** 2;
+    return s + sum;
+  }, 0) / preds.length;
+}
+
+/** Wrong answers given with at least `threshold` confidence: the misses a UI would not catch. */
+export function confidentMisses(preds: Prediction[], threshold = 0.85): number {
+  return preds.filter((p) => p.choice !== p.expected && p.confidence >= threshold).length;
+}

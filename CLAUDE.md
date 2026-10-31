@@ -8,7 +8,7 @@ Jev-compatible open models), not chat LLMs.
 ## Why
 AI media tools expose many models. Users don't know which model
 fits their brief, and wrong picks waste credits and time. A router answers "which model?" in
-~150ms for fractions of a cent, and its confidence tells the UI when to just pick vs. show the
+~200ms for fractions of a cent, and its confidence tells the UI when to just pick vs. show the
 top two side by side.
 
 ## Principles
@@ -49,7 +49,7 @@ top two side by side.
 - `parseDecisionResponse` in `src/jev.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
   A recorded live response lives in `test/fixtures/jev-choice-response.json`; tests never call the API.
 
-## Labelling briefs (`data/briefs.jsonl`)
+## Labelling briefs (`data/*.jsonl`)
 When a brief fits several categories, the first matching rule wins:
 1. `video` - the output must move (clips, loops, cinemagraphs, GIFs, animatics).
 2. `fast-draft` - the user explicitly trades quality for speed, volume or low stakes.
@@ -59,6 +59,18 @@ When a brief fits several categories, the first matching rule wins:
 6. `illustration` - drawn, painted or stylized art.
 
 Borderline briefs carry a `note` explaining which rule decided. Briefs are English only.
+
+## Measuring a change without overfitting
+- `data/dev.jsonl` is for iterating: look at its misses freely.
+- `data/test.jsonl` is held out. It was written blind to dev and to past results.
+  Don't read its misses while iterating, don't tune against it, and never move briefs between splits.
+  Score it only on a final candidate (or a small shortlist fixed in advance), against baseline in the same session.
+- A change is a variant in `src/variants.ts` (instructions + roster). Baseline stays the default.
+- Run each config with `--repeats 3` (Jev is not deterministic), then `npm run compare -- <baseline run> <candidate run>`.
+  It prints paired deltas with bootstrap 95% CIs over briefs and an exact McNemar test on majority-vote correctness.
+- Adopt a candidate only if, on test: log-loss improves (CI below 0), confident misses (wrong at >= 0.85) don't rise,
+  and clear-brief accuracy drops by at most one brief.
+- Label fixes are decided by the rules above, before seeing any run that uses them.
 
 ## Conventions
 - Never commit `.env`. The repo is public.
