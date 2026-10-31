@@ -43,7 +43,7 @@ Dependencies point inward: `cli/` -> `comparison/`, `evaluation/` -> `routing/` 
 |---|---|
 | `jev/parse.ts` | Wire types and strict response validation |
 | `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |
-| `routing/` | `Router` interface, the decision-model router, roster and variants |
+| `routing/` | `Router` interface, the decision-model router, the keyword difficulty probe, roster and variants |
 | `evaluation/` | Briefs, pure metrics, metric registry, runner, summary, report formatting, run store |
 | `comparison/` | Paired statistics, run comparison, report formatting |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
@@ -92,6 +92,8 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - Adopt a candidate only if, on test: log-loss improves (CI below 0), confident misses (wrong at >= 0.85) don't rise,
   and clear-brief accuracy drops by at most one brief.
 - Label fixes are decided by the rules above, before seeing any run that uses them.
+- Check a new brief set's difficulty with `npm run eval -- --router keyword --data <file>` (no API calls).
+  The keyword router is a fixed, naive rule list; a set it scores highly on is too explicit to tell routers apart.
 
 ## Conventions
 - Never commit `.env`. The repo is public.
