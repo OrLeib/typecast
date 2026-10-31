@@ -94,6 +94,11 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - Label fixes are decided by the rules above, before seeing any run that uses them.
 - Check a new brief set's difficulty with `npm run eval -- --router keyword --data <file>` (no API calls).
   The keyword router is a fixed, naive rule list; a set it scores highly on is too explicit to tell routers apart.
+- `data/hard.jsonl` is a second held-out set (120 briefs, all hard, so every line has a `note`).
+  Its deciding cues are implied, buried, corrected mid-brief or contradicted by surface words.
+  It was written blind by one agent, relabelled blind by another (200/200 agreement), filtered to briefs both were sure of,
+  and then to briefs the keyword router gets wrong, so its 9% keyword accuracy is by construction, not a difficulty measure.
+  Same rules as `test.jsonl`: score it only on final candidates.
 
 ## Conventions
 - Never commit `.env`. The repo is public.
