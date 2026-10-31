@@ -8,3 +8,113 @@
 {"id":"b08","brief":"Flat vector illustration of a team collaborating around a laptop for a SaaS landing page","expected":"illustration"}
 {"id":"b09","brief":"Street sign at night reading 'OPEN 24/7' in neon, rain reflections","expected":"typography"}
 {"id":"b10","brief":"Drone shot of a coastline at golden hour, photographic","expected":"photoreal"}
+{"id":"b11","brief":"pls make packshot of our new oat milk carton, white bg, soft shadows, its for the amazon listing","expected":"product"}
+{"id":"b12","brief":"Instagram story template - big headline 'SALE 50%' and smaller line 'this weekend only'. minimal, lots of whitespace","expected":"typography"}
+{"id":"b13","brief":"kawaii mascot for a ramen shop, thick outlines, sticker style","expected":"illustration"}
+{"id":"b14","brief":"just need a bunch of quick throwaway layouts to see if the composition works, will do it properly later","expected":"fast-draft"}
+{"id":"b15","brief":"Cinemagraph: café window at night, everything frozen except rain running down the glass","expected":"video"}
+{"id":"b16","brief":"tel aviv beach at sunset, realistic, people playing paddle ball near the water","expected":"photoreal"}
+{"id":"b17","brief":"Perfume bottle on black marble, the brand name 'NOIR' engraved on the glass must be clearly readable","expected":"typography","note":"Packshot setup, but legible text is a hard requirement; text beats product."}
+{"id":"b18","brief":"Lifestyle shot of a woman jogging at sunrise wearing our new running shoes, the shoes should be the focus","expected":"photoreal","note":"Product is the focus, but the setting is a real-world scene with a person and natural light, not a studio."}
+{"id":"b19","brief":"Storyboard frames for a 30s TV ad, rough sketches are fine, 8 panels","expected":"fast-draft","note":"Mentions video, but the deliverable is still frames; 'rough is fine' signals speed over quality."}
+{"id":"b20","brief":"Animated logo reveal for 'Kestrel Labs', 3 seconds, sleek","expected":"video","note":"Needs legible text too, but motion is the requirement no still model can meet."}
+{"id":"b21","brief":"Children's book cover: watercolor dragon curled on a cloud, title 'The Sleepy Dragon' across the top","expected":"typography","note":"Illustration style, but the title must render legibly; text beats style."}
+{"id":"b22","brief":"Hyperreal 3D render of a sneaker bursting into colorful particles, dark background, for a sportswear ad","expected":"product","note":"Stylized rather than photographic, but a single hero object on a clean backdrop for commerce."}
+{"id":"b23","brief":"need like 4 quick versions of a burger photo for the menu, doesnt have to be perfect its for a pitch tmrw","expected":"fast-draft","note":"Product-style food shot, but explicit speed and low-stakes signals."}
+{"id":"b24","brief":"photo of paella on a rustic wooden table, natural light, food blog style","expected":"photoreal","note":"Food as subject, but an editorial real-world setting with natural light rather than a clean packshot."}
+{"id":"b25","brief":"ok so we're launching a podcast and need cover art, true crime, dark and moody, name is 'Cold Files' and it has to read at thumbnail size in podcast apps","expected":"typography","note":"Mood could suit photoreal or illustration, but legible title at small size decides it."}
+{"id":"b26","brief":"white background shots of a ceramic mug from 3 angles for our shopify store","expected":"product"}
+{"id":"b27","brief":"Flat lay of a leather wallet, keys and sunglasses on a linen backdrop, overhead, even softbox light","expected":"product"}
+{"id":"b28","brief":"headphones. matte black. floating. gradient bg. premium feel","expected":"product"}
+{"id":"b29","brief":"Our new protein bar needs a hero image for the website - bar half unwrapped, a few crumbs, clean grey seamless backdrop, crisp and appetizing","expected":"product"}
+{"id":"b30","brief":"jewelry: thin gold ring with a small emerald, macro, reflective black acrylic surface, studio","expected":"product"}
+{"id":"b31","brief":"Ecommerce photo of a kids backpack, front view, pure white, no props","expected":"product"}
+{"id":"b32","brief":"luxury watch on a wet slate rock, dramatic rim light, dark moody studio","expected":"product"}
+{"id":"b33","brief":"can you do a clean shot of our shampoo bottle with water splashes around it, studio lit, blue backdrop","expected":"product"}
+{"id":"b34","brief":"Amazon main image for a phone case, white bg, the case has our logo on the back but it doesnt need to be readable","expected":"product","note":"A logo is present, but legibility is explicitly not required, so packshot rules apply."}
+{"id":"b35","brief":"3D-style render of a glass perfume bottle with pink liquid, soft caustics, pastel podium","expected":"product","note":"Render style rather than photo, but a single hero object on a podium."}
+{"id":"b36","brief":"Sneaker on a pedestal surrounded by flowers, kind of dreamy painterly vibe, for a product drop","expected":"product","note":"Painterly mood, but object-centric commercial hero; would be illustration only if fully drawn."}
+{"id":"b37","brief":"cosmetics lineup: 5 lipsticks in a row, caps off, beige seamless, high-end beauty catalog","expected":"product"}
+{"id":"b38","brief":"close up of a mechanical keyboard on a desk mat, studio lighting, for the product page","expected":"product"}
+{"id":"b39","brief":"Bottle of hot sauce on a plain red backdrop, label should look roughly like ours, we'll comp the real label in later","expected":"product","note":"Label text gets composited later, so legibility is not required."}
+{"id":"b40","brief":"wine bottle + two glasses, dark backdrop, rim light, holiday gift guide","expected":"product"}
+{"id":"b41","brief":"tiny packshot of an open earbuds case for a 1:1 ad tile","expected":"product"}
+{"id":"b42","brief":"Portrait of an elderly fisherman mending nets at dawn, film grain, warm Portra colors","expected":"photoreal"}
+{"id":"b43","brief":"busy tokyo crosswalk at night from above, long exposure, realistic","expected":"photoreal"}
+{"id":"b44","brief":"Team of four in a modern office having a stand-up meeting, natural window light, diverse, candid, it's for our careers page so it should feel genuine and not like cheesy stock","expected":"photoreal"}
+{"id":"b45","brief":"golden retriever puppy asleep on a wooden porch, afternoon sun","expected":"photoreal"}
+{"id":"b46","brief":"A realistic photo of a mountain cabin in snow with warm light in the windows","expected":"photoreal"}
+{"id":"b47","brief":"doctor talkng with a patient in a bright clinic, reassuring, stock photo style","expected":"photoreal"}
+{"id":"b48","brief":"close-up of hands kneading bread dough, flour in the air, warm kitchen light","expected":"photoreal"}
+{"id":"b49","brief":"hiker on a ridge in the dolomites, wide shot, dramatic clouds, shot on a 24mm","expected":"photoreal"}
+{"id":"b50","brief":"Sofa in a bright scandinavian living room for our furniture catalog, no people","expected":"photoreal","note":"Catalog use, but a full real-world interior scene rather than an isolated object on a clean backdrop."}
+{"id":"b51","brief":"Model wearing our linen shirt walking through a market in Lisbon, editorial","expected":"photoreal","note":"Apparel product, but a person in a real-world location."}
+{"id":"b52","brief":"cocktail on a bar counter, bokeh city lights behind, moody","expected":"photoreal","note":"Drink as subject, but in a real-world bar setting rather than a studio."}
+{"id":"b53","brief":"Realistic image of a futuristic city with flying cars, like a real photo taken in 2080","expected":"photoreal","note":"Sci-fi subject, but explicitly asked to look like a real photograph."}
+{"id":"b54","brief":"a still from a movie: detective in the rain under a streetlight, cinematic, 35mm","expected":"photoreal","note":"'Movie still' means a single photographic frame, not motion."}
+{"id":"b55","brief":"family having breakfast together on a sunny sunday, warm and authentic, not too staged","expected":"photoreal"}
+{"id":"b56","brief":"aerial of rice terraces in bali at sunrise, mist","expected":"photoreal"}
+{"id":"b57","brief":"Logo for a bakery called 'Crumb & Co', wordmark, warm and handmade","expected":"typography"}
+{"id":"b58","brief":"Book cover, title 'THE LAST ORBIT', author 'M. Reyes', minimalist sci-fi","expected":"typography"}
+{"id":"b59","brief":"a sign on a shop door that says 'Back in 5 min' handwritten in chalk","expected":"typography"}
+{"id":"b60","brief":"Landing page hero mockup for a fintech app with headline 'Money, simplified.' and a 'Get started' button","expected":"typography"}
+{"id":"b61","brief":"birthday card for my dad, says Happy 60th Dad! in big gold letters","expected":"typography"}
+{"id":"b62","brief":"Infographic with 3 steps: Plan, Build, Ship - each with a short label under an icon","expected":"typography"}
+{"id":"b63","brief":"menu board for a coffee truck listing espresso 3, latte 4, cold brew 4.5, has to be readable from a distance","expected":"typography"}
+{"id":"b64","brief":"T-shirt print: cartoon cat in sunglasses with the words 'NAP QUEEN' under it","expected":"typography","note":"Cartoon style, but the printed words must be legible."}
+{"id":"b65","brief":"label design for a honey jar, brand name 'Wildbloom' and 'raw & unfiltered' underneath","expected":"typography","note":"Packaging context, but the deliverable is the label text itself."}
+{"id":"b66","brief":"movie poster, dark forest, glowing eyes, title 'HOLLOW' at the bottom with a credits block","expected":"typography","note":"Atmospheric photographic scene, but title and credits must read."}
+{"id":"b67","brief":"App store screenshot showing our habit tracker UI with the caption 'Build streaks that stick'","expected":"typography","note":"UI mockups with captions count as text-critical."}
+{"id":"b68","brief":"neon sign in a bar window that says 'last call', photographed at night","expected":"typography","note":"Realistic night photo, but the sign text must be spelled and rendered correctly."}
+{"id":"b69","brief":"Box packshot for our tea brand, the front must clearly show 'Earl Grey Supreme'","expected":"typography","note":"Packshot setup, but readable text is required (same rule as b17)."}
+{"id":"b70","brief":"youtube thumbnail: shocked face on the left, big yellow text 'I QUIT MY JOB' on the right","expected":"typography"}
+{"id":"b71","brief":"isometric illustration of a tiny city block with cafes and trees, soft pastel palette","expected":"illustration"}
+{"id":"b72","brief":"Anime-style girl on a rooftop at dusk, wind in her hair, nostalgic mood","expected":"illustration"}
+{"id":"b73","brief":"line art icon set: cloud, lock, gear, chart - consistent 2px stroke","expected":"illustration"}
+{"id":"b74","brief":"editorial illustration for an article about burnout, person melting into a desk chair, muted colors, conceptual","expected":"illustration"}
+{"id":"b75","brief":"pixel art knight with a sword, 32x32 vibe, for a game","expected":"illustration"}
+{"id":"b76","brief":"children's book spread: a bear and a rabbit having a picnic, gouache","expected":"illustration"}
+{"id":"b77","brief":"Botanical drawing of a monstera leaf, vintage scientific plate style","expected":"illustration"}
+{"id":"b78","brief":"linocut print of waves crashing on rocks, two colours","expected":"illustration"}
+{"id":"b79","brief":"Character design sheet for a friendly robot mascot, front and side views, flat colors","expected":"illustration"}
+{"id":"b80","brief":"comic panel, superhero landing in a city street, bold inks, halftone dots","expected":"illustration"}
+{"id":"b81","brief":"paper-cut style illustration of a forest with layered depth","expected":"illustration"}
+{"id":"b82","brief":"Watercolor illustration of a wedding venue for the invitation, we will add the names ourselves in the layout","expected":"illustration","note":"Invitation context, but text is added later in layout, so style decides."}
+{"id":"b83","brief":"3D cartoon character like an animated short, a snail with a tiny backpack","expected":"illustration","note":"3D render, but stylized character art rather than photoreal or a product shot."}
+{"id":"b84","brief":"Concept art for a desert city built on a giant creature's back, painterly, cinematic","expected":"illustration","note":"'Cinematic' describes the framing; this is painted concept art, a still image."}
+{"id":"b85","brief":"realistic pencil sketch of a lion","expected":"illustration","note":"'Realistic' refers to drawing skill; the medium is drawn."}
+{"id":"b86","brief":"flat vector of our blender for the how-to guide, simple shapes","expected":"illustration","note":"Product subject, but rendered as flat vector art."}
+{"id":"b87","brief":"Stylized illustration for our app onboarding: a person on a phone, abstract shapes, no words in the image","expected":"illustration","note":"UI context, but no text is required, so not typography."}
+{"id":"b88","brief":"quick sketches of 10 logo directions, rough, just exploring","expected":"fast-draft","note":"Logos need text eventually, but explicit rough exploration signals speed (draft beats text)."}
+{"id":"b89","brief":"Generate 30 variations of a living room layout, cheap and fast, I'll pick a couple to refine","expected":"fast-draft"}
+{"id":"b90","brief":"low res is fine, just want to see if a purple vs orange palette works for the packaging","expected":"fast-draft","note":"Packaging subject, but an explicit low-res palette test."}
+{"id":"b91","brief":"brainstorm: lots of different creature concepts, quantity over quality","expected":"fast-draft"}
+{"id":"b92","brief":"Rough moodboard images for a summer campaign, 12 quick ones, doesn't need to be polished","expected":"fast-draft"}
+{"id":"b93","brief":"fast preview before I spend credits on the real one: astronaut riding a horse","expected":"fast-draft"}
+{"id":"b94","brief":"throw me some quick ideas for a book cover vibe, no need for the title yet","expected":"fast-draft","note":"Book cover, but no text yet and explicitly quick ideas."}
+{"id":"b95","brief":"sketchy thumbnails for a comic page layout, 6 panels, super rough","expected":"fast-draft","note":"Comic subject, but rough layout thumbnails rather than finished art."}
+{"id":"b96","brief":"Need placeholder images for a website wireframe, anything generic, fast","expected":"fast-draft"}
+{"id":"b97","brief":"ideation round - 20 cheap concepts for a sneaker colorway, low effort","expected":"fast-draft","note":"Product subject, but explicit cheap, high-volume ideation."}
+{"id":"b98","brief":"quick test: does a foggy forest look good as a background? just a rough one","expected":"fast-draft"}
+{"id":"b99","brief":"draft a few options for a poster headline layout 'Summer Fest', rough is totally fine","expected":"fast-draft","note":"Needs text, but drafts don't need final legible type (draft beats text)."}
+{"id":"b100","brief":"lots of quick variants of a cat in different hats lol, just for fun, fast pls","expected":"fast-draft"}
+{"id":"b101","brief":"Speed over quality: 50 rough background options for a slide deck","expected":"fast-draft"}
+{"id":"b102","brief":"a bunch of rough angles of a room for a 3d blockout reference, nothing fancy","expected":"fast-draft"}
+{"id":"b103","brief":"quick and dirty storyboard frames for a 15s reel","expected":"fast-draft","note":"About a video, but the deliverable is rough still frames."}
+{"id":"b104","brief":"slow-motion pour of coffee into a glass with ice, 4 seconds","expected":"video"}
+{"id":"b105","brief":"animate this: clouds drifting over a mountain lake, seamless loop","expected":"video"}
+{"id":"b106","brief":"10s product spin of a watch on a turntable, studio","expected":"video","note":"Packshot setup, but a rotation is motion."}
+{"id":"b107","brief":"short clip of a dog running on the beach, handheld feel","expected":"video"}
+{"id":"b108","brief":"Animated explainer opener: shapes morphing into a lightbulb, 5s, flat style","expected":"video","note":"Flat illustration style, but animated."}
+{"id":"b109","brief":"make the waves in this beach scene move, keep everything else still","expected":"video","note":"Subtle partial motion (cinemagraph) still needs a video model."}
+{"id":"b110","brief":"timelapse of a city skyline going from day to night","expected":"video"}
+{"id":"b111","brief":"vertical clip for social, girl dancing in a neon-lit room, 8 seconds","expected":"video"}
+{"id":"b112","brief":"Kinetic typography: the words 'Dream Big' bouncing in, 3s","expected":"video","note":"Text-critical, but motion beats text."}
+{"id":"b113","brief":"drone flyover of a forest canopy in autumn, smooth, 6 secs","expected":"video"}
+{"id":"b114","brief":"animated GIF of a loading spinner made of dots","expected":"video","note":"Tiny UI asset, but a GIF animation is motion."}
+{"id":"b115","brief":"camera slowly pushes in on a candle flame flickering in the dark","expected":"video"}
+{"id":"b116","brief":"anime-style magical transformation sequence, sparkles everywhere, 5 seconds","expected":"video","note":"Anime illustration style, but a motion sequence."}
+{"id":"b117","brief":"quick rough animatic of a car chase, low quality fine, 10s","expected":"video","note":"Rough and cheap signals, but motion beats draft."}
+{"id":"b118","brief":"short loop of steam rising from a bowl of ramen for a menu screen","expected":"video"}
+{"id":"b119","brief":"Video of a hand signing a signature on paper, close up","expected":"video"}
+{"id":"b120","brief":"ocean waves crashing on rocks, slow motion, cinematic, 1080p","expected":"video"}

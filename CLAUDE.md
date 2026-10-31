@@ -49,6 +49,17 @@ top two side by side.
 - `parseDecisionResponse` in `src/jev.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
   A recorded live response lives in `test/fixtures/jev-choice-response.json`; tests never call the API.
 
+## Labelling briefs (`data/briefs.jsonl`)
+When a brief fits several categories, the first matching rule wins:
+1. `video` - the output must move (clips, loops, cinemagraphs, GIFs, animatics).
+2. `fast-draft` - the user explicitly trades quality for speed, volume or low stakes.
+3. `typography` - text must be legible in the image (titles, headlines, signs, brand names).
+4. `product` - a single hero object on a studio or clean backdrop, even if stylized.
+5. `photoreal` - real-world scenes, people, natural light (products in lifestyle settings land here).
+6. `illustration` - drawn, painted or stylized art.
+
+Borderline briefs carry a `note` explaining which rule decided. Briefs are English only.
+
 ## Conventions
 - Never commit `.env`. The repo is public.
 - Eval runs write timestamped JSON to `runs/` (gitignored) so results are reproducible.

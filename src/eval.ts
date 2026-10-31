@@ -8,7 +8,7 @@ const file = process.argv[2] ?? "data/briefs.jsonl";
 const rows = (await readFile(file, "utf8"))
   .split("\n")
   .filter((l) => l.trim())
-  .map((l) => JSON.parse(l) as { id: string; brief: string; expected: string });
+  .map((l) => JSON.parse(l) as { id: string; brief: string; expected: string; note?: string });
 
 const results: (Prediction & { id: string; latencyMs: number; inputTokens: number; model: string })[] = [];
 for (const row of rows) {
