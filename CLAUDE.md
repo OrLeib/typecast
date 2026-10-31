@@ -36,6 +36,27 @@ top two side by side.
 - Vitest for tests.
 - Data as JSON/JSONL under `data/`.
 
+## Architecture
+Dependencies point inward: `cli/` -> `comparison/`, `evaluation/` -> `routing/` -> `jev/`. Nothing below `cli/` reads `process.env`.
+
+| Module | Responsibility |
+|---|---|
+| `jev/parse.ts` | Wire types and strict response validation |
+| `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |
+| `routing/` | `Router` interface, the decision-model router, roster and variants |
+| `evaluation/` | Briefs, pure metrics, metric registry, runner, summary, report formatting, run store |
+| `comparison/` | Paired statistics, run comparison, report formatting |
+| `cli/` | Composition roots: read env and args, wire implementations, print |
+
+SOLID, and where it lives:
+- **S** - one reason to change per module: parsing vs transport (`jev/`), running vs summarising vs formatting vs storing (`evaluation/`), computing vs printing (`comparison/`).
+- **O** - extend by adding entries, not editing code: a metric is one entry in `RUN_METRICS` (summary and compare pick it up), a routing change is one entry in `VARIANTS`.
+- **L** - any `DecisionClient` can stand in for another. `test/jev/decision-client.contract.ts` is the contract; the HTTP client and the test fake both run it. A new client (e.g. a local model) must pass it too.
+- **I** - small interfaces: `Router` has only `route`, `DecisionClient` only `decide`; metrics take the narrowest prediction type they need.
+- **D** - high-level code depends on abstractions: `runEval` takes a `Router`, the router takes a `DecisionClient`, the client takes config and `fetch`. Only `cli/` picks implementations.
+
+Clean Code conventions: intention-revealing names, small single-purpose functions, named constants instead of magic numbers, errors that name the offending field, and comments only for the "why".
+
 ## Jev API (verify against https://docs.typesafe.ai before relying on details)
 - `POST {base}/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY`.
 - Body: `{ model: "jev-latest", state: string|object, questions: { [id]: { type, instructions, criteria } } }`.
@@ -46,7 +67,7 @@ top two side by side.
   - `model` is the resolved version, not the requested alias (`jev-latest`).
   - `probabilities` has one entry per criteria option (zeros included); `confidence` is reported separately and is close to, but not always equal to, the chosen option's probability (0.95 vs 0.96 seen).
   - `usage` reports both input and output tokens (474 in / 69 out for a one-line brief + 6-option roster); only input is billed.
-- `parseDecisionResponse` in `src/jev.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
+- `parseDecisionResponse` in `src/jev/parse.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
   A recorded live response lives in `test/fixtures/jev-choice-response.json`; tests never call the API.
 
 ## Labelling briefs (`data/*.jsonl`)
@@ -65,7 +86,7 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - `data/test.jsonl` is held out. It was written blind to dev and to past results.
   Don't read its misses while iterating, don't tune against it, and never move briefs between splits.
   Score it only on a final candidate (or a small shortlist fixed in advance), against baseline in the same session.
-- A change is a variant in `src/variants.ts` (instructions + roster). Baseline stays the default.
+- A change is a variant in `src/routing/variants.ts` (instructions + roster). Baseline stays the default.
 - Run each config with `--repeats 3` (Jev is not deterministic), then `npm run compare -- <baseline run> <candidate run>`.
   It prints paired deltas with bootstrap 95% CIs over briefs and an exact McNemar test on majority-vote correctness.
 - Adopt a candidate only if, on test: log-loss improves (CI below 0), confident misses (wrong at >= 0.85) don't rise,

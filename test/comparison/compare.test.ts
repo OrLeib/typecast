@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { compareRuns } from "../src/comparison.ts";
-import type { Result } from "../src/runs.ts";
+import { compareRuns, verdict, type MetricDelta } from "../../src/comparison/compare.ts";
+import type { Result } from "../../src/evaluation/result.ts";
+import { RUN_METRICS } from "../../src/evaluation/run-metrics.ts";
 
 const result = (id: string, choice: string, expected: string, repeat = 0, confidence = 0.9): Result => ({
   id, repeat, expected, choice, confidence,
@@ -11,7 +12,7 @@ const result = (id: string, choice: string, expected: string, repeat = 0, confid
 describe("compareRuns", () => {
   it("reports zero deltas and no flips for identical runs", () => {
     const run = [result("a", "x", "x"), result("b", "y", "x")];
-    const c = compareRuns(run, run, new Set());
+    const c = compareRuns(run, run, { borderline: new Set() });
     expect(c.flips).toEqual([]);
     expect(c.mcnemar).toEqual({ onlyA: 0, onlyB: 0, p: 1 });
     for (const m of c.metrics) {
@@ -29,7 +30,7 @@ describe("compareRuns", () => {
       result("fixed", "x", "x", 0), result("fixed", "x", "x", 1), result("fixed", "y", "x", 2),
       result("broken", "z", "x", 0), result("broken", "z", "x", 1), result("broken", "x", "x", 2),
     ];
-    const c = compareRuns(a, b, new Set(["fixed"]));
+    const c = compareRuns(a, b, { borderline: new Set(["fixed"]) });
     expect(c.mcnemar.onlyA).toBe(1);
     expect(c.mcnemar.onlyB).toBe(1);
     expect(c.flips).toEqual([
@@ -42,6 +43,22 @@ describe("compareRuns", () => {
   });
 
   it("refuses runs over different briefs", () => {
-    expect(() => compareRuns([result("a", "x", "x")], [result("b", "x", "x")], new Set())).toThrow(/different briefs/);
+    expect(() => compareRuns([result("a", "x", "x")], [result("b", "x", "x")], { borderline: new Set() })).toThrow(/different briefs/);
+  });
+
+  it("reports one delta per registered run metric", () => {
+    const run = [result("a", "x", "x")];
+    expect(compareRuns(run, run, { borderline: new Set() }).metrics.map((m) => m.metric)).toEqual(RUN_METRICS.map((m) => m.label));
+  });
+});
+
+describe("verdict", () => {
+  const delta = (ci: [number, number], lowerIsBetter: boolean): MetricDelta => ({ metric: "m", a: 0, b: 0, delta: 0, ci, lowerIsBetter });
+
+  it("calls a change only when the whole CI is on one side of zero", () => {
+    expect(verdict(delta([0.01, 0.05], false))).toBe("better");
+    expect(verdict(delta([0.01, 0.05], true))).toBe("worse");
+    expect(verdict(delta([-0.05, -0.01], true))).toBe("better");
+    expect(verdict(delta([-0.01, 0.01], false))).toBe("unclear");
   });
 });

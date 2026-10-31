@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accuracy, brier, confidentMisses, ece, logLoss, percentile, PROB_FLOOR } from "../src/metrics.ts";
+import { accuracy, brier, confidentMisses, ece, logLoss, percentile, PROB_FLOOR } from "../../src/evaluation/metrics.ts";
 
 describe("metrics", () => {
   it("accuracy", () => {

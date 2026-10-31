@@ -5,11 +5,11 @@
   "type": "module",
   "engines": { "node": ">=22.6" },
   "scripts": {
-    "route": "node --env-file=.env --experimental-strip-types src/cli.ts",
-    "eval": "node --env-file=.env --experimental-strip-types src/eval.ts",
+    "route": "node --env-file=.env --experimental-strip-types src/cli/route.ts",
+    "eval": "node --env-file=.env --experimental-strip-types src/cli/eval.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "compare": "node --experimental-strip-types src/compare.ts"
+    "compare": "node --experimental-strip-types src/cli/compare.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

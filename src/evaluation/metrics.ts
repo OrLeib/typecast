@@ -67,7 +67,10 @@ export function brier(preds: ProbPrediction[]): number {
   }, 0) / preds.length;
 }
 
+/** Confidence at or above which a UI would just pick, so a miss there goes unnoticed. */
+export const CONFIDENT_MISS_THRESHOLD = 0.85;
+
 /** Wrong answers given with at least `threshold` confidence: the misses a UI would not catch. */
-export function confidentMisses(preds: Prediction[], threshold = 0.85): number {
+export function confidentMisses(preds: Prediction[], threshold = CONFIDENT_MISS_THRESHOLD): number {
   return preds.filter((p) => p.choice !== p.expected && p.confidence >= threshold).length;
 }

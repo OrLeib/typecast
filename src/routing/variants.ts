@@ -9,3 +9,9 @@ export const VARIANTS: Record<string, Variant> = {
     roster: ROSTER,
   },
 };
+
+export function getVariant(name: string): Variant {
+  const variant = VARIANTS[name];
+  if (!variant) throw new Error(`Unknown variant "${name}". Known: ${Object.keys(VARIANTS).join(", ")}`);
+  return variant;
+}

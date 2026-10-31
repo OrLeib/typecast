@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ROSTER } from "../src/roster.ts";
+import { ROSTER } from "../src/routing/roster.ts";
 
 const dataDir = new URL("../data/", import.meta.url);
 const files = readdirSync(dataDir).filter((f) => f.endsWith(".jsonl"));
