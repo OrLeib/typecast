@@ -27,4 +27,11 @@ the hosted API.
 | p50 / p95 latency | How fast in practice? |
 | Cost per 1,000 routes | What does it cost? |
 
-Results: _coming soon_.
+Latest run (2026-10-31, `jev-1.14.0`, 120 briefs in `data/briefs.jsonl`, 44 of them deliberately borderline):
+
+| Metric | Result |
+|---|---|
+| Accuracy | 92.5% (99% on clear briefs, 82% on borderline) |
+| ECE | 0.049 |
+| p50 / p95 latency | 195ms / 309ms |
+| Cost per 1,000 routes | ~$0.02 |

@@ -10,10 +10,10 @@ const rows = (await readFile(file, "utf8"))
   .filter((l) => l.trim())
   .map((l) => JSON.parse(l) as { id: string; brief: string; expected: string; note?: string });
 
-const results: (Prediction & { id: string; latencyMs: number; inputTokens: number; model: string })[] = [];
+const results: (Prediction & { id: string; probabilities: Record<string, number>; latencyMs: number; inputTokens: number; model: string })[] = [];
 for (const row of rows) {
   const r = await route(row.brief);
-  results.push({ id: row.id, expected: row.expected, choice: r.choice, confidence: r.confidence, latencyMs: r.latencyMs, inputTokens: r.inputTokens, model: r.model });
+  results.push({ id: row.id, expected: row.expected, choice: r.choice, confidence: r.confidence, probabilities: r.probabilities, latencyMs: r.latencyMs, inputTokens: r.inputTokens, model: r.model });
   process.stdout.write(r.choice === row.expected ? "." : "x");
 }
 console.log();
