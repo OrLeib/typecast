@@ -1,0 +1,22 @@
+{
+  "model": "jev-1.14.0",
+  "answers": {
+    "model": {
+      "type": "choice",
+      "choice": "product",
+      "confidence": 0.98,
+      "probabilities": {
+        "photoreal": 0.02,
+        "product": 0.98,
+        "typography": 0,
+        "illustration": 0,
+        "fast-draft": 0,
+        "video": 0
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 474,
+    "output_tokens": 69
+  }
+}

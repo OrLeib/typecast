@@ -47,6 +47,7 @@ top two side by side.
   - `probabilities` has one entry per criteria option (zeros included); `confidence` is reported separately and is close to, but not always equal to, the chosen option's probability (0.95 vs 0.96 seen).
   - `usage` reports both input and output tokens (474 in / 69 out for a one-line brief + 6-option roster); only input is billed.
 - `parseDecisionResponse` in `src/jev.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
+  A recorded live response lives in `test/fixtures/jev-choice-response.json`; tests never call the API.
 
 ## Conventions
 - Never commit `.env`. The repo is public.
