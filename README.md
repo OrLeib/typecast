@@ -30,16 +30,16 @@ the hosted API.
 | Cost per 1,000 routes | What does it cost? |
 
 Latest runs (2026-10-31, `jev-1.14.0`, default variant `priority`, 3 repeats each).
-`dev` (120 briefs, 44 borderline) is the set we iterate on; `test` (120 briefs, 42 borderline) is held out and was written blind to dev.
+`dev` is the set we iterate on. `test` and `hard` are held out: `test` was written blind to dev, and `hard` was written so its deciding cue is implied rather than stated (a keyword baseline scores 85-88% on dev/test but 9% on hard).
 
-| Metric | dev | test (held out) |
-|---|---|---|
-| Accuracy | 98.3% (100% clear, 95.5% borderline) | 100% |
-| ECE | 0.035 | 0.031 |
-| Log-loss | 0.062 | 0.029 |
-| Confident misses (wrong at >= 0.85) | 0 | 0 |
-| p50 / p95 latency | 199ms / 275ms | 199ms / 307ms |
-| Cost per 1,000 routes | ~$0.026 | ~$0.026 |
+| Metric | dev | test (held out) | hard (held out) |
+|---|---|---|---|
+| Accuracy | 98.3% | 100% | 91.7% |
+| ECE | 0.035 | 0.031 | 0.050 |
+| Log-loss | 0.062 | 0.029 | 0.210 |
+| Confident misses (wrong at >= 0.85) | 0 | 0 | 0 |
+| p50 / p95 latency | 199ms / 275ms | 199ms / 307ms | 214ms / 324ms |
+| Cost per 1,000 routes | ~$0.026 | ~$0.026 | ~$0.026 |
 
-Against the original `baseline` variant on the held-out set: accuracy 96.9% -> 100%, log-loss 0.124 -> 0.029, confident misses 2 -> 0.
-The held-out set is now at ceiling, so the next step is a harder one built from real user briefs.
+Against the original `baseline` variant on `hard`: accuracy 83.1% -> 91.7%, log-loss 0.361 -> 0.210, confident misses 5.7 -> 0 per run (McNemar p = 0.003).
+Every `priority` answer at >= 0.9 confidence on `hard` was right; its misses sit at 0.4-0.7 confidence, where a UI should show the top two.
