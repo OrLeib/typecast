@@ -8,6 +8,26 @@ export const VARIANTS: Record<string, Variant> = {
     instructions: "Which image or video model category best fits this creative brief?",
     roster: ROSTER,
   },
+  /** Spells out which requirement outranks which, in the order the labelling rules use. */
+  priority: {
+    instructions:
+      "Pick the category for the brief's hardest requirement, checking in this order: " +
+      "(1) must the output move? " +
+      "(2) does the user explicitly put speed, cost or volume ahead of quality? " +
+      "(3) must specific words be readable in the final image? " +
+      "Only if none apply, choose by subject and setting. " +
+      "Style words like 'cinematic', 'painterly' or 'animated look' describe appearance, not the output type.",
+    roster: {
+      ...ROSTER,
+      typography:
+        "Specific words must be readable in the final image (titles, headlines, brand names, signs, labels, captions), " +
+        "whatever the subject or style. Not when text will be added later in layout.",
+      "fast-draft":
+        "The user explicitly prioritizes speed, cost or volume over quality " +
+        "(rough, quick, placeholder, many variations, preview before spending), whatever the subject.",
+      video: "The output itself must move: clips, loops, animations, GIFs, cinemagraphs. Not stills that only look cinematic or animated.",
+    },
+  },
 };
 
 export function getVariant(name: string): Variant {
