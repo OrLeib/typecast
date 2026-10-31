@@ -7,8 +7,11 @@ export function accuracy(preds: Prediction[]): number {
 
 export type Bin = { lo: number; hi: number; count: number; avgConfidence: number; accuracy: number };
 
+/** Ten equal-width bins: fine enough to show over-confidence, coarse enough to fill on ~100 briefs. */
+export const DEFAULT_BIN_COUNT = 10;
+
 /** Reliability bins over [0,1]; the last bin includes 1.0. */
-export function reliabilityBins(preds: Prediction[], nBins = 10): Bin[] {
+export function reliabilityBins(preds: Prediction[], nBins = DEFAULT_BIN_COUNT): Bin[] {
   const bins: Bin[] = [];
   for (let i = 0; i < nBins; i++) {
     const lo = i / nBins;
@@ -27,7 +30,7 @@ export function reliabilityBins(preds: Prediction[], nBins = 10): Bin[] {
 }
 
 /** ECE (Expected Calibration Error): weighted mean |accuracy - confidence| across bins. */
-export function ece(preds: Prediction[], nBins = 10): number {
+export function ece(preds: Prediction[], nBins = DEFAULT_BIN_COUNT): number {
   if (preds.length === 0) return 0;
   return reliabilityBins(preds, nBins).reduce(
     (sum, b) => sum + (b.count / preds.length) * Math.abs(b.accuracy - b.avgConfidence),

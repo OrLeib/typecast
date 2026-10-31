@@ -9,7 +9,8 @@ export type RunMeta = { data: string; variant: string; repeats: number; commit: 
 export type Summary = RunMeta & {
   n: number;
   model: string;
-  metrics: Record<string, number>;
+  /** null where a metric is undefined for this run, e.g. borderline accuracy on a file with no borderline briefs. */
+  metrics: Record<string, number | null>;
   perRepeatAccuracy: number[];
   latencyP50: number;
   latencyP95: number;
@@ -25,7 +26,7 @@ export function summarize(results: Result[], briefs: Brief[], meta: RunMeta, inp
     ...meta,
     n: briefs.length,
     model: [...new Set(results.map((r) => r.model))].join(","),
-    metrics: computeMetrics(results, { borderline }),
+    metrics: Object.fromEntries(Object.entries(computeMetrics(results, { borderline })).map(([id, v]) => [id, Number.isNaN(v) ? null : v])),
     perRepeatAccuracy: Array.from({ length: meta.repeats }, (_, i) => accuracy(results.filter((r) => r.repeat === i))),
     latencyP50: percentile(latencies, 50),
     latencyP95: percentile(latencies, 95),

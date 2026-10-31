@@ -30,6 +30,18 @@ describe("createJevClient", () => {
     expect(result.latencyMs).toBe(250);
   });
 
+  it("counts reading the response body in latency", async () => {
+    let clock = 0;
+    const slowBody = vi.fn(async () => {
+      clock += 100;
+      const res = new Response(JSON.stringify(fixture));
+      const json = res.json.bind(res);
+      return Object.assign(res, { json: async () => ((clock += 400), json()) });
+    });
+    const result = await createJevClient(config, { fetch: slowBody, now: () => clock }).decide("x", {});
+    expect(result.latencyMs).toBe(500);
+  });
+
   it("hands every raw body to onRawResponse", async () => {
     const onRawResponse = vi.fn();
     await createJevClient({ ...config, onRawResponse }, { fetch: respondWith(fixture) }).decide("x", {});

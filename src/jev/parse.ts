@@ -48,9 +48,9 @@ function parseChoiceAnswer(raw: unknown, path: string): ChoiceAnswer {
   return {
     type: "choice",
     choice,
-    confidence: expectNumber(answer.confidence, `${path}.confidence`),
+    confidence: expectProbability(answer.confidence, `${path}.confidence`),
     probabilities: Object.fromEntries(
-      Object.entries(probabilities).map(([option, p]) => [option, expectNumber(p, `${path}.probabilities.${option}`)]),
+      Object.entries(probabilities).map(([option, p]) => [option, expectProbability(p, `${path}.probabilities.${option}`)]),
     ),
   };
 }
@@ -68,6 +68,12 @@ function expectString(value: unknown, path: string): string {
 function expectNumber(value: unknown, path: string): number {
   if (typeof value !== "number" || !Number.isFinite(value)) fail(`${path} must be a number`);
   return value as number;
+}
+
+function expectProbability(value: unknown, path: string): number {
+  const p = expectNumber(value, path);
+  if (p < 0 || p > 1) fail(`${path} must be between 0 and 1, got ${p}`);
+  return p;
 }
 
 function fail(message: string): never {

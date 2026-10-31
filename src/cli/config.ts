@@ -9,9 +9,12 @@ export function jevConfigFromEnv(env: NodeJS.ProcessEnv = process.env): JevConfi
     apiKey,
     baseUrl: env.TYPESAFE_BASE_URL ?? JEV_DEFAULT_BASE_URL,
     model: env.JEV_MODEL ?? JEV_DEFAULT_MODEL,
-    onRawResponse: env.DEBUG_JEV ? (raw) => console.error(JSON.stringify(raw, null, 2)) : undefined,
+    onRawResponse: isOn(env.DEBUG_JEV) ? (raw) => console.error(JSON.stringify(raw, null, 2)) : undefined,
   };
 }
+
+/** A flag is on only when set to 1 or true, so DEBUG_JEV=0 means off. */
+const isOn = (flag: string | undefined) => flag === "1" || flag?.toLowerCase() === "true";
 
 /** Short commit hash, suffixed "-dirty" when the work tree has changes, so runs record what produced them. */
 export function currentCommit(): string {

@@ -24,7 +24,9 @@ describe("parseDecisionResponse", () => {
     ["non-choice answer", () => { const b = clone(); b.answers.model.type = "score"; return b; }, /answers\.model\.type must be "choice"/],
     ["choice outside options", () => { const b = clone(); b.answers.model.choice = "audio"; return b; }, /"audio" is not in probabilities/],
     ["non-numeric probability", () => { const b = clone(); b.answers.model.probabilities.video = "0"; return b; }, /probabilities\.video must be a number/],
-  ])("rejects %s", (_name, body, message) => {
+    ["probability above 1", () => { const b = clone(); b.answers.model.probabilities.video = 1.2; return b; }, /probabilities\.video must be between 0 and 1, got 1\.2/],
+    ["negative confidence", () => { const b = clone(); b.answers.model.confidence = -0.1; return b; }, /confidence must be between 0 and 1/],
+  ])("rejects %s",(_name, body, message) => {
     expect(() => parseDecisionResponse(body())).toThrow(message);
   });
 });

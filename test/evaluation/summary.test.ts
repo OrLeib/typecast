@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Brief } from "../../src/evaluation/briefs.ts";
-import { formatMisses } from "../../src/evaluation/report.ts";
+import { CONFIDENT_MISS_THRESHOLD } from "../../src/evaluation/metrics.ts";
+import { formatMisses, formatSummary } from "../../src/evaluation/report.ts";
 import type { Result } from "../../src/evaluation/result.ts";
 import { RUN_METRICS } from "../../src/evaluation/run-metrics.ts";
 import { summarize } from "../../src/evaluation/summary.ts";
@@ -33,6 +34,25 @@ describe("summarize", () => {
 
   it("prices routes from mean input tokens", () => {
     expect(s.costPer1000Usd).toBeCloseTo(500 * 1000 * (0.042 / 1e6), 10);
+  });
+});
+
+describe("formatSummary", () => {
+  const lines = formatSummary(summarize(results, briefs, meta, 0.042));
+
+  it("prints every registered metric with its own format", () => {
+    for (const m of RUN_METRICS) expect(lines, m.id).toContainEqual(expect.stringContaining(m.label));
+    expect(lines).toContain("  accuracy (clear) 100.0%");
+    expect(lines).toContain(`  confident misses (>=${CONFIDENT_MISS_THRESHOLD}) / repeat 0.5`);
+  });
+
+  it("prints n/a for a metric undefined on this run", () => {
+    const clearOnly = formatSummary(summarize(results.filter((r) => r.id === "a"), briefs.slice(0, 1), meta, 0.042));
+    expect(clearOnly).toContain("  accuracy (borderline) n/a");
+  });
+
+  it("prints only the non-empty reliability bins", () => {
+    expect(lines.filter((l) => /^ {2}\[/.test(l))).toEqual(["  [0.9, 1.0]  n=4  confidence 0.900  accuracy 0.750"]);
   });
 });
 

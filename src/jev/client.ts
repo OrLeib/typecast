@@ -36,9 +36,9 @@ export function createJevClient(config: JevConfig, deps: JevClientDeps = {}): De
         headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model: config.model, state, questions }),
       });
-      const latencyMs = now() - started;
-
       const raw: unknown = await res.json().catch(() => undefined);
+      // Stop after the body: fetch resolves on headers, and the caller waits for the whole answer.
+      const latencyMs = now() - started;
       config.onRawResponse?.(raw);
       if (!res.ok) throw new Error(`Jev ${res.status}: ${JSON.stringify(raw)}`);
       return { ...parseDecisionResponse(raw), latencyMs };

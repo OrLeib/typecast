@@ -4,7 +4,8 @@ import { bootstrapCI, mcnemarExact } from "./stats.ts";
 
 export type MetricDelta = { metric: string; a: number; b: number; delta: number; ci: [number, number]; lowerIsBetter: boolean };
 
-export type Flip = { id: string; expected: string; a: string; b: string };
+/** A brief whose majority choice differs between runs; undefined means that run had no majority. */
+export type Flip = { id: string; expected: string; a: string | undefined; b: string | undefined };
 
 export type Comparison = {
   n: number;
@@ -68,9 +69,13 @@ function sharedIds(a: Map<string, Result[]>, b: Map<string, Result[]>): string[]
   return ids;
 }
 
-/** Most frequent choice across repeats; ties break alphabetically so the result is deterministic. */
-function majorityChoice(results: Result[]): string {
+/**
+ * Most frequent choice across repeats, or undefined when the top choices tie. A tie counts as
+ * wrong: breaking it by option name would decide correctness by spelling.
+ */
+function majorityChoice(results: Result[]): string | undefined {
   const counts = new Map<string, number>();
   for (const r of results) counts.set(r.choice, (counts.get(r.choice) ?? 0) + 1);
-  return [...counts.entries()].sort(([ka, x], [kb, y]) => y - x || ka.localeCompare(kb))[0][0];
+  const [first, second] = [...counts.entries()].sort(([, x], [, y]) => y - x);
+  return second && second[1] === first[1] ? undefined : first[0];
 }

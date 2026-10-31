@@ -20,6 +20,12 @@ describe("createDecisionRouter", () => {
     await expect(createDecisionRouter(client, variant).route("x")).rejects.toThrow(/"audio", which is not in the roster/);
   });
 
+  it("rejects probabilities that don't cover the roster exactly", async () => {
+    const answer = { type: "choice" as const, choice: "motion", confidence: 0.9, probabilities: { motion: 0.9, audio: 0.1 } };
+    const client: DecisionClient = { decide: async () => ({ model: "m", answers: { model: answer }, usage: { input_tokens: 0, output_tokens: 0 }, latencyMs: 0 }) };
+    await expect(createDecisionRouter(client, variant).route("x")).rejects.toThrow(/missing: stills; extra: audio/);
+  });
+
   it("rejects a response without its answer", async () => {
     const client: DecisionClient = { decide: async () => ({ model: "m", answers: {}, usage: { input_tokens: 0, output_tokens: 0 }, latencyMs: 0 }) };
     await expect(createDecisionRouter(client, variant).route("x")).rejects.toThrow(/No 'model' answer/);

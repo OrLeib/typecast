@@ -12,7 +12,7 @@ const result = (id: string, choice: string, expected: string, repeat = 0, confid
 describe("compareRuns", () => {
   it("reports zero deltas and no flips for identical runs", () => {
     const run = [result("a", "x", "x"), result("b", "y", "x")];
-    const c = compareRuns(run, run, { borderline: new Set() });
+    const c = compareRuns(run, run, { borderline: new Set(["b"]) });
     expect(c.flips).toEqual([]);
     expect(c.mcnemar).toEqual({ onlyA: 0, onlyB: 0, p: 1 });
     for (const m of c.metrics) {
@@ -40,6 +40,20 @@ describe("compareRuns", () => {
     const borderline = c.metrics.find((m) => m.metric === "accuracy (borderline)")!;
     expect(borderline.a).toBeCloseTo(1 / 3, 6);
     expect(borderline.b).toBeCloseTo(2 / 3, 6);
+  });
+
+  it("counts a brief with no majority choice as wrong, even when the expected option sorts first", () => {
+    const split = [result("t", "a", "a", 0), result("t", "b", "a", 1), result("t", "c", "a", 2)];
+    const right = [result("t", "a", "a", 0), result("t", "a", "a", 1), result("t", "a", "a", 2)];
+    const c = compareRuns(split, right, { borderline: new Set() });
+    expect(c.mcnemar).toMatchObject({ onlyA: 0, onlyB: 1 });
+    expect(c.flips).toEqual([{ id: "t", expected: "a", a: undefined, b: "a" }]);
+  });
+
+  it("reports an undefined subset metric as NaN rather than 0", () => {
+    const run = [result("a", "x", "x")];
+    const borderline = compareRuns(run, run, { borderline: new Set() }).metrics.find((m) => m.metric === "accuracy (borderline)")!;
+    expect(borderline).toMatchObject({ a: NaN, b: NaN, ci: [NaN, NaN] });
   });
 
   it("refuses runs over different briefs", () => {

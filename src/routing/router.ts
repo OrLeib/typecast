@@ -21,7 +21,17 @@ export function createDecisionRouter(client: DecisionClient, variant: Variant): 
       const answer = res.answers[QUESTION_ID];
       if (!answer) throw new Error(`No '${QUESTION_ID}' answer in response: ${JSON.stringify(res.answers)}`);
       if (!(answer.choice in variant.roster)) throw new Error(`Decision model chose "${answer.choice}", which is not in the roster`);
+      assertOnePerOption(answer.probabilities, Object.keys(variant.roster));
       return { ...answer, model: res.model, inputTokens: res.usage.input_tokens, latencyMs: res.latencyMs };
     },
   };
+}
+
+/** Log-loss and Brier read every option's probability, so a missing or extra one would skew them silently. */
+function assertOnePerOption(probabilities: Record<string, number>, options: string[]): void {
+  const missing = options.filter((o) => !(o in probabilities));
+  const extra = Object.keys(probabilities).filter((o) => !options.includes(o));
+  if (missing.length || extra.length) {
+    throw new Error(`probabilities must have one entry per roster option (missing: ${missing.join(", ") || "none"}; extra: ${extra.join(", ") || "none"})`);
+  }
 }

@@ -1,17 +1,25 @@
+import type { Bin } from "./metrics.ts";
 import type { Result } from "./result.ts";
+import { RUN_METRICS, type RunMetric } from "./run-metrics.ts";
 import type { Summary } from "./summary.ts";
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 
-export function formatSummary(s: Summary): string[] {
-  const m = s.metrics;
+export function formatSummary(s: Summary, metrics: readonly RunMetric[] = RUN_METRICS): string[] {
   return [
     `${s.data}  variant=${s.variant}  n=${s.n} x${s.repeats}  model=${s.model}  commit=${s.commit}`,
-    `accuracy ${pct(m.accuracy)} (clear ${pct(m.accuracyClear)}, borderline ${pct(m.accuracyBorderline)})  per repeat ${s.perRepeatAccuracy.map(pct).join(" / ")}`,
-    `ECE ${m.ece.toFixed(3)}  log-loss ${m.logLoss.toFixed(3)}  Brier ${m.brier.toFixed(3)}  confident misses (>=0.85) ${m.confidentMissesPerRepeat.toFixed(1)} per repeat`,
+    ...metrics.map((m) => `  ${m.label} ${formatValue(m, s.metrics[m.id])}`),
+    `  per-repeat accuracy ${s.perRepeatAccuracy.map(pct).join(" / ")}`,
     `latency p50 ${Math.round(s.latencyP50)}ms  p95 ${Math.round(s.latencyP95)}ms   cost per 1,000 routes ~$${s.costPer1000Usd.toFixed(4)}`,
+    "reliability (non-empty confidence bins):",
+    ...s.bins.filter((b) => b.count > 0).map(formatBin),
   ];
 }
+
+const formatValue = (m: RunMetric, value: number | null | undefined) => (value == null ? "n/a" : m.format(value));
+
+const formatBin = (b: Bin) =>
+  `  [${b.lo.toFixed(1)}, ${b.hi.toFixed(1)}${b.hi === 1 ? "]" : ")"}  n=${b.count}  confidence ${b.avgConfidence.toFixed(3)}  accuracy ${b.accuracy.toFixed(3)}`;
 
 export function formatMisses(results: Result[]): string[] {
   return results.filter((r) => r.choice !== r.expected).map((r) => {

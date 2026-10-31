@@ -29,6 +29,12 @@ describe("bootstrapCI", () => {
     expect(hi).toBeGreaterThan(0.3);
     expect(bootstrapCI([2, 2, 2], mean)).toEqual([2, 2]);
   });
+
+  it("drops resamples where the statistic is undefined instead of counting them", () => {
+    const meanOfOnes = (xs: number[]) => (xs.includes(1) ? mean(xs.filter((x) => x === 1)) : NaN);
+    expect(bootstrapCI([1, 0, 0, 0], meanOfOnes)).toEqual([1, 1]);
+    expect(bootstrapCI([0, 0], meanOfOnes)).toEqual([NaN, NaN]);
+  });
 });
 
 describe("rng", () => {
