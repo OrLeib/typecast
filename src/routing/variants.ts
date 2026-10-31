@@ -30,6 +30,9 @@ export const VARIANTS: Record<string, Variant> = {
   },
 };
 
+/** The variant routes use unless told otherwise. Adopted on 2026-10-31 after beating baseline on held-out briefs. */
+export const DEFAULT_VARIANT = "priority";
+
 export function getVariant(name: string): Variant {
   const variant = VARIANTS[name];
   if (!variant) throw new Error(`Unknown variant "${name}". Known: ${Object.keys(VARIANTS).join(", ")}`);

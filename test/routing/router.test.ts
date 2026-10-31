@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DecisionClient } from "../../src/jev/client.ts";
 import { createDecisionRouter } from "../../src/routing/router.ts";
-import { getVariant, type Variant } from "../../src/routing/variants.ts";
+import { DEFAULT_VARIANT, getVariant, VARIANTS, type Variant } from "../../src/routing/variants.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
 
 const variant: Variant = { instructions: "Pick a category", roster: { stills: "Still images", motion: "Video" } };
@@ -30,5 +30,9 @@ describe("getVariant", () => {
   it("returns known variants and names the known ones on a typo", () => {
     expect(getVariant("baseline").instructions).toMatch(/\S/);
     expect(() => getVariant("baselin")).toThrow(/Unknown variant "baselin". Known: baseline/);
+  });
+
+  it("defaults to a registered variant", () => {
+    expect(Object.keys(VARIANTS)).toContain(DEFAULT_VARIANT);
   });
 });

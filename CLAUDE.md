@@ -85,9 +85,9 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - `data/dev.jsonl` is for iterating: look at its misses freely.
 - `data/test.jsonl` is held out. It was written blind to dev and to past results.
   Don't read its misses while iterating, don't tune against it, and never move briefs between splits.
-  Score it only on a final candidate (or a small shortlist fixed in advance), against baseline in the same session.
-- A change is a variant in `src/routing/variants.ts` (instructions + roster). Baseline stays the default.
-- Run each config with `--repeats 3` (Jev is not deterministic), then `npm run compare -- <baseline run> <candidate run>`.
+  Score it only on a final candidate (or a small shortlist fixed in advance), against the current default in the same session.
+- A change is a variant in `src/routing/variants.ts` (instructions + roster). `DEFAULT_VARIANT` is what routes use; `baseline` stays as the original reference.
+- Run each config with `--repeats 3` (Jev's choices were stable across repeats, but its probabilities jitter by about ±0.01), then `npm run compare -- <default run> <candidate run>`.
   It prints paired deltas with bootstrap 95% CIs over briefs and an exact McNemar test on majority-vote correctness.
 - Adopt a candidate only if, on test: log-loss improves (CI below 0), confident misses (wrong at >= 0.85) don't rise,
   and clear-brief accuracy drops by at most one brief.

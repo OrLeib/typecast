@@ -6,13 +6,13 @@ import { saveRun } from "../evaluation/runs.ts";
 import { summarize } from "../evaluation/summary.ts";
 import { createJevClient, JEV_INPUT_PRICE_PER_MILLION } from "../jev/client.ts";
 import { createDecisionRouter } from "../routing/router.ts";
-import { getVariant } from "../routing/variants.ts";
+import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { currentCommit, jevConfigFromEnv } from "./config.ts";
 
 const { values: args } = parseArgs({
   options: {
     data: { type: "string", default: "data/dev.jsonl" },
-    variant: { type: "string", default: "baseline" },
+    variant: { type: "string", default: DEFAULT_VARIANT },
     repeats: { type: "string", default: "1" },
   },
 });
