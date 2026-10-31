@@ -41,11 +41,12 @@ top two side by side.
 - Body: `{ model: "jev-latest", state: string|object, questions: { [id]: { type, instructions, criteria } } }`.
 - Types: `choice` (criteria = { optionId: description }, 1–255 options),
   `score` (2–10 ordered levels), `noul` (yes/no).
-- Choice answer: `choice`, `probabilities` (per option), `confidence`.
-- Response reports the exact model version (e.g. `jev-1.13.0`) and `usage`
-  (input tokens billed; output free). Log both with every eval run.
-- The exact response envelope was not verified yet — `src/jev.ts` logs the raw response
-  with `DEBUG_JEV=1`; tighten the types once confirmed.
+- Response envelope (confirmed live against `jev-1.14.0`, 2026-10-31):
+  `{ model: "jev-1.14.0", answers: { [questionId]: { type: "choice", choice, confidence, probabilities } }, usage: { input_tokens, output_tokens } }`.
+  - `model` is the resolved version, not the requested alias (`jev-latest`).
+  - `probabilities` has one entry per criteria option (zeros included); `confidence` is reported separately and is close to, but not always equal to, the chosen option's probability (0.95 vs 0.96 seen).
+  - `usage` reports both input and output tokens (474 in / 69 out for a one-line brief + 6-option roster); only input is billed.
+- `parseDecisionResponse` in `src/jev.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
 
 ## Conventions
 - Never commit `.env`. The repo is public.

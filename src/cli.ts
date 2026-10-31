@@ -8,5 +8,5 @@ if (!brief) {
 
 const r = await route(brief);
 const ranked = Object.entries(r.probabilities).sort(([, a], [, b]) => b - a);
-console.log(`→ ${r.choice}  (confidence ${r.confidence.toFixed(2)}, ${Math.round(r.latencyMs)}ms, ${r.model ?? "model?"})`);
+console.log(`→ ${r.choice}  (confidence ${r.confidence.toFixed(2)}, ${Math.round(r.latencyMs)}ms, ${r.model})`);
 for (const [option, p] of ranked) console.log(`  ${option.padEnd(14)} ${p.toFixed(3)}`);
