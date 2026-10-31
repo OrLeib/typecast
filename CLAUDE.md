@@ -1,4 +1,4 @@
-# brief-router
+# Typecast
 
 ## What this is
 A model router for AI media generation: given a creative brief, pick which image/video model

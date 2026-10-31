@@ -1,4 +1,4 @@
-# brief-router
+# Typecast
 
 Pick the right image model for a creative brief — in ~150ms, with a confidence you can trust.
 
