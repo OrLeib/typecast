@@ -7,9 +7,10 @@ import { basename, join } from "node:path";
 import type { GenerationProgress, Generator } from "../generation/generator.ts";
 import type { DecisionClient } from "../jev/client.ts";
 import type { ImageAsset } from "../jev/parse.ts";
-import { judgeWithJev } from "../judging/jev-judge.ts";
+import { JEV_JUDGE_PROMPT, judgeWithJev } from "../judging/jev-judge.ts";
 import { PICK_THRESHOLD, recommend } from "../routing/recommendation.ts";
 import type { Router } from "../routing/router.ts";
+import { createDiskCache } from "./disk-cache.ts";
 import type { Evidence } from "./evidence.ts";
 import { DEMO_PAGE } from "./page.ts";
 
@@ -28,6 +29,10 @@ export type DemoConfig = {
   /** USD per million input tokens, to show what a route costs. */
   inputPricePerMillion: number;
   imagesDir: string;
+  /** Routes and Jev judgments are kept here, so asking again costs no API call and gives the same answer. */
+  cacheDir: string;
+  /** Everything besides the brief that changes a route (variant, Jev model), so a changed router misses the cache. */
+  routerId: string;
   seed: number;
 };
 
@@ -38,6 +43,8 @@ const IMAGE_URL = /^\/images\/([0-9a-f]{16}\.png)$/;
 
 export function createDemoServer(config: DemoConfig): Server {
   const renderOneAtATime = serialize();
+  const routes = createDiskCache<Record<string, unknown>>(join(config.cacheDir, "routes"));
+  const judgments = createDiskCache<Record<string, unknown>>(join(config.cacheDir, "judgments"));
 
   const handlers: Record<string, (body: Record<string, unknown>) => Promise<unknown>> = {
     "GET /api/config": async () => ({
@@ -49,8 +56,11 @@ export function createDemoServer(config: DemoConfig): Server {
     }),
     "POST /api/route": async (body) => {
       const brief = briefFrom(body);
+      const key = `${config.routerId}\n${brief}`;
+      const hit = await routes.get(key);
+      if (hit) return { ...hit, cached: true };
       const route = await config.router.route(brief);
-      return {
+      const result = {
         choice: route.choice,
         confidence: route.confidence,
         probabilities: route.probabilities,
@@ -59,21 +69,35 @@ export function createDemoServer(config: DemoConfig): Server {
         costUsd: (route.inputTokens * config.inputPricePerMillion) / 1e6,
         recommendation: recommend(route),
       };
+      await routes.set(key, result);
+      return { ...result, cached: false };
+    },
+    // Lets the page show images it already rendered as soon as a brief is routed, without a render click.
+    "POST /api/cached-image": async (body) => {
+      const brief = briefFrom(body);
+      const generator = generatorFrom(body);
+      const file = imageFileFor(generator, brief);
+      const cached = await exists(join(config.imagesDir, file));
+      return { image: cached ? `/images/${file}` : null, generator: generator.name };
     },
     "POST /api/judge": async (body) => {
       const brief = briefFrom(body);
-      const verdict = await judgeWithJev(config.judge, {
-        brief,
-        routed: await imageFrom(body.routed, "routed"),
-        default: await imageFrom(body.default, "default"),
-      });
-      return {
+      const routed = await imageFrom(body.routed, "routed");
+      const dflt = await imageFrom(body.default, "default");
+      // Image URLs are content hashes of model, seed and brief, so they name the exact pair being judged.
+      const key = `${JEV_JUDGE_PROMPT}\n${body.routed}\n${body.default}\n${brief}`;
+      const hit = await judgments.get(key);
+      if (hit) return { ...hit, cached: true };
+      const verdict = await judgeWithJev(config.judge, { brief, routed, default: dflt });
+      const result = {
         winner: verdict.winner,
         probabilities: verdict.probabilities,
         model: verdict.model,
         latencyMs: verdict.latencyMs,
         costUsd: (verdict.inputTokens * config.inputPricePerMillion) / 1e6,
       };
+      await judgments.set(key, result);
+      return { ...result, cached: false };
     },
   };
 
@@ -96,14 +120,13 @@ export function createDemoServer(config: DemoConfig): Server {
   async function generate(body: Record<string, unknown>, res: ServerResponse) {
     const brief = briefFrom(body);
     const generator = generatorFrom(body);
-    const file = `${createHash("sha256").update(`${generator.name}\n${config.seed}\n${brief}`).digest("hex").slice(0, 16)}.png`;
+    const file = imageFileFor(generator, brief);
     const outputPath = join(config.imagesDir, file);
     const done = (latencyMs: number, cached: boolean) => ({ type: "done", image: `/images/${file}`, generator: generator.name, latencyMs, cached });
 
     res.writeHead(200, { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" });
     const emit = (event: Record<string, unknown>) => res.write(`${JSON.stringify(event)}\n`);
     try {
-      // Same brief, model and seed always give the same image, so a repeat request is instant.
       if (await exists(outputPath)) {
         emit(done(0, true));
       } else {
@@ -115,6 +138,11 @@ export function createDemoServer(config: DemoConfig): Server {
       emit({ type: "error", error: (e as Error).message });
     }
     res.end();
+  }
+
+  /** Same brief, model and seed always give the same image, so they name its file. */
+  function imageFileFor(generator: Generator, brief: string): string {
+    return `${createHash("sha256").update(`${generator.name}\n${config.seed}\n${brief}`).digest("hex").slice(0, 16)}.png`;
   }
 
   function generatorFrom(body: Record<string, unknown>): Generator {

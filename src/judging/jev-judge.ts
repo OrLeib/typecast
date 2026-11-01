@@ -36,6 +36,9 @@ const instructions = (image1: string, image2: string) =>
   "Which image better fulfils the brief? Weigh how faithfully it follows the brief (subject, style, mood, " +
   "composition, and any text that must be legible) and its visual quality (no artifacts, distortions or garbled details).";
 
+/** Changes whenever the judge's wording or options do, so cached verdicts from an older prompt are not reused. */
+export const JEV_JUDGE_PROMPT = JSON.stringify({ instructions: instructions("1", "2"), criteria: CRITERIA });
+
 const question = (image1: string, image2: string): ChoiceQuestion => ({ type: "choice", instructions: instructions(image1, image2), criteria: CRITERIA });
 
 export async function judgeWithJev(client: DecisionClient, pair: JudgedPair): Promise<JevVerdict> {

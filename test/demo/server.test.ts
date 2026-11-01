@@ -9,8 +9,10 @@ import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
 import { createFakeGenerator } from "../support/fake-generator.ts";
 
 const dir = await mkdtemp(join(tmpdir(), "typecast-demo-"));
+let routeCalls = 0;
 const router: Router = {
   async route(brief) {
+    routeCalls++;
     const unsure = brief.includes("maybe");
     return { type: "choice", choice: "photo", confidence: unsure ? 0.6 : 0.95, probabilities: unsure ? { photo: 0.6, video: 0.4 } : { photo: 0.95, video: 0.05 }, model: "jev-test", inputTokens: 500, latencyMs: 180 };
   },
@@ -28,6 +30,8 @@ const server = createDemoServer({
   examples: ["a brief"],
   inputPricePerMillion: 0.04,
   imagesDir: dir,
+  cacheDir: join(dir, "cache"),
+  routerId: "test-router",
   seed: 1,
 });
 let base = "";
@@ -57,11 +61,19 @@ describe("demo server", () => {
 
   it("routes a brief and recommends picking or comparing by confidence", async () => {
     const sure = await (await post("/api/route", { brief: "a beach at dawn" })).json();
-    expect(sure).toMatchObject({ choice: "photo", confidence: 0.95, latencyMs: 180, model: "jev-test", recommendation: { mode: "pick", shortlist: ["photo"] } });
+    expect(sure).toMatchObject({ choice: "photo", confidence: 0.95, latencyMs: 180, model: "jev-test", cached: false, recommendation: { mode: "pick", shortlist: ["photo"] } });
     expect(sure.costUsd).toBeCloseTo(0.00002);
 
     const unsure = await (await post("/api/route", { brief: "maybe a clip" })).json();
     expect(unsure.recommendation).toEqual({ mode: "compare", shortlist: ["photo", "video"] });
+  });
+
+  it("answers a repeated brief from the cache without calling the router", async () => {
+    const first = await (await post("/api/route", { brief: "a cached harbor" })).json();
+    const calls = routeCalls;
+    const again = await (await post("/api/route", { brief: "  a cached harbor  " })).json();
+    expect(routeCalls).toBe(calls);
+    expect(again).toEqual({ ...first, cached: true });
   });
 
   it("rejects an empty brief", async () => {
@@ -104,11 +116,16 @@ describe("demo server", () => {
 
     const verdict = await (await post("/api/judge", { brief, routed, default: dflt })).json();
 
-    expect(verdict).toMatchObject({ winner: "tie", model: "fake-1.0.0", latencyMs: 1 });
+    expect(verdict).toMatchObject({ winner: "tie", model: "fake-1.0.0", latencyMs: 1, cached: false });
     expect(verdict.probabilities.tie).toBeCloseTo(0.7);
     expect(verdict.costUsd).toBeCloseTo(0.000004);
     const sent = Object.values(judge.assets.at(-1)!).map((a) => Buffer.from(a.data_base64, "base64").toString()).sort();
     expect(sent).toEqual(["default-png", "routed-png"]);
+
+    const calls = judge.calls.length;
+    const again = await (await post("/api/judge", { brief, routed, default: dflt })).json();
+    expect(judge.calls).toHaveLength(calls);
+    expect(again).toEqual({ ...verdict, cached: true });
   });
 
   it("refuses to judge images it didn't render", async () => {
@@ -117,6 +134,18 @@ describe("demo server", () => {
     expect(await outside.json()).toEqual({ error: "routed must be an image URL from /api/generate" });
     const missing = await post("/api/judge", { brief: "x", routed: "/images/0123456789abcdef.png", default: "/images/fedcba9876543210.png" });
     expect(missing.status).toBe(404);
+  });
+
+  it("says whether an image is already rendered, without rendering it", async () => {
+    const brief = "a quiet pier";
+    const calls = photo.requests.length;
+    expect(await (await post("/api/cached-image", { brief, category: "photo" })).json()).toEqual({ image: null, generator: "mflux:photo@q8" });
+    expect(photo.requests).toHaveLength(calls);
+
+    const rendered = (await events(await post("/api/generate", { brief, category: "photo" }))).at(-1);
+    await writeFile(join(dir, rendered.image.slice("/images/".length)), "png");
+    expect(await (await post("/api/cached-image", { brief, category: "photo" })).json()).toEqual({ image: rendered.image, generator: "mflux:photo@q8" });
+    expect((await (await post("/api/cached-image", { brief, default: true })).json()).image).toBeNull();
   });
 
   it("refuses categories without a generator before streaming", async () => {

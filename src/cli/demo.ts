@@ -26,7 +26,8 @@ await mkdir(imagesDir, { recursive: true });
 /** Image requests to Jev have hit brief 503s; a short retry keeps the judge button from failing on one. */
 const JUDGE_RETRIES = { attempts: 3, delayMs: 1500 };
 
-const jev = createJevClient(jevConfigFromEnv());
+const jevConfig = jevConfigFromEnv();
+const jev = createJevClient(jevConfig);
 const server = createDemoServer({
   router: createDecisionRouter(jev, variant),
   roster: variant.roster,
@@ -37,6 +38,8 @@ const server = createDemoServer({
   examples: EXAMPLE_IDS.flatMap((id) => dev.filter((b) => b.id === id).map((b) => b.brief)),
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
   imagesDir,
+  cacheDir: join(DEMO_DIR, "cache"),
+  routerId: JSON.stringify({ variant, model: jevConfig.model, baseUrl: jevConfig.baseUrl }),
   seed: Number(args.seed),
 });
 server.listen(Number(args.port), "127.0.0.1", () => console.log(`Typecast demo at http://localhost:${args.port}  (Ctrl+C to stop)`));

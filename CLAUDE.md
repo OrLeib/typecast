@@ -48,7 +48,7 @@ Dependencies point inward: `cli/` -> `demo/`, `judging/`, `generation/`, `compar
 | `comparison/` | Paired statistics, run comparison, report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, manifest store |
 | `judging/` | Judgments store, blind side and order, win-rate statistics, report formatting, the local judging server and page |
-| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have Jev judge the pair, latest eval evidence |
+| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have Jev judge the pair, latest eval evidence. Images, routes and judgments are cached on disk under `runs/demo/` |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
 
 SOLID, and where it lives:

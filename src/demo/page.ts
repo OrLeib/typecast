@@ -119,6 +119,7 @@ export const DEMO_PAGE = `<!doctype html>
   .verdict-line .odds b { color: var(--text-2); font-weight: 550; }
   .evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
   .evidence-head .section-title { margin: 0; }
+  .set-about { margin: -4px 0 12px; font-size: 14px; color: var(--text-2); }
   .segmented { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
   .segmented button { border: 0; background: transparent; padding: 5px 12px; font-size: 13px; color: var(--text-2); border-radius: 7px; }
   .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
@@ -206,6 +207,7 @@ export const DEMO_PAGE = `<!doctype html>
       <h2 class="section-title">Why trust the confidence</h2>
       <div class="segmented" id="sets" role="group" aria-label="Brief set"></div>
     </div>
+    <p class="set-about" id="set-about"></p>
     <div class="card" id="evidence-card"></div>
   </section>
 
@@ -220,7 +222,11 @@ export const DEMO_PAGE = `<!doctype html>
     pick: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
     compare: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="5" height="10" rx="1.2"/><rect x="9" y="3" width="5" height="10" rx="1.2"/></svg>'
   };
-  var SET_NAMES = { "data/dev.jsonl": "Dev", "data/test.jsonl": "Test (held out)", "data/hard.jsonl": "Hard (held out)" };
+  // Only held-out sets: dev was tuned against, so its numbers would flatter the router.
+  var HELD_OUT_SETS = [
+    { data: "data/test.jsonl", name: "Test", about: "Everyday briefs, written blind and never tuned against." },
+    { data: "data/hard.jsonl", name: "Hard", about: "Tricky briefs whose deciding cue is implied, buried or contradicted. Never tuned against." }
+  ];
 
   function pct(x, digits) { return (x * 100).toFixed(digits == null ? 0 : digits) + "%"; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -228,7 +234,7 @@ export const DEMO_PAGE = `<!doctype html>
   /** A shot renders a routed category, or the default model when its target is DEFAULT. */
   var DEFAULT = "default";
   function generatorFor(target) { return target === DEFAULT ? config.defaultGenerator : generatorOf(target); }
-  function modelName(g) { return g ? g.replace(/^mflux:/, "").replace(/@q\\d+$/, "") : null; }
+  function modelName(g) { return g ? g.replace(/^mflux:/, "").replace(/@q\\d+(\\+g[\\d.]+)?$/, "") : null; }
 
   async function api(path, body) {
     var res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
@@ -294,7 +300,7 @@ export const DEMO_PAGE = `<!doctype html>
       ? "Below the " + pct(config.pickThreshold) + " pick line, so the UI should render both and let the user choose."
       : "At or above the " + pct(config.pickThreshold) + " pick line, so the UI can use this model without asking.";
     var meta = $("meta"); meta.textContent = "";
-    [["Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model]].forEach(function (m) {
+    [r.cached ? ["From cache", "instant"] : ["Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model]].forEach(function (m) {
       var span = el("span"); span.appendChild(el("strong", null, m[1])); span.appendChild(document.createTextNode(" " + m[0].toLowerCase()));
       meta.appendChild(span);
     });
@@ -327,6 +333,36 @@ export const DEMO_PAGE = `<!doctype html>
       ? "Routing already picked the default model, " + modelName(config.defaultGenerator) + "."
       : "Also render with " + modelName(config.defaultGenerator) + ", the single model routing has to beat.";
     describeRender();
+    showCachedImages(lastBrief, routedIsDefault);
+  }
+
+  /** Puts already-rendered images on screen right after routing; only images never rendered need a click. */
+  async function showCachedImages(brief, routedIsDefault) {
+    var lookup = function (target) {
+      return api("/api/cached-image", target === DEFAULT ? { brief: brief, default: true } : { brief: brief, category: target })
+        .then(function (r) { return r.image; }, function () { return null; });
+    };
+    var shots = renderable();
+    var images = await Promise.all(shots.map(function (s) { return lookup(s.dataset.target); }));
+    var defaultImage = routedIsDefault ? null : await lookup(DEFAULT);
+    if (brief !== lastBrief) return;
+    shots.forEach(function (shot, i) { if (images[i] && pending(shot)) showImage(shot, images[i], "cached"); });
+    // A comparison made before comes back with the brief.
+    if (defaultImage && !allShots().some(function (s) { return s.dataset.target === DEFAULT; })) {
+      var shot = makeShot(DEFAULT, "default, no routing");
+      $("shots").appendChild(shot);
+      $("compare-default").disabled = true;
+      layoutShots();
+      showImage(shot, defaultImage, "cached");
+    }
+    describeRender();
+  }
+
+  function showImage(shot, url, note) {
+    var frame = shot.querySelector(".frame"); frame.textContent = "";
+    var img = new Image(); img.alt = lastBrief; img.src = url; frame.appendChild(img);
+    shot.dataset.image = url;
+    shot.querySelector("code").textContent = modelName(generatorFor(shot.dataset.target)) + " · " + note;
   }
 
   function makeShot(target, label) {
@@ -396,7 +432,7 @@ export const DEMO_PAGE = `<!doctype html>
       }
       var odds = el("div", "odds");
       [["routed", pct(v.probabilities.routed)], ["default", pct(v.probabilities.default)], ["tie", pct(v.probabilities.tie)],
-       [v.model, Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
+       [v.model, v.cached ? "cached" : Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
         var item = el("span"); item.appendChild(el("b", null, o[1])); item.appendChild(document.createTextNode(" " + o[0]));
         odds.appendChild(item);
       });
@@ -414,9 +450,12 @@ export const DEMO_PAGE = `<!doctype html>
     var button = $("render");
     button.disabled = waiting === 0;
     button.textContent = waiting === 2 ? "Render both" : waiting > 2 ? "Render all" : "Render";
-    $("render-text").textContent = targets.length
-      ? "Render locally with " + targets.map(function (s) { return modelName(generatorFor(s.dataset.target)); }).join(" and ") + ". The first render of a model includes loading it."
-      : "Nothing to render locally for this route.";
+    var models = targets.map(function (s) { return modelName(generatorFor(s.dataset.target)); }).join(" and ");
+    $("render-text").textContent = !targets.length
+      ? "Nothing to render locally for this route."
+      : waiting || allShots().some(function (s) { return s.dataset.busy === "1"; })
+        ? "Render locally with " + models + ". The first render of a model includes loading it."
+        : "Rendered locally with " + models + ".";
   }
 
   function compareWithDefault() {
@@ -438,10 +477,7 @@ export const DEMO_PAGE = `<!doctype html>
       var shot = targets[i];
       try {
         var out = await renderShot(shot);
-        var frame = shot.querySelector(".frame"); frame.textContent = "";
-        var img = new Image(); img.alt = lastBrief; img.src = out.image; frame.appendChild(img);
-        shot.dataset.image = out.image;
-        shot.querySelector("code").textContent = modelName(out.generator) + " · " + (out.cached ? "cached" : (out.latencyMs / 1000).toFixed(0) + "s");
+        showImage(shot, out.image, out.cached ? "cached" : (out.latencyMs / 1000).toFixed(0) + "s");
       } catch (e) {
         setState(shot, "Render failed: " + e.message);
       }
@@ -501,23 +537,25 @@ export const DEMO_PAGE = `<!doctype html>
 
   var currentSet = null;
   function renderEvidence() {
-    var ORDER = ["data/dev.jsonl", "data/test.jsonl", "data/hard.jsonl"];
-    var rank = function (s) { var i = ORDER.indexOf(s.data); return i < 0 ? ORDER.length : i; };
-    var sets = config.evidence.slice().sort(function (a, b) { return rank(a) - rank(b); });
+    var sets = HELD_OUT_SETS.map(function (h) {
+      var run = config.evidence.find(function (e) { return e.data === h.data; });
+      return run && Object.assign({ name: h.name, about: h.about }, run);
+    }).filter(Boolean);
     if (!sets.length) {
-      $("evidence-card").innerHTML = '<div class="empty">No eval runs yet. Run <kbd>npm run eval -- --repeats 3</kbd> and reload to see accuracy and calibration here.</div>';
+      $("evidence-card").innerHTML = '<div class="empty">No held-out eval runs yet. Run <kbd>npm run eval -- --repeats 3 --data data/test.jsonl</kbd> and reload to see accuracy and calibration here.</div>';
       return;
     }
     var preferred = sets.find(function (s) { return s.data === "data/hard.jsonl"; }) || sets[0];
     currentSet = currentSet || preferred.data;
     var group = $("sets"); group.textContent = "";
     sets.forEach(function (s) {
-      var b = el("button", null, SET_NAMES[s.data] || s.data);
+      var b = el("button", null, s.name);
       b.setAttribute("aria-pressed", String(s.data === currentSet));
       b.addEventListener("click", function () { currentSet = s.data; renderEvidence(); });
       group.appendChild(b);
     });
     var s = sets.find(function (x) { return x.data === currentSet; });
+    $("set-about").textContent = s.about + " " + s.n + " briefs.";
     var card = $("evidence-card"); card.textContent = "";
     var grid = el("div", "evidence-grid"), tiles = el("div", "tiles");
     var m = s.metrics;
