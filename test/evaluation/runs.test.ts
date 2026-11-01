@@ -23,4 +23,12 @@ describe("run store", () => {
     await writeFile(file, JSON.stringify({ summary: { data: "d" }, results: [{ id: "a" }] }));
     await expect(loadRun(file)).rejects.toThrow(/not a run file/);
   });
+
+  it("names the field of a malformed result", async () => {
+    const file = join(dir, "bad.json");
+    const summary = { data: "d", variant: "v", repeats: 1, commit: "c", model: "m" };
+    const result = { id: "a", repeat: 0, expected: "x", choice: "x", confidence: 1.5, probabilities: { x: 1 }, latencyMs: 1, inputTokens: 1, model: "m" };
+    await writeFile(file, JSON.stringify({ summary, results: [result] }));
+    await expect(loadRun(file)).rejects.toThrow(/results\[0\]\.confidence must be between 0 and 1, got 1.5/);
+  });
 });

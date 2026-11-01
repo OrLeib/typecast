@@ -1,3 +1,4 @@
+import { inputCostUsd } from "../shared/cost.ts";
 import { isBorderline, type Brief } from "./briefs.ts";
 import { accuracy, percentile, reliabilityBins, type Bin } from "./metrics.ts";
 import type { Result } from "./result.ts";
@@ -18,6 +19,9 @@ export type Summary = RunMeta & {
   bins: Bin[];
 };
 
+/** Cost is quoted per this many routes: a single route costs fractions of a cent. */
+const ROUTES_PER_QUOTE = 1000;
+
 export function summarize(results: Result[], briefs: Brief[], meta: RunMeta, inputPricePerMillion: number): Summary {
   const borderline = new Set(briefs.filter(isBorderline).map((b) => b.id));
   const latencies = results.map((r) => r.latencyMs);
@@ -30,7 +34,7 @@ export function summarize(results: Result[], briefs: Brief[], meta: RunMeta, inp
     perRepeatAccuracy: Array.from({ length: meta.repeats }, (_, i) => accuracy(results.filter((r) => r.repeat === i))),
     latencyP50: percentile(latencies, 50),
     latencyP95: percentile(latencies, 95),
-    costPer1000Usd: meanInputTokens * 1000 * (inputPricePerMillion / 1e6),
+    costPer1000Usd: inputCostUsd(meanInputTokens * ROUTES_PER_QUOTE, inputPricePerMillion),
     bins: reliabilityBins(results),
   };
 }

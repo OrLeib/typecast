@@ -2,12 +2,14 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { loadEvidence } from "../demo/evidence.ts";
+import { loadShootoutEvidence } from "../demo/shootout-evidence.ts";
 import { createDemoServer } from "../demo/server.ts";
 import { loadBriefs } from "../evaluation/briefs.ts";
-import { LOCAL_DEFAULT, LOCAL_LINEUP } from "../generation/local-lineup.ts";
-import { createMfluxGenerator } from "../generation/mflux.ts";
+import { createLocalLineup } from "../generation/local-lineup.ts";
 import { createJevClient, JEV_INPUT_PRICE_PER_MILLION } from "../jev/client.ts";
 import { withRetries } from "../jev/retry.ts";
+import { createJevJudge } from "../judging/jev-judge.ts";
+import { createJevPicker } from "../judging/jev-picker.ts";
 import { createDecisionRouter } from "../routing/router.ts";
 import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { jevConfigFromEnv } from "./config.ts";
@@ -26,13 +28,16 @@ const JUDGE_RETRIES = { attempts: 3, delayMs: 1500 };
 
 const jevConfig = jevConfigFromEnv();
 const jev = createJevClient(jevConfig);
+const lineup = createLocalLineup();
 const server = createDemoServer({
   router: createDecisionRouter(jev, variant),
   roster: variant.roster,
-  generators: Object.fromEntries(Object.entries(LOCAL_LINEUP).map(([category, model]) => [category, createMfluxGenerator(model)])),
-  defaultGenerator: createMfluxGenerator(LOCAL_DEFAULT),
-  judge: withRetries(jev, JUDGE_RETRIES),
+  generators: lineup.byCategory,
+  defaultGenerator: lineup.fallback,
+  judge: createJevJudge(withRetries(jev, JUDGE_RETRIES)),
   evidence: await loadEvidence("runs", DEFAULT_VARIANT),
+  // Only the picker's id and prompt version are used, to read back its picks; the demo never picks live.
+  shootout: await loadShootoutEvidence(join("runs", "shootout"), createJevPicker(jev)),
   examples: dev.map(({ brief, expected, note }) => ({ brief, expected, note })),
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
   imagesDir,

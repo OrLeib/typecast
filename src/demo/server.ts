@@ -1,232 +1,68 @@
 // Local demo: route a brief live, show the pick-or-compare recommendation, render with the routed model(s),
-// and show the eval evidence behind the confidence.
-import { createHash } from "node:crypto";
-import { access, readFile } from "node:fs/promises";
+// and show the eval evidence behind the confidence and the latest best-of-N shootout.
+import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { basename, join } from "node:path";
-import type { GenerationProgress, Generator } from "../generation/generator.ts";
-import type { DecisionClient } from "../jev/client.ts";
-import type { ImageAsset } from "../jev/parse.ts";
-import { JEV_JUDGE_PROMPT, judgeWithJev } from "../judging/jev-judge.ts";
-import { PICK_THRESHOLD, recommend } from "../routing/recommendation.ts";
-import type { Router } from "../routing/router.ts";
-import { createDiskCache } from "./disk-cache.ts";
+import { PICK_THRESHOLD } from "../routing/recommendation.ts";
+import { HttpError, jsonErrors, readJsonObject, requestUrl, send, sendHtml, sendJson } from "../shared/http.ts";
 import type { Evidence } from "./evidence.ts";
+import { createJudgeApi, type JudgeApiConfig } from "./judge-api.ts";
 import { DEMO_PAGE } from "./page.ts";
+import { createRenderApi, type RenderApiConfig } from "./render-api.ts";
+import { createRouteApi, type RouteApiConfig } from "./route-api.ts";
+import { SHOOTOUT_IMAGE_PREFIX, type LoadedShootout } from "./shootout-evidence.ts";
 
-export type Example = { brief: string; expected: string; note?: string };
+type Example = { brief: string; expected: string; note?: string };
 
-export type DemoConfig = {
-  router: Router;
+type DemoConfig = Omit<RouteApiConfig & JudgeApiConfig & RenderApiConfig, "cacheDir"> & {
   /** Model category -> description, as the router sees it. */
   roster: Record<string, string>;
-  /** Category -> local generator. Categories without one (e.g. video) can be routed to but not rendered. */
-  generators: Record<string, Generator>;
-  /** The single model routing has to beat in Level 2, rendered on request to compare against the routed pick. */
-  defaultGenerator: Generator;
-  /** Judges a rendered routed-vs-default pair from the images. */
-  judge: DecisionClient;
   evidence: Evidence[];
+  /** The latest judged shootout, if any: which model made the best image of each brief. */
+  shootout?: LoadedShootout;
   /** Labelled briefs the page offers to try. Only tuned-against briefs: routing held-out ones here would leak their misses. */
   examples: Example[];
-  /** USD per million input tokens, to show what a route costs. */
-  inputPricePerMillion: number;
-  imagesDir: string;
-  /** Routes and Jev judgments are kept here, so asking again costs no API call and gives the same answer. */
+  /** Routes and judgments are kept here, so asking again costs no API call and gives the same answer. */
   cacheDir: string;
-  /** Everything besides the brief that changes a route (variant, Jev model), so a changed router misses the cache. */
-  routerId: string;
-  seed: number;
 };
 
-/** Briefs longer than this are almost certainly pasted by mistake, and Jev bills per input token. */
-const MAX_BRIEF_CHARS = 2000;
-/** The only image URLs the demo hands out: a content hash in imagesDir. Anything else is refused before touching disk. */
-const IMAGE_URL = /^\/images\/([0-9a-f]{16}\.png)$/;
+type JsonHandler = (body: Record<string, unknown>) => Promise<unknown>;
 
 export function createDemoServer(config: DemoConfig): Server {
-  const renderOneAtATime = serialize();
-  const routes = createDiskCache<Record<string, unknown>>(join(config.cacheDir, "routes"));
-  const judgments = createDiskCache<Record<string, unknown>>(join(config.cacheDir, "judgments"));
-
-  const handlers: Record<string, (body: Record<string, unknown>) => Promise<unknown>> = {
+  const render = createRenderApi(config);
+  const handlers: Record<string, JsonHandler> = {
     "GET /api/config": async () => ({
       roster: Object.entries(config.roster).map(([id, description]) => ({ id, description, generator: config.generators[id]?.name ?? null })),
       defaultGenerator: config.defaultGenerator.name,
       evidence: config.evidence,
+      shootout: config.shootout?.evidence ?? null,
       examples: config.examples,
       pickThreshold: PICK_THRESHOLD,
     }),
-    "POST /api/route": async (body) => {
-      const brief = briefFrom(body);
-      const key = `${config.routerId}\n${brief}`;
-      const hit = await routes.get(key);
-      if (hit) return { ...hit, cached: true };
-      const route = await config.router.route(brief);
-      const result = {
-        choice: route.choice,
-        confidence: route.confidence,
-        probabilities: route.probabilities,
-        model: route.model,
-        latencyMs: route.latencyMs,
-        costUsd: (route.inputTokens * config.inputPricePerMillion) / 1e6,
-        recommendation: recommend(route),
-      };
-      await routes.set(key, result);
-      return { ...result, cached: false };
-    },
-    // Lets the page show images it already rendered as soon as a brief is routed, without a render click.
-    "POST /api/cached-image": async (body) => {
-      const brief = briefFrom(body);
-      const generator = generatorFrom(body);
-      const file = imageFileFor(generator, brief);
-      const cached = await exists(join(config.imagesDir, file));
-      return { image: cached ? `/images/${file}` : null, generator: generator.name };
-    },
-    "POST /api/judge": async (body) => {
-      const brief = briefFrom(body);
-      const routed = await imageFrom(body.routed, "routed");
-      const dflt = await imageFrom(body.default, "default");
-      // Image URLs are content hashes of model, seed and brief, so they name the exact pair being judged.
-      const key = `${JEV_JUDGE_PROMPT}\n${body.routed}\n${body.default}\n${brief}`;
-      const hit = await judgments.get(key);
-      if (hit) return { ...hit, cached: true };
-      const verdict = await judgeWithJev(config.judge, { brief, routed, default: dflt });
-      const result = {
-        winner: verdict.winner,
-        probabilities: verdict.probabilities,
-        model: verdict.model,
-        latencyMs: verdict.latencyMs,
-        costUsd: (verdict.inputTokens * config.inputPricePerMillion) / 1e6,
-      };
-      await judgments.set(key, result);
-      return { ...result, cached: false };
-    },
+    "POST /api/route": createRouteApi({ ...config, cacheDir: join(config.cacheDir, "routes") }),
+    "POST /api/cached-image": render.cachedImage,
+    "POST /api/judge": createJudgeApi({ ...config, cacheDir: join(config.cacheDir, "judgments") }),
   };
-
-  /** Reads an image this demo rendered, named by the URL `/api/generate` returned for it. */
-  async function imageFrom(url: unknown, field: string): Promise<ImageAsset> {
-    const file = typeof url === "string" ? IMAGE_URL.exec(url)?.[1] : undefined;
-    if (!file) throw new HttpError(400, `${field} must be an image URL from /api/generate`);
-    const bytes = await readFile(join(config.imagesDir, file)).catch(() => {
-      throw new HttpError(404, `${field} image not found; render it first`);
-    });
-    return { type: "image", format: "png", data_base64: bytes.toString("base64") };
-  }
-
-  /**
-   * Streams the render as NDJSON events so the page can show progress: zero or more
-   * `{ type: "progress", step, total }`, then `{ type: "done", image, generator, latencyMs, cached }` or `{ type: "error", error }`.
-   * Bad requests fail before the stream starts, as plain JSON errors like every other route.
-   * The body names a routed `category`, or sets `default: true` for the default model.
-   */
-  async function generate(body: Record<string, unknown>, res: ServerResponse) {
-    const brief = briefFrom(body);
-    const generator = generatorFrom(body);
-    const file = imageFileFor(generator, brief);
-    const outputPath = join(config.imagesDir, file);
-    const done = (latencyMs: number, cached: boolean) => ({ type: "done", image: `/images/${file}`, generator: generator.name, latencyMs, cached });
-
-    res.writeHead(200, { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" });
-    const emit = (event: Record<string, unknown>) => res.write(`${JSON.stringify(event)}\n`);
-    try {
-      if (await exists(outputPath)) {
-        emit(done(0, true));
-      } else {
-        const onProgress = (progress: GenerationProgress) => emit({ type: "progress", ...progress });
-        const { latencyMs } = await renderOneAtATime(() => generator.generate({ prompt: brief, seed: config.seed, outputPath }, onProgress));
-        emit(done(latencyMs, false));
-      }
-    } catch (e) {
-      emit({ type: "error", error: (e as Error).message });
-    }
-    res.end();
-  }
-
-  /** Same brief, model and seed always give the same image, so they name its file. */
-  function imageFileFor(generator: Generator, brief: string): string {
-    return `${createHash("sha256").update(`${generator.name}\n${config.seed}\n${brief}`).digest("hex").slice(0, 16)}.png`;
-  }
-
-  function generatorFrom(body: Record<string, unknown>): Generator {
-    if (body.default === true) return config.defaultGenerator;
-    const category = String(body.category ?? "");
-    const generator = config.generators[category];
-    if (!generator) throw new HttpError(400, `no local generator for "${category}"`);
-    return generator;
-  }
 
   async function handle(req: IncomingMessage, res: ServerResponse) {
-    const url = new URL(req.url ?? "/", "http://localhost");
-    if (req.method === "GET" && url.pathname === "/") return send(res, 200, "text/html; charset=utf-8", DEMO_PAGE);
-    if (req.method === "GET" && url.pathname.startsWith("/images/")) {
-      const file = basename(url.pathname);
-      const bytes = await readFile(join(config.imagesDir, file)).catch(() => {
-        throw new HttpError(404, "not found");
-      });
-      return send(res, 200, "image/png", bytes);
-    }
-    if (req.method === "POST" && url.pathname === "/api/generate") return generate(parseJson(await readBody(req)), res);
+    const url = requestUrl(req);
+    if (req.method === "GET" && url.pathname === "/") return sendHtml(res, DEMO_PAGE);
+    if (req.method === "GET" && url.pathname.startsWith("/images/")) return sendImage(res, join(config.imagesDir, basename(url.pathname)));
+    if (req.method === "GET" && url.pathname.startsWith(SHOOTOUT_IMAGE_PREFIX)) return sendImage(res, config.shootout?.files.get(url.pathname));
+    if (req.method === "POST" && url.pathname === "/api/generate") return render.generate(await readJsonObject(req), res);
     const handler = handlers[`${req.method} ${url.pathname}`];
     if (!handler) throw new HttpError(404, "not found");
-    const body = req.method === "POST" ? parseJson(await readBody(req)) : {};
-    return send(res, 200, "application/json", JSON.stringify(await handler(body)));
+    const body = req.method === "POST" ? await readJsonObject(req) : {};
+    return sendJson(res, await handler(body));
   }
 
-  return createServer((req, res) => {
-    handle(req, res).catch((e: unknown) => {
-      const status = e instanceof HttpError ? e.status : 500;
-      send(res, status, "application/json", JSON.stringify({ error: (e as Error).message }));
-    });
+  return createServer(jsonErrors(handle));
+}
+
+async function sendImage(res: ServerResponse, path: string | undefined) {
+  if (!path) throw new HttpError(404, "not found");
+  const bytes = await readFile(path).catch(() => {
+    throw new HttpError(404, "not found");
   });
-}
-
-function briefFrom(body: Record<string, unknown>): string {
-  const brief = typeof body.brief === "string" ? body.brief.trim() : "";
-  if (!brief) throw new HttpError(400, "brief must be a non-empty string");
-  if (brief.length > MAX_BRIEF_CHARS) throw new HttpError(400, `brief must be at most ${MAX_BRIEF_CHARS} characters`);
-  return brief;
-}
-
-/** Image models fill most of unified memory, so renders run one at a time, in arrival order. */
-function serialize() {
-  let tail: Promise<unknown> = Promise.resolve();
-  return <T>(task: () => Promise<T>): Promise<T> => {
-    const result = tail.then(task, task);
-    tail = result.catch(() => undefined);
-    return result;
-  };
-}
-
-class HttpError extends Error {
-  readonly status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
-
-async function exists(path: string): Promise<boolean> {
-  return access(path).then(() => true, () => false);
-}
-
-function send(res: ServerResponse, status: number, type: string, body: string | Buffer) {
-  res.writeHead(status, { "Content-Type": type, "Cache-Control": "no-store" });
-  res.end(body);
-}
-
-function parseJson(text: string): Record<string, unknown> {
-  try {
-    const value = JSON.parse(text || "{}");
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) return value;
-  } catch {
-    // fall through to the error below
-  }
-  throw new HttpError(400, "body must be a JSON object");
-}
-
-async function readBody(req: IncomingMessage): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
-  return Buffer.concat(chunks).toString("utf8");
+  send(res, 200, "image/png", bytes);
 }

@@ -1,0 +1,53 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "demo"
+      ],
+      "port": 4180
+    },
+    {
+      "name": "judge-smoke",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "judge",
+        "--",
+        "runs/level2/smoke",
+        "--port",
+        "4181"
+      ],
+      "port": 4181
+    },
+    {
+      "name": "shootout-sheet",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4182",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "runs/shootout/2026-11-01"
+      ],
+      "port": 4182
+    },
+    {
+      "name": "demo-4183",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "demo",
+        "--",
+        "--port",
+        "4183"
+      ],
+      "port": 4183
+    }
+  ]
+}

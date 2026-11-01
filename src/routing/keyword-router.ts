@@ -6,8 +6,12 @@ export type KeywordRule = { category: string; pattern: RegExp };
 
 export const KEYWORD_ROUTER_MODEL = "keyword-rules-v1";
 
-/** Written from the labelling rules in CLAUDE.md, in the same priority order. Fixed: don't tune it to a brief set. */
-export const KEYWORD_RULES: readonly KeywordRule[] = [
+/**
+ * Written from the labelling rules in CLAUDE.md. The order matches them except that illustration is checked before
+ * product and photoreal (CLAUDE.md checks it last). Fixed anyway: don't tune it to a brief set, or past runs stop
+ * being comparable.
+ */
+const KEYWORD_RULES: readonly KeywordRule[] = [
   { category: "video", pattern: /\b(clips?|loops?|looping|animat\w*|gif|cinemagraph|seconds?|secs?|\d+\s?s|video|time-?lapse|slow[- ]?mo\w*|flyover|reel|sequence|footage)\b/ },
   { category: "fast-draft", pattern: /\b(roughs?|quick|quickly|drafts?|throwaway|placeholders?|cheap|fast|low[- ]?res|variations?|variants|ideas|brainstorm\w*|sketchy|thumbnails?|quantity|ideation|test)\b/ },
   { category: "typography", pattern: /'[^']{2,}'|\b(says|saying|reads?|readable|legible|text|title|headline|wordmark|caption|label|sign|lettering|font|typography|words?)\b/ },
@@ -25,7 +29,7 @@ export function createKeywordRouter(categories: readonly string[], rules: readon
       const text = brief.toLowerCase();
       const choice = rules.find((r) => r.pattern.test(text))?.category ?? fallback;
       const probabilities = Object.fromEntries(categories.map((c) => [c, c === choice ? 1 : 0]));
-      return { type: "choice", choice, confidence: 1, probabilities, model: KEYWORD_ROUTER_MODEL, inputTokens: 0, latencyMs: 0 };
+      return { choice, confidence: 1, probabilities, model: KEYWORD_ROUTER_MODEL, inputTokens: 0, latencyMs: 0 };
     },
   };
 }

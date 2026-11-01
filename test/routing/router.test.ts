@@ -3,8 +3,12 @@ import type { DecisionClient } from "../../src/jev/client.ts";
 import { createDecisionRouter } from "../../src/routing/router.ts";
 import { DEFAULT_VARIANT, getVariant, VARIANTS, type Variant } from "../../src/routing/variants.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
+import { routerContract } from "./router.contract.ts";
 
 const variant: Variant = { instructions: "Pick a category", roster: { stills: "Still images", motion: "Video" } };
+
+routerContract("decision router", variant.roster, () =>
+  createDecisionRouter(createFakeDecisionClient(() => ({ choice: "motion", confidence: 0.8 })), variant));
 
 describe("createDecisionRouter", () => {
   it("asks one choice question built from the variant and returns the answer with run details", async () => {
@@ -17,7 +21,7 @@ describe("createDecisionRouter", () => {
 
   it("rejects a choice outside the roster", async () => {
     const client = createFakeDecisionClient(() => ({ choice: "audio", confidence: 0.9 }));
-    await expect(createDecisionRouter(client, variant).route("x")).rejects.toThrow(/"audio", which is not in the roster/);
+    await expect(createDecisionRouter(client, variant).route("x")).rejects.toThrow(/"audio" for .model., which is not one of its options/);
   });
 
   it("rejects probabilities that don't cover the roster exactly", async () => {

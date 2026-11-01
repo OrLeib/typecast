@@ -1,6 +1,6 @@
 // Local image generation on Apple Silicon through the mflux CLI (https://github.com/mflux-community/mflux).
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { fileExists as defaultFileExists } from "../shared/files.ts";
 import type { GenerationProgress, Generator } from "./generator.ts";
 
 /**
@@ -10,7 +10,7 @@ import type { GenerationProgress, Generator } from "./generator.ts";
 export type MfluxModel = { command: string; quantize: 3 | 4 | 5 | 6 | 8; guidance?: number };
 
 /** Every generator renders the same square size, so a judge compares content, not framing. */
-export const IMAGE_SIZE = 1024;
+const IMAGE_SIZE = 1024;
 /** Enough of mflux's stderr to show why it failed without its progress bars. */
 const STDERR_TAIL_CHARS = 2000;
 
@@ -23,7 +23,7 @@ export type MfluxDeps = { run?: RunCommand; now?: () => number; fileExists?: (pa
 export function createMfluxGenerator(model: MfluxModel, deps: MfluxDeps = {}): Generator {
   const run = deps.run ?? runCommand;
   const now = deps.now ?? (() => performance.now());
-  const fileExists = deps.fileExists ?? exists;
+  const fileExists = deps.fileExists ?? defaultFileExists;
   const command = `mflux-generate-${model.command}`;
 
   return {
@@ -73,10 +73,6 @@ export function createStepProgressReader(onProgress: (progress: GenerationProgre
       onProgress({ step, total: Number(match[2]) });
     }
   };
-}
-
-async function exists(path: string): Promise<boolean> {
-  return access(path).then(() => true, () => false);
 }
 
 /** Runs a command, discarding stdout, passing stderr to `onStderr` as it arrives, and keeping its tail for error messages. */

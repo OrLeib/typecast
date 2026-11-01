@@ -1,8 +1,9 @@
 import type { GenerationMeta } from "../generation/manifest.ts";
 import type { Agreement } from "./agreement.ts";
+import { percent as pct } from "../shared/format.ts";
+import type { PickSummary } from "./pick-summary.ts";
 import type { Tally, WinRateSummary } from "./win-rate.ts";
 
-const pct = (x: number) => (Number.isNaN(x) ? "n/a" : `${(x * 100).toFixed(1)}%`);
 const counts = (t: Tally) => `${t.wins}W ${t.losses}L ${t.ties}T`;
 
 export function formatWinRate(s: WinRateSummary, meta: GenerationMeta, judge: string): string[] {
@@ -19,4 +20,15 @@ export function formatWinRate(s: WinRateSummary, meta: GenerationMeta, judge: st
 
 export function formatAgreement(a: Agreement, judge: string, other: string): string {
   return `  ${judge} agrees with ${other} on ${a.agree}/${a.n} pairs (${pct(a.rate)}), opposite calls ${a.opposite}`;
+}
+
+export function formatPickSummary(s: PickSummary, meta: GenerationMeta, judge: string): string[] {
+  const chance = pct(1 / s.models);
+  return [
+    `${meta.data}  variant=${meta.variant}  seed=${meta.seed}  models=${s.models}  judge=${judge}  commit=${meta.commit}`,
+    `  best image came from  the routed model ${pct(s.bestWas.routed)}  the expected category's model ${pct(s.bestWas.expected)}  the default ${pct(s.bestWas.default)}  (chance ${chance})`,
+    `  n=${s.picked}${s.unpicked ? `, ${s.unpicked} still to pick` : ""}  mean agreement across orders ${pct(s.meanAgreement)}  mean top probability ${pct(s.meanTopProbability)}`,
+    "by model:",
+    ...Object.entries(s.byGenerator).map(([g, t]) => `  ${g.padEnd(24)} picked ${String(t.picked).padStart(3)}  mean probability ${pct(t.meanProbability).padStart(6)}`),
+  ];
 }

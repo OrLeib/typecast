@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks a commit that fails any check. Installed by `npm install` (the prepare script sets core.hooksPath).
+# Skip once with `git commit --no-verify` only for a work-in-progress commit you will fix before pushing.
+exec npm run --silent check

@@ -1,5 +1,7 @@
 // The blind-judging page. Self-contained: no build step, no external assets.
 // It never learns which side is routed; the server maps left/right back to routed/default.
+import { escapeHtml } from "../shared/format.ts";
+
 /** `dir` is the run being judged, named in the closing hint so the report command can be copied as is. */
 export function judgePage(dir: string): string {
   return `<!doctype html>
@@ -114,8 +116,4 @@ export function judgePage(dir: string): string {
 </body>
 </html>
 `;
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

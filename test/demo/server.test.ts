@@ -1,12 +1,13 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createDemoServer } from "../../src/demo/server.ts";
+import { createJevJudge } from "../../src/judging/jev-judge.ts";
 import type { Router } from "../../src/routing/router.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
 import { createFakeGenerator } from "../support/fake-generator.ts";
+import { listenForTests } from "../support/listen.ts";
 
 const dir = await mkdtemp(join(tmpdir(), "typecast-demo-"));
 let routeCalls = 0;
@@ -25,7 +26,7 @@ const server = createDemoServer({
   roster: { photo: "Photos", video: "Clips" },
   generators: { photo },
   defaultGenerator: fallback,
-  judge,
+  judge: createJevJudge(judge),
   evidence: [],
   examples: [{ brief: "a brief", expected: "photo" }],
   inputPricePerMillion: 0.04,
@@ -34,28 +35,18 @@ const server = createDemoServer({
   routerId: "test-router",
   seed: 1,
 });
-let base = "";
-
-beforeAll(async () => {
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-});
-afterAll(async () => {
-  server.close();
-  await rm(dir, { recursive: true, force: true });
-});
-
-const post = (path: string, body: unknown) => fetch(base + path, { method: "POST", body: JSON.stringify(body) });
+const { get, post } = listenForTests(server, { cleanup: () => rm(dir, { recursive: true, force: true }) });
 const events = async (res: Response) => (await res.text()).trim().split("\n").map((line) => JSON.parse(line));
 
 describe("demo server", () => {
   it("describes the roster with each category's local generator", async () => {
-    const config = await (await fetch(base + "/api/config")).json();
+    const config = await (await get("/api/config")).json();
     expect(config).toMatchObject({
       roster: [{ id: "photo", description: "Photos", generator: "mflux:photo@q8" }, { id: "video", description: "Clips", generator: null }],
       defaultGenerator: "mflux:default@q8",
       examples: [{ brief: "a brief", expected: "photo" }],
       pickThreshold: 0.85,
+      shootout: null,
     });
   });
 
@@ -162,14 +153,39 @@ describe("demo server", () => {
   });
 
   it("serves the page", async () => {
-    expect(await (await fetch(base + "/")).text()).toContain("Which image model should make this?");
+    expect(await (await get("/")).text()).toContain("Which image model should make this?");
   });
 
   it("serves a page script that parses", async () => {
-    const page = await (await fetch(base + "/")).text();
+    const page = await (await get("/")).text();
     const script = /<script>([\s\S]*)<\/script>/.exec(page)?.[1] ?? "";
     expect(script).not.toBe("");
     // Compiles without running; catches escaping slips in the template literal that holds the page.
     expect(() => new Function(script)).not.toThrow();
+  });
+});
+
+describe("demo server with a shootout", () => {
+  const image = join(dir, "shot.png");
+  const shootout = {
+    evidence: { run: "r", data: "d", defaultGenerator: "g", picked: 0, models: 1, bestWas: { routed: 0, expected: 0, default: 0 }, meanAgreement: 0, briefs: [] },
+    files: new Map([["/shootout-images/shot.png", image]]),
+  };
+  const withShootout = createDemoServer({
+    router, roster: {}, generators: {}, defaultGenerator: fallback, judge: createJevJudge(judge), evidence: [], examples: [], shootout,
+    inputPricePerMillion: 0.04, imagesDir: dir, cacheDir: join(dir, "cache"), routerId: "test-router", seed: 1,
+  });
+  const local = listenForTests(withShootout, { setup: () => writeFile(image, "shot-png") });
+
+  it("sends the shootout evidence with the config", async () => {
+    expect((await (await local.get("/api/config")).json()).shootout).toEqual(shootout.evidence);
+  });
+
+  it("serves the shootout's images and nothing else under its prefix", async () => {
+    const res = await local.get("/shootout-images/shot.png");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("shot-png");
+    expect((await local.get("/shootout-images/other.png")).status).toBe(404);
+    expect((await local.get("/shootout-images/..%2Fcache")).status).toBe(404);
   });
 });

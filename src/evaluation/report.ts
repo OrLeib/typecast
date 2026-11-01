@@ -1,15 +1,15 @@
+import { rankOptions } from "../routing/router.ts";
+import { percent } from "../shared/format.ts";
 import type { Bin } from "./metrics.ts";
 import type { Result } from "./result.ts";
 import { RUN_METRICS, type RunMetric } from "./run-metrics.ts";
 import type { Summary } from "./summary.ts";
 
-const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
-
 export function formatSummary(s: Summary, metrics: readonly RunMetric[] = RUN_METRICS): string[] {
   return [
     `${s.data}  variant=${s.variant}  n=${s.n} x${s.repeats}  model=${s.model}  commit=${s.commit}`,
     ...metrics.map((m) => `  ${m.label} ${formatValue(m, s.metrics[m.id])}`),
-    `  per-repeat accuracy ${s.perRepeatAccuracy.map(pct).join(" / ")}`,
+    `  per-repeat accuracy ${s.perRepeatAccuracy.map((x) => percent(x)).join(" / ")}`,
     `latency p50 ${Math.round(s.latencyP50)}ms  p95 ${Math.round(s.latencyP95)}ms   cost per 1,000 routes ~$${s.costPer1000Usd.toFixed(4)}`,
     "reliability (non-empty confidence bins):",
     ...s.bins.filter((b) => b.count > 0).map(formatBin),
@@ -23,7 +23,7 @@ const formatBin = (b: Bin) =>
 
 export function formatMisses(results: Result[]): string[] {
   return results.filter((r) => r.choice !== r.expected).map((r) => {
-    const [runnerUp] = Object.entries(r.probabilities).filter(([option]) => option !== r.choice).sort(([, a], [, b]) => b - a);
+    const [runnerUp] = rankOptions(r.probabilities).filter(([option]) => option !== r.choice);
     const expectedP = (r.probabilities[r.expected] ?? 0).toFixed(2);
     return `  miss ${r.id}#${r.repeat}: expected ${r.expected} (${expectedP}), got ${r.choice} (${r.confidence.toFixed(2)}), runner-up ${runnerUp?.[0]}`;
   });

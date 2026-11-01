@@ -163,6 +163,17 @@ export const DEMO_PAGE = `<!doctype html>
   th, td { text-align: right; padding: 4px 12px 4px 0; }
   th { font-weight: 550; color: var(--muted); }
   .empty { padding: 24px; color: var(--muted); font-size: 14px; }
+  .shootout-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; }
+  .shootout-brief { padding: 20px 24px 24px; border-top: 1px solid var(--line); }
+  .shootout-text { margin: 0; font-size: 15px; line-height: 1.45; max-width: 75ch; text-wrap: pretty; }
+  .shootout-meta { margin: 4px 0 14px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .shootout-meta b { color: var(--text-2); font-weight: 550; }
+  #shootout .shots { gap: 12px; }
+  #shootout .shot-caption { align-items: baseline; }
+  #shootout .shot-caption span { font-variant-numeric: tabular-nums; }
+  .shot-tags { display: flex; gap: 6px; min-height: 20px; }
+  .shot-tags .pick-tag { margin-left: 0; }
+  .routed-tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--text-2); border: 1px solid var(--line); }
   #error { color: var(--danger); font-size: 14px; margin: 12px 0 0; min-height: 0; }
   footer { color: var(--muted); font-size: 13px; padding: 40px 0 48px; }
   @media (max-width: 760px) {
@@ -173,6 +184,9 @@ export const DEMO_PAGE = `<!doctype html>
     .verdict { border-right: 0; border-bottom: 1px solid var(--line); }
     .tiles { border-right: 0; border-bottom: 1px solid var(--line); }
     .shots { grid-template-columns: 1fr; }
+    #shootout .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .shootout-tiles { grid-template-columns: 1fr; }
+    .shootout-brief { padding: 16px; }
     .hint { display: none; }
     .bar-row { grid-template-columns: 96px minmax(0, 1fr) 44px; }
     .examples { grid-template-columns: 1fr; }
@@ -245,6 +259,12 @@ export const DEMO_PAGE = `<!doctype html>
     <div class="card" id="evidence-card"></div>
   </section>
 
+  <section id="shootout" hidden>
+    <h2 class="section-title">Which model made the best image</h2>
+    <p class="set-about" id="shootout-about"></p>
+    <div class="card" id="shootout-card"></div>
+  </section>
+
   <footer>Runs locally. Routing calls the Jev decision API; images render on this Mac with mflux.</footer>
 </div>
 <div class="tooltip" id="tooltip"></div>
@@ -300,6 +320,7 @@ export const DEMO_PAGE = `<!doctype html>
     renderExamples();
     $("threshold-label").textContent = "Pick line at " + pct(config.pickThreshold) + ". Below it, compare the top two.";
     renderEvidence();
+    renderShootout();
   }
 
   /** Examples shown per page, and more on each "Show more": two rows of three. */
@@ -734,6 +755,56 @@ export const DEMO_PAGE = `<!doctype html>
     });
     details.appendChild(table);
     return details;
+  }
+
+  function renderShootout() {
+    var s = config.shootout;
+    if (!s || !s.briefs.length) return;
+    $("shootout").hidden = false;
+    $("shootout-about").textContent = "Each brief was rendered by all " + s.models + " local models with the same prompt and seed. " +
+      "Jev picked the image that fulfils it best without knowing which model made which, asking once per ordering of the images. " +
+      "These are dev briefs, which routing was tuned on, and the picks are not yet checked against people.";
+    var card = $("shootout-card"); card.textContent = "";
+    var tiles = el("div", "shootout-tiles");
+    var count = function (rate) { return Math.round(rate * s.picked) + " of " + s.picked; };
+    [
+      ["Best image from the routed model", count(s.bestWas.routed), pct(s.bestWas.routed) + " · a random pick scores " + pct(1 / s.models)],
+      ["Best image from the default model", count(s.bestWas.default), modelName(s.defaultGenerator) + ", the single model routing has to beat"],
+      ["Agreement across orderings", pct(s.meanAgreement), "how often reordering the images kept Jev's pick"]
+    ].forEach(function (t) {
+      var tile = el("div", "tile"); tile.appendChild(el("div", "label", t[0])); tile.appendChild(el("div", "value", t[1])); tile.appendChild(el("div", "sub", t[2]));
+      tiles.appendChild(tile);
+    });
+    card.appendChild(tiles);
+    s.briefs.forEach(function (b) { card.appendChild(shootoutBrief(b)); });
+  }
+
+  function shootoutBrief(b) {
+    var row = el("div", "shootout-brief");
+    row.appendChild(el("p", "shootout-text", b.brief));
+    var meta = el("p", "shootout-meta");
+    meta.appendChild(document.createTextNode("Labelled " + b.expected + " · routed to "));
+    meta.appendChild(el("b", null, b.routed));
+    meta.appendChild(document.createTextNode(" · " + pct(b.agreement) + " of orderings agree"));
+    row.appendChild(meta);
+    var shots = el("div", "shots"); shots.style.setProperty("--cols", b.shots.length);
+    b.shots.forEach(function (shot) {
+      var fig = el("div", "shot" + (shot.picked ? " winner" : ""));
+      var frame = el("div", "frame"), img = el("img");
+      img.src = shot.url; img.alt = modelName(shot.generator) + " image"; img.loading = "lazy";
+      frame.appendChild(img); fig.appendChild(frame);
+      var caption = el("div", "shot-caption");
+      caption.appendChild(el("code", null, modelName(shot.generator)));
+      caption.appendChild(el("span", null, pct(shot.probability)));
+      fig.appendChild(caption);
+      var tags = el("div", "shot-tags");
+      if (shot.picked) tags.appendChild(el("span", "pick-tag", "Jev's pick"));
+      if (shot.generator === b.routedGenerator) tags.appendChild(el("span", "routed-tag", "routed"));
+      fig.appendChild(tags);
+      shots.appendChild(fig);
+    });
+    row.appendChild(shots);
+    return row;
   }
 
   $("route").addEventListener("click", route);

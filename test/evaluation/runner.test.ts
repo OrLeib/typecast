@@ -9,7 +9,7 @@ const briefs: Brief[] = [
 ];
 const router: Router = {
   route: async (brief) => ({
-    type: "choice", choice: brief.includes("clip") ? "video" : "product", confidence: 0.7,
+    choice: brief.includes("clip") ? "video" : "product", confidence: 0.7,
     probabilities: { video: 0.7, product: 0.3 }, model: "m", inputTokens: 10, latencyMs: 5,
   }),
 };

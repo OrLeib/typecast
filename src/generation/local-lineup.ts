@@ -1,6 +1,7 @@
 // Which local mflux model stands in for each placeholder roster category (Level 2).
 // A stand-in, not a recommendation: Level 3 replaces it with a real product's models.
-import type { MfluxModel } from "./mflux.ts";
+import { createMfluxGenerator, type MfluxModel } from "./mflux.ts";
+import type { Lineup } from "./runner.ts";
 
 /** 8-bit weights keep the largest model well inside 48GB of unified memory at little quality cost. */
 const QUANTIZE = 8;
@@ -19,4 +20,10 @@ export const LOCAL_LINEUP: Record<string, MfluxModel> = {
 };
 
 /** The single model routing has to beat: the strongest generalist in the lineup. */
-export const LOCAL_DEFAULT: MfluxModel = LOCAL_LINEUP.typography;
+const LOCAL_DEFAULT: MfluxModel = LOCAL_LINEUP.typography;
+
+/** The local lineup as generators, ready to render. */
+export function createLocalLineup(): Lineup {
+  const byCategory = Object.fromEntries(Object.entries(LOCAL_LINEUP).map(([category, model]) => [category, createMfluxGenerator(model)]));
+  return { byCategory, fallback: createMfluxGenerator(LOCAL_DEFAULT) };
+}

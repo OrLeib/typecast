@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { expectArray, expectNumber, expectProbabilities, expectProbability, expectRecord, expectString, withSource } from "../shared/validate.ts";
 import type { Result } from "./result.ts";
 import type { RunMeta, Summary } from "./summary.ts";
 
@@ -15,11 +16,36 @@ export async function saveRun(dir: string, run: RunFile, at = new Date()): Promi
   return file;
 }
 
+/** Reads a run file, throwing with the file and the offending field when it is not one the current eval wrote. */
 export async function loadRun(file: string): Promise<LoadedRun> {
-  const run = JSON.parse(await readFile(file, "utf8")) as LoadedRun;
-  const resultsOk = Array.isArray(run.results) && run.results.every((r) => typeof r.repeat === "number" && r.probabilities);
-  if (!run.summary?.data || !resultsOk) {
-    throw new Error(`${file} is not a run file from the current eval (needs summary.data and results with repeat + probabilities)`);
-  }
-  return run;
+  const text = await readFile(file, "utf8");
+  return withSource(`${file} is not a run file from the current eval`, () => parseRun(JSON.parse(text)));
+}
+
+function parseRun(raw: unknown): LoadedRun {
+  const run = expectRecord(raw, "run");
+  const summary = expectRecord(run.summary, "summary");
+  // Checked, then kept whole: a newer summary carries more fields than this guarantees, and they pass through.
+  expectString(summary.data, "summary.data");
+  expectString(summary.variant, "summary.variant");
+  expectNumber(summary.repeats, "summary.repeats");
+  expectString(summary.commit, "summary.commit");
+  expectString(summary.model, "summary.model");
+  const results = expectArray(run.results, "results").map((r, i) => parseResult(r, `results[${i}]`));
+  return { summary: summary as LoadedRun["summary"], results };
+}
+
+function parseResult(raw: unknown, path: string): Result {
+  const r = expectRecord(raw, path);
+  return {
+    id: expectString(r.id, `${path}.id`),
+    repeat: expectNumber(r.repeat, `${path}.repeat`),
+    expected: expectString(r.expected, `${path}.expected`),
+    choice: expectString(r.choice, `${path}.choice`),
+    confidence: expectProbability(r.confidence, `${path}.confidence`),
+    probabilities: expectProbabilities(r.probabilities, `${path}.probabilities`),
+    latencyMs: expectNumber(r.latencyMs, `${path}.latencyMs`),
+    inputTokens: expectNumber(r.inputTokens, `${path}.inputTokens`),
+    model: expectString(r.model, `${path}.model`),
+  };
 }

@@ -4,7 +4,7 @@ import type { DecisionClient } from "../../src/jev/client.ts";
 import type { ChoiceQuestion } from "../../src/jev/parse.ts";
 import { ROSTER } from "../../src/routing/roster.ts";
 
-export const CONTRACT_QUESTIONS: Record<string, ChoiceQuestion> = {
+const CONTRACT_QUESTIONS: Record<string, ChoiceQuestion> = {
   model: { type: "choice", instructions: "Which category fits?", criteria: ROSTER },
 };
 

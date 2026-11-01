@@ -1,4 +1,4 @@
-import { rng } from "../comparison/stats.ts";
+import { rng } from "../shared/stats.ts";
 import type { Brief } from "../evaluation/briefs.ts";
 
 export type SampleOptions = { perCategory: number; categories: readonly string[]; seed: number };

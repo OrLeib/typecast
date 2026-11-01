@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bootstrapCI, mcnemarExact, rng } from "../../src/comparison/stats.ts";
+import { bootstrapCI, mcnemarExact, rng } from "../../src/shared/stats.ts";
 
 describe("mcnemarExact", () => {
   it("matches the exact binomial two-sided p-value", () => {

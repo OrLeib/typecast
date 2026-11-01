@@ -3,7 +3,7 @@ import { compareRuns, verdict, type MetricDelta } from "../../src/comparison/com
 import type { Result } from "../../src/evaluation/result.ts";
 import { RUN_METRICS } from "../../src/evaluation/run-metrics.ts";
 
-const result = (id: string, choice: string, expected: string, repeat = 0, confidence = 0.9): Result => ({
+const result = (id: string, choice: string, expected: string, { repeat = 0, confidence = 0.9 } = {}): Result => ({
   id, repeat, expected, choice, confidence,
   probabilities: { [choice]: confidence, ...(choice === expected ? {} : { [expected]: 1 - confidence }) },
   latencyMs: 100, inputTokens: 500, model: "jev-test",
@@ -23,12 +23,12 @@ describe("compareRuns", () => {
 
   it("counts discordant briefs by majority vote across repeats", () => {
     const a = [
-      result("fixed", "y", "x", 0), result("fixed", "y", "x", 1), result("fixed", "x", "x", 2),
-      result("broken", "x", "x", 0), result("broken", "x", "x", 1), result("broken", "x", "x", 2),
+      result("fixed", "y", "x", { repeat: 0 }), result("fixed", "y", "x", { repeat: 1 }), result("fixed", "x", "x", { repeat: 2 }),
+      result("broken", "x", "x", { repeat: 0 }), result("broken", "x", "x", { repeat: 1 }), result("broken", "x", "x", { repeat: 2 }),
     ];
     const b = [
-      result("fixed", "x", "x", 0), result("fixed", "x", "x", 1), result("fixed", "y", "x", 2),
-      result("broken", "z", "x", 0), result("broken", "z", "x", 1), result("broken", "x", "x", 2),
+      result("fixed", "x", "x", { repeat: 0 }), result("fixed", "x", "x", { repeat: 1 }), result("fixed", "y", "x", { repeat: 2 }),
+      result("broken", "z", "x", { repeat: 0 }), result("broken", "z", "x", { repeat: 1 }), result("broken", "x", "x", { repeat: 2 }),
     ];
     const c = compareRuns(a, b, { borderline: new Set(["fixed"]) });
     expect(c.mcnemar.onlyA).toBe(1);
@@ -43,8 +43,8 @@ describe("compareRuns", () => {
   });
 
   it("counts a brief with no majority choice as wrong, even when the expected option sorts first", () => {
-    const split = [result("t", "a", "a", 0), result("t", "b", "a", 1), result("t", "c", "a", 2)];
-    const right = [result("t", "a", "a", 0), result("t", "a", "a", 1), result("t", "a", "a", 2)];
+    const split = [result("t", "a", "a", { repeat: 0 }), result("t", "b", "a", { repeat: 1 }), result("t", "c", "a", { repeat: 2 })];
+    const right = [result("t", "a", "a", { repeat: 0 }), result("t", "a", "a", { repeat: 1 }), result("t", "a", "a", { repeat: 2 })];
     const c = compareRuns(split, right, { borderline: new Set() });
     expect(c.mcnemar).toMatchObject({ onlyA: 0, onlyB: 1 });
     expect(c.flips).toEqual([{ id: "t", expected: "a", a: undefined, b: "a" }]);

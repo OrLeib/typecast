@@ -1,19 +1,13 @@
 // Auto-judging a pair with Jev: both images go in one request, asked about in both orders to cancel position bias.
+import { answerFor } from "../jev/answers.ts";
 import type { DecisionClient } from "../jev/client.ts";
-import type { ChoiceQuestion, ImageAsset } from "../jev/parse.ts";
+import type { ChoiceQuestion } from "../jev/parse.ts";
+import { toAsset, WHAT_COUNTS } from "./jev-images.ts";
 import type { Winner } from "./judgments.ts";
+import type { PairJudge, PairVerdict } from "./pair-judge.ts";
 
-export type JudgedPair = { brief: string; routed: ImageAsset; default: ImageAsset };
-
-export type JevVerdict = {
-  winner: Winner;
-  /** Each outcome's probability, averaged over both orders. */
-  probabilities: Record<Winner, number>;
-  /** The resolved model that judged, e.g. "jev-1.14.0"; recorded as the judge. */
-  model: string;
-  inputTokens: number;
-  latencyMs: number;
-};
+/** Recorded as the judge of every Jev judgment; `npm run judge-report -- <dir> --judge jev` reads them back. */
+export const JEV_JUDGE = "jev";
 
 /**
  * Opaque asset references. They are the only names the model sees for the images, so they must not hint at which is
@@ -33,28 +27,32 @@ const CRITERIA = {
 
 const instructions = (image1: string, image2: string) =>
   `Two images were generated for the creative brief in \`brief\`. Image 1 is ${image1}. Image 2 is ${image2}. ` +
-  "Which image better fulfils the brief? Weigh how faithfully it follows the brief (subject, style, mood, " +
-  "composition, and any text that must be legible) and its visual quality (no artifacts, distortions or garbled details).";
+  `Which image better fulfils the brief? ${WHAT_COUNTS}`;
 
-/** Changes whenever the judge's wording or options do, so cached verdicts from an older prompt are not reused. */
-export const JEV_JUDGE_PROMPT = JSON.stringify({ instructions: instructions("1", "2"), criteria: CRITERIA });
+/** Changes whenever the judge's wording or options do. */
+const PROMPT_VERSION = JSON.stringify({ instructions: instructions("1", "2"), criteria: CRITERIA });
 
 const question = (image1: string, image2: string): ChoiceQuestion => ({ type: "choice", instructions: instructions(image1, image2), criteria: CRITERIA });
 
-export async function judgeWithJev(client: DecisionClient, pair: JudgedPair): Promise<JevVerdict> {
-  const result = await client.decide(
-    { brief: pair.brief },
-    { [ORDER_A]: question(REF.routed, REF.default), [ORDER_B]: question(REF.default, REF.routed) },
-    { [REF.routed]: pair.routed, [REF.default]: pair.default },
-  );
-  const a = result.answers[ORDER_A].probabilities;
-  const b = result.answers[ORDER_B].probabilities;
-  const probabilities: Record<Winner, number> = {
-    routed: (a.first + b.second) / 2,
-    default: (a.second + b.first) / 2,
-    tie: (a.tie + b.tie) / 2,
+/** Probabilities are averaged over both orders. */
+export function createJevJudge(client: DecisionClient): PairJudge {
+  return {
+    id: JEV_JUDGE,
+    version: PROMPT_VERSION,
+    async judge(pair): Promise<PairVerdict> {
+      const questions = { [ORDER_A]: question(REF.routed, REF.default), [ORDER_B]: question(REF.default, REF.routed) };
+      const result = await client.decide({ brief: pair.brief }, questions, { [REF.routed]: toAsset(pair.routed), [REF.default]: toAsset(pair.default) });
+      // An unchecked missing option would average to NaN and argmax would call it a loss for routing.
+      const a = answerFor(result, ORDER_A, questions[ORDER_A]).probabilities;
+      const b = answerFor(result, ORDER_B, questions[ORDER_B]).probabilities;
+      const probabilities: Record<Winner, number> = {
+        routed: (a.first + b.second) / 2,
+        default: (a.second + b.first) / 2,
+        tie: (a.tie + b.tie) / 2,
+      };
+      return { winner: argmax(probabilities), probabilities, model: result.model, inputTokens: result.usage.input_tokens, latencyMs: result.latencyMs };
+    },
   };
-  return { winner: argmax(probabilities), probabilities, model: result.model, inputTokens: result.usage.input_tokens, latencyMs: result.latencyMs };
 }
 
 /** On an exact draw between a side and a tie, the tie wins: no clear preference is the honest call. */

@@ -1,8 +1,8 @@
-import type { Route } from "./router.ts";
+import { rankOptions, type Route } from "./router.ts";
 
 /**
- * At or above this confidence a UI can just pick. It is the line evaluation calls a "confident miss",
- * so the number of wrong picks this would make is exactly what eval reports as confident misses.
+ * At or above this confidence a UI can just pick. Evaluation counts a wrong answer above it as a "confident miss",
+ * so eval's confident-miss count is exactly the number of wrong picks this line would make.
  */
 export const PICK_THRESHOLD = 0.85;
 
@@ -11,7 +11,7 @@ export type Recommendation = { mode: "pick"; shortlist: [string] } | { mode: "co
 
 export function recommend(route: Pick<Route, "choice" | "confidence" | "probabilities">, threshold = PICK_THRESHOLD): Recommendation {
   if (route.confidence >= threshold) return { mode: "pick", shortlist: [route.choice] };
-  const [runnerUp] = Object.entries(route.probabilities).filter(([option]) => option !== route.choice).sort(([, a], [, b]) => b - a);
+  const [runnerUp] = rankOptions(route.probabilities).filter(([option]) => option !== route.choice);
   if (!runnerUp) return { mode: "pick", shortlist: [route.choice] };
   return { mode: "compare", shortlist: [route.choice, runnerUp[0]] };
 }

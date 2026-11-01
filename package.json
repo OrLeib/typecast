@@ -3,22 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.6" },
+  "engines": {
+    "node": ">=22.6"
+  },
   "scripts": {
     "route": "node --env-file=.env --experimental-strip-types src/cli/route.ts",
     "eval": "node --env-file=.env --experimental-strip-types src/cli/eval.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "dead-code": "knip",
+    "duplication": "jscpd src test",
+    "check": "npm run typecheck && npm run lint && npm run dead-code && npm run duplication && npm test",
+    "prepare": "git config core.hooksPath .githooks",
     "test": "vitest run",
     "compare": "node --experimental-strip-types src/cli/compare.ts",
     "generate": "node --env-file=.env --experimental-strip-types src/cli/generate.ts",
     "judge": "node --experimental-strip-types src/cli/judge.ts",
     "judge-jev": "node --env-file=.env --experimental-strip-types src/cli/judge-jev.ts",
+    "pick-jev": "node --env-file=.env --experimental-strip-types src/cli/pick-jev.ts",
     "judge-report": "node --experimental-strip-types src/cli/judge-report.ts",
     "demo": "node --env-file=.env --experimental-strip-types src/cli/demo.ts"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^22.0.0",
+    "eslint": "^9.39.5",
+    "jscpd": "^4.3.0",
+    "knip": "^5.88.1",
     "typescript": "^5.6.0",
+    "typescript-eslint": "^8.72.1",
     "vitest": "^2.1.0"
   }
 }

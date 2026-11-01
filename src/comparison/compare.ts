@@ -1,6 +1,6 @@
 import type { Result } from "../evaluation/result.ts";
 import { RUN_METRICS, type MetricContext, type RunMetric } from "../evaluation/run-metrics.ts";
-import { bootstrapCI, mcnemarExact } from "./stats.ts";
+import { bootstrapCI, mcnemarExact } from "../shared/stats.ts";
 
 export type MetricDelta = { metric: string; a: number; b: number; delta: number; ci: [number, number]; lowerIsBetter: boolean };
 

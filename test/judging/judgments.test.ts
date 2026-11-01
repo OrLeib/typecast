@@ -1,8 +1,8 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { appendJudgment, latestByPair, loadJudgments, parseJudgments, removeLastJudgment } from "../../src/judging/judgments.ts";
+import { appendJudgment, latestByPair, loadJudgments, parseJudgments, undoLastJudgment } from "../../src/judging/judgments.ts";
 
 const dir = await mkdtemp(join(tmpdir(), "typecast-judgments-"));
 afterAll(() => rm(dir, { recursive: true, force: true }));
@@ -17,8 +17,28 @@ describe("judgments store", () => {
     await appendJudgment(file, second);
     expect(await loadJudgments(file)).toEqual([first, second]);
 
-    expect(await removeLastJudgment(file)).toEqual(second);
+    expect(await undoLastJudgment(file, "human", new Date("2026-11-01T00:00:00Z"))).toEqual(second);
     expect(await loadJudgments(file)).toEqual([first]);
+  });
+
+  it("undoes only the named judge's judgments, by appending", async () => {
+    const file = join(dir, "mixed.jsonl");
+    const human = { id: "a", winner: "routed" as const, judge: "human", at: "t1" };
+    const jev = { id: "a", winner: "tie" as const, judge: "jev", at: "t2" };
+    await appendJudgment(file, human);
+    await appendJudgment(file, jev);
+    await undoLastJudgment(file, "human", new Date("2026-11-01T00:00:00Z"));
+    expect(await loadJudgments(file)).toEqual([jev]);
+    expect(await undoLastJudgment(file, "human", new Date())).toBeUndefined();
+    expect((await readFile(file, "utf8")).trim().split("\n")).toHaveLength(3);
+  });
+
+  it("refuses an undo with nothing to take back", () => {
+    expect(() => parseJudgments('{"undo":true,"judge":"human","at":"t"}', "j.jsonl")).toThrow(/j.jsonl:1: undo for judge "human" has no judgment/);
+  });
+
+  it("names the line of a row that is not JSON", () => {
+    expect(() => parseJudgments("{nope", "j.jsonl")).toThrow(/j.jsonl:1: not valid JSON/);
   });
 
   it("names the line and field of a malformed row", () => {

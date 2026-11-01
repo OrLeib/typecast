@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { parseJsonLine } from "../shared/validate.ts";
 
 export type Brief = { id: string; brief: string; expected: string; note?: string };
 
@@ -17,14 +18,7 @@ export function parseBriefs(jsonl: string, source: string): Brief[] {
 }
 
 function parseBrief(line: string, where: string): Brief {
-  let row: unknown;
-  try {
-    row = JSON.parse(line);
-  } catch (e) {
-    throw new Error(`${where}: not valid JSON (${(e as Error).message})`);
-  }
-  if (typeof row !== "object" || row === null || Array.isArray(row)) throw new Error(`${where}: must be a JSON object`);
-  const fields = row as Record<string, unknown>;
+  const fields = parseJsonLine(line, where);
   const unknown = Object.keys(fields).filter((k) => !BRIEF_FIELDS.has(k));
   if (unknown.length) throw new Error(`${where}: unknown field(s) ${unknown.join(", ")}`);
   const text = (field: string) => {

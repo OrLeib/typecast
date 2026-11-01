@@ -55,14 +55,16 @@ async function generatePair(router: Router, lineup: Lineup, brief: Brief, { dir,
   const routedGenerator = lineup.byCategory[choice];
   if (!routedGenerator) return { ...base, skipped: `no generator for category "${choice}"` };
 
-  const shoot = async (generator: Generator): Promise<Shot> => {
-    const image = join(IMAGES_DIR, `${brief.id}-${fileSafe(generator.name)}.png`);
-    const { latencyMs } = await generator.generate({ prompt: brief.brief, seed, outputPath: join(dir, image) });
-    return { generator: generator.name, image, latencyMs };
-  };
-  const routed = await shoot(routedGenerator);
-  const fallback = lineup.fallback.name === routedGenerator.name ? routed : await shoot(lineup.fallback);
+  const routed = await shoot(routedGenerator, brief, { dir, seed });
+  const fallback = lineup.fallback.name === routedGenerator.name ? routed : await shoot(lineup.fallback, brief, { dir, seed });
   return { ...base, routed, default: fallback };
+}
+
+/** Renders `brief` with `generator` into the run's images dir, named so every generator's image of a brief sits side by side. */
+export async function shoot(generator: Generator, brief: Brief, { dir, seed }: Pick<GenerationOptions, "dir" | "seed">): Promise<Shot> {
+  const image = join(IMAGES_DIR, `${brief.id}-${fileSafe(generator.name)}.png`);
+  const { latencyMs } = await generator.generate({ prompt: brief.brief, seed, outputPath: join(dir, image) });
+  return { generator: generator.name, image, latencyMs };
 }
 
 const fileSafe = (name: string) => name.replace(/[^a-z0-9.-]+/gi, "_");

@@ -1,3 +1,5 @@
+import { PICK_THRESHOLD } from "../routing/recommendation.ts";
+
 export type Prediction = { expected: string; choice: string; confidence: number };
 
 export function accuracy(preds: Prediction[]): number {
@@ -8,7 +10,7 @@ export function accuracy(preds: Prediction[]): number {
 export type Bin = { lo: number; hi: number; count: number; avgConfidence: number; accuracy: number };
 
 /** Ten equal-width bins: fine enough to show over-confidence, coarse enough to fill on ~100 briefs. */
-export const DEFAULT_BIN_COUNT = 10;
+const DEFAULT_BIN_COUNT = 10;
 
 /** Reliability bins over [0,1]; the last bin includes 1.0. */
 export function reliabilityBins(preds: Prediction[], nBins = DEFAULT_BIN_COUNT): Bin[] {
@@ -70,8 +72,8 @@ export function brier(preds: ProbPrediction[]): number {
   }, 0) / preds.length;
 }
 
-/** Confidence at or above which a UI would just pick, so a miss there goes unnoticed. */
-export const CONFIDENT_MISS_THRESHOLD = 0.85;
+/** Confidence at or above which a UI just picks (see `recommend`), so a miss there goes unnoticed. */
+export const CONFIDENT_MISS_THRESHOLD = PICK_THRESHOLD;
 
 /** Wrong answers given with at least `threshold` confidence: the misses a UI would not catch. */
 export function confidentMisses(preds: Prediction[], threshold = CONFIDENT_MISS_THRESHOLD): number {

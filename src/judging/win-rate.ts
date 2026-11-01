@@ -1,6 +1,7 @@
-import { bootstrapCI, mcnemarExact } from "../comparison/stats.ts";
-import { isPair, type GenerationItem, type PairItem } from "../generation/runner.ts";
+import { bootstrapCI, mcnemarExact } from "../shared/stats.ts";
+import { isPair, type GenerationItem } from "../generation/runner.ts";
 import type { Judgment } from "./judgments.ts";
+import { needsJudging } from "./pairs.ts";
 
 export type Tally = { n: number; wins: number; losses: number; ties: number; winRate: number };
 
@@ -15,9 +16,6 @@ export type WinRateSummary = {
   unjudged: number;
   meanLatencyMs: { routed: number; default: number };
 };
-
-/** A pair needs judging only when routing picked a different model than the default. */
-export const needsJudging = (item: GenerationItem): item is PairItem => isPair(item) && item.routed.generator !== item.default.generator;
 
 /** Score of one judged pair: a win counts 1, a tie half. */
 const score = (j: Judgment) => (j.winner === "routed" ? 1 : j.winner === "tie" ? 0.5 : 0);

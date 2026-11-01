@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createKeywordRouter, KEYWORD_ROUTER_MODEL } from "../../src/routing/keyword-router.ts";
 import { ROSTER } from "../../src/routing/roster.ts";
+import { routerContract } from "./router.contract.ts";
 
 const router = createKeywordRouter(Object.keys(ROSTER));
+
+routerContract("keyword router", ROSTER, () => router);
 
 describe("createKeywordRouter", () => {
   it.each([

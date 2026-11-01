@@ -1,4 +1,4 @@
-import { rng } from "../comparison/stats.ts";
+import { rng } from "../shared/stats.ts";
 
 export type Side = "left" | "right";
 

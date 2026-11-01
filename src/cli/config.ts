@@ -1,6 +1,8 @@
 // The only place that reads the process environment. Everything below the CLIs receives config.
 import { execSync } from "node:child_process";
-import { JEV_DEFAULT_BASE_URL, JEV_DEFAULT_MODEL, type JevConfig } from "../jev/client.ts";
+import { parseArgs } from "node:util";
+import { createJevClient, JEV_DEFAULT_BASE_URL, JEV_DEFAULT_MODEL, type DecisionClient, type JevConfig } from "../jev/client.ts";
+import { withRetries } from "../jev/retry.ts";
 
 export function jevConfigFromEnv(env: NodeJS.ProcessEnv = process.env): JevConfig {
   const apiKey = env.TYPESAFE_API_KEY;
@@ -24,4 +26,20 @@ export function currentCommit(): string {
   } catch {
     return "unknown";
   }
+}
+
+/** Image requests have hit brief 503 "Image processing is unavailable" answers that cleared on retry. */
+const IMAGE_RETRIES = { attempts: 5, delayMs: 5000 };
+
+/** A Jev client for judging images, retrying through brief outages. */
+export const jevImageClientFromEnv = (): DecisionClient => withRetries(createJevClient(jevConfigFromEnv()), IMAGE_RETRIES);
+
+/** The run directory a CLI was given as its only positional argument; exits with `usage` when there is none. */
+export function runDirArg(usage: string): string {
+  const { positionals } = parseArgs({ allowPositionals: true });
+  if (!positionals[0]) {
+    console.error(`Usage: ${usage}`);
+    process.exit(1);
+  }
+  return positionals[0];
 }

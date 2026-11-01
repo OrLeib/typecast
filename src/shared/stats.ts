@@ -1,7 +1,7 @@
-// Paired statistics for comparing two eval runs on the same briefs.
+// Generic statistics: a seeded PRNG, a paired exact test and a bootstrap CI. Used by run comparison, sampling and judging.
 
 const UINT32_RANGE = 2 ** 32;
-/** Enough resamples that the 2.5% and 97.5% percentiles are stable to about a brief. */
+/** Enough resamples that the 2.5% and 97.5% percentiles are stable to about one item. */
 const DEFAULT_BOOTSTRAP_ITERATIONS = 2000;
 /** A 95% interval. */
 const DEFAULT_ALPHA = 0.05;

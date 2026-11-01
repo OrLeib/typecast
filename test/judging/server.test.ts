@@ -1,49 +1,31 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Manifest } from "../../src/generation/manifest.ts";
-import type { GenerationItem } from "../../src/generation/runner.ts";
+import { describe, expect, it } from "vitest";
 import { routedSide } from "../../src/judging/blind.ts";
-import { JUDGMENTS_FILE, loadJudgments } from "../../src/judging/judgments.ts";
+import { appendJudgment, JUDGMENTS_FILE, loadJudgments } from "../../src/judging/judgments.ts";
 import { createJudgeServer } from "../../src/judging/server.ts";
+import { manifestOf, pair } from "../support/level2-fixtures.ts";
+import { listenForTests } from "../support/listen.ts";
 
-const pair = (id: string, routed: string): GenerationItem => ({
-  id, brief: `brief ${id}`, expected: "photo",
-  route: { choice: "photo", confidence: 0.9, model: "jev" },
-  routed: { generator: routed, image: `images/${id}-${routed}.png`, latencyMs: 1 },
-  default: { generator: "dflt", image: `images/${id}-dflt.png`, latencyMs: 1 },
-});
-
-const manifest: Manifest = {
-  meta: { data: "d", variant: "v", seed: 1, perCategory: 1, defaultGenerator: "dflt", lineup: {}, commit: "c", createdAt: "t" },
-  items: [pair("a", "photo"), pair("same", "dflt")],
-};
+const manifest = manifestOf([pair("a", "photo"), pair("same", "dflt")]);
 
 const dir = await mkdtemp(join(tmpdir(), "typecast-judge-"));
 const server = createJudgeServer(dir, manifest, () => new Date("2026-10-31T12:00:00Z"));
-let base = "";
-
-beforeAll(async () => {
-  await mkdir(join(dir, "images"));
-  await writeFile(join(dir, "images", "a-photo.png"), "png-bytes");
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+const { get, post } = listenForTests(server, {
+  setup: async () => {
+    await mkdir(join(dir, "images"));
+    await writeFile(join(dir, "images", "a-photo.png"), "png-bytes");
+  },
+  cleanup: () => rm(dir, { recursive: true, force: true }),
 });
-afterAll(async () => {
-  server.close();
-  await rm(dir, { recursive: true, force: true });
-});
-
-const post = (path: string, body: unknown) => fetch(base + path, { method: "POST", body: JSON.stringify(body) });
 
 describe("judge server", () => {
   it("serves the page and only pairs that differ, without revealing which side is routed", async () => {
-    const page = await (await fetch(base + "/")).text();
+    const page = await (await get("/")).text();
     expect(page).toContain("<title>Typecast Judge</title>");
     expect(page).toContain(`npm run judge-report -- ${dir}`);
-    const state = await (await fetch(base + "/api/next")).json();
+    const state = await (await get("/api/next")).json();
     expect(state).toMatchObject({ judged: 0, total: 1, pair: { id: "a", brief: "brief a" } });
     expect(JSON.stringify(state)).not.toMatch(/routed|default/);
     const routedUrl = "/images/a-photo.png";
@@ -59,14 +41,30 @@ describe("judge server", () => {
     expect(undone).toMatchObject({ judged: 0, pair: { id: "a" } });
   });
 
+  it("undoes only the human's last pick, even when an auto-judge wrote after it", async () => {
+    const file = join(dir, JUDGMENTS_FILE);
+    await post("/api/judge", { id: "a", pick: "tie" });
+    await appendJudgment(file, { id: "a", winner: "routed", judge: "jev", at: "t" });
+
+    const undone = await (await post("/api/undo", {})).json();
+    expect(undone).toMatchObject({ judged: 0, pair: { id: "a" } });
+    expect((await loadJudgments(file)).map((j) => `${j.id}:${j.judge}`)).toEqual(["a:jev"]);
+    await rm(file);
+  });
+
+  it("rejects bodies that are not JSON objects", async () => {
+    expect((await post("/api/judge", null)).status).toBe(400);
+    expect((await post("/api/judge", [1])).status).toBe(400);
+  });
+
   it("rejects unknown pairs and picks", async () => {
     expect((await post("/api/judge", { id: "nope", pick: "left" })).status).toBe(400);
     expect((await post("/api/judge", { id: "a", pick: "routed" })).status).toBe(400);
   });
 
   it("serves run images but nothing outside the images dir", async () => {
-    expect(await (await fetch(base + "/images/a-photo.png")).text()).toBe("png-bytes");
-    expect((await fetch(base + "/images/..%2Fmanifest.json")).status).toBe(404);
-    expect((await fetch(base + "/judgments.jsonl")).status).toBe(404);
+    expect(await (await get("/images/a-photo.png")).text()).toBe("png-bytes");
+    expect((await get("/images/..%2Fmanifest.json")).status).toBe(404);
+    expect((await get("/judgments.jsonl")).status).toBe(404);
   });
 });
