@@ -1,4 +1,5 @@
 import type { GenerationMeta } from "../generation/manifest.ts";
+import type { Agreement } from "./agreement.ts";
 import type { Tally, WinRateSummary } from "./win-rate.ts";
 
 const pct = (x: number) => (Number.isNaN(x) ? "n/a" : `${(x * 100).toFixed(1)}%`);
@@ -14,4 +15,8 @@ export function formatWinRate(s: WinRateSummary, meta: GenerationMeta, judge: st
     "by routed category:",
     ...Object.entries(s.byCategory).map(([c, t]) => `  ${c.padEnd(14)} ${pct(t.winRate).padStart(6)}  n=${t.n} (${counts(t)})`),
   ];
+}
+
+export function formatAgreement(a: Agreement, judge: string, other: string): string {
+  return `  ${judge} agrees with ${other} on ${a.agree}/${a.n} pairs (${pct(a.rate)}), opposite calls ${a.opposite}`;
 }

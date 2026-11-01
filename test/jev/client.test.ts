@@ -24,6 +24,20 @@ describe("createJevClient", () => {
     expect(JSON.parse(init.body as string)).toEqual({ model: "jev-latest", state: "a brief", questions });
   });
 
+  it("sends images as assets, opting in with the images header only when there are any", async () => {
+    const fetch = respondWith(fixture);
+    const client = createJevClient(config, { fetch });
+    const assets = { "ref-1": { type: "image" as const, format: "png" as const, data_base64: "iVBO" } };
+    await client.decide({ photo: "ref-1" }, {}, assets);
+    await client.decide("no images", {}, {});
+
+    const [withImages, without] = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect((withImages[1].headers as Record<string, string>)["TypeSafe-Danger-Zone-Images"]).toBe("true");
+    expect(JSON.parse(withImages[1].body as string).assets).toEqual(assets);
+    expect(without[1].headers).not.toHaveProperty("TypeSafe-Danger-Zone-Images");
+    expect(JSON.parse(without[1].body as string)).not.toHaveProperty("assets");
+  });
+
   it("measures latency with the injected clock", async () => {
     const ticks = [100, 350];
     const result = await createJevClient(config, { fetch: respondWith(fixture), now: () => ticks.shift()! }).decide("x", {});
@@ -51,5 +65,6 @@ describe("createJevClient", () => {
   it("surfaces HTTP errors with the body", async () => {
     const client = createJevClient(config, { fetch: respondWith({ error: "bad request" }, 400) });
     await expect(client.decide("x", {})).rejects.toThrow(/Jev 400: .*bad request/);
+    await expect(client.decide("x", {})).rejects.toMatchObject({ status: 400 });
   });
 });

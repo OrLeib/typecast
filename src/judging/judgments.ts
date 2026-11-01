@@ -3,8 +3,14 @@ import { appendFile, readFile, writeFile } from "node:fs/promises";
 /** Which image won a pair. A tie means no preference, not "both bad". */
 export type Winner = "routed" | "default" | "tie";
 
-/** `judge` names who decided: "human" for hand judging, or an auto-judge's model id. */
-export type Judgment = { id: string; winner: Winner; judge: string; at: string };
+/**
+ * `judge` names who decided: HUMAN_JUDGE for hand judging, or an auto-judge such as JEV_JUDGE. An auto-judge also
+ * records its resolved `model` version and its `probabilities` for each outcome.
+ */
+export type Judgment = { id: string; winner: Winner; judge: string; at: string; model?: string; probabilities?: Record<Winner, number> };
+
+export const HUMAN_JUDGE = "human";
+export const JEV_JUDGE = "jev";
 
 export const JUDGMENTS_FILE = "judgments.jsonl";
 

@@ -1,15 +1,20 @@
 import type { DecisionClient, DecisionResult } from "../../src/jev/client.ts";
-import type { ChoiceQuestion } from "../../src/jev/parse.ts";
+import type { ChoiceQuestion, ImageAsset } from "../../src/jev/parse.ts";
 
 type Pick = { choice: string; confidence: number };
 
 /** In-memory DecisionClient: answers every question with `pick`, spreading leftover probability over the other options. */
-export function createFakeDecisionClient(pick: (state: string | object, question: ChoiceQuestion) => Pick): DecisionClient & { calls: Record<string, ChoiceQuestion>[] } {
+export function createFakeDecisionClient(
+  pick: (state: string | object, question: ChoiceQuestion) => Pick,
+): DecisionClient & { calls: Record<string, ChoiceQuestion>[]; assets: (Record<string, ImageAsset> | undefined)[] } {
   const calls: Record<string, ChoiceQuestion>[] = [];
+  const assets: (Record<string, ImageAsset> | undefined)[] = [];
   return {
     calls,
-    async decide(state, questions): Promise<DecisionResult> {
+    assets,
+    async decide(state, questions, sentAssets): Promise<DecisionResult> {
       calls.push(questions);
+      assets.push(sentAssets);
       const answers = Object.fromEntries(Object.entries(questions).map(([id, q]) => {
         const { choice, confidence } = pick(state, q);
         const others = Object.keys(q.criteria).filter((o) => o !== choice);

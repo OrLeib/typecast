@@ -5,11 +5,9 @@ import { join, normalize, sep } from "node:path";
 import { IMAGES_DIR } from "../generation/runner.ts";
 import type { Manifest } from "../generation/manifest.ts";
 import { blindOrder, routedSide, type Side } from "./blind.ts";
-import { appendJudgment, JUDGMENTS_FILE, latestByPair, loadJudgments, removeLastJudgment, type Winner } from "./judgments.ts";
+import { appendJudgment, HUMAN_JUDGE, JUDGMENTS_FILE, latestByPair, loadJudgments, removeLastJudgment, type Winner } from "./judgments.ts";
 import { judgePage } from "./page.ts";
 import { needsJudging } from "./win-rate.ts";
-
-export const HUMAN_JUDGE = "human";
 
 type Pick = Side | "tie";
 const PICKS: readonly Pick[] = ["left", "right", "tie"];

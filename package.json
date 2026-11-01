@@ -12,6 +12,7 @@
     "compare": "node --experimental-strip-types src/cli/compare.ts",
     "generate": "node --env-file=.env --experimental-strip-types src/cli/generate.ts",
     "judge": "node --experimental-strip-types src/cli/judge.ts",
+    "judge-jev": "node --env-file=.env --experimental-strip-types src/cli/judge-jev.ts",
     "judge-report": "node --experimental-strip-types src/cli/judge-report.ts",
     "demo": "node --env-file=.env --experimental-strip-types src/cli/demo.ts"
   },

@@ -6,6 +6,12 @@ export type ChoiceQuestion = {
   criteria: Record<string, string>;
 };
 
+/**
+ * An image sent with a request, keyed in `assets` by a reference string. The reference is written into the state or a
+ * question's instructions wherever the image belongs; the API swaps it for the image. PNG or JPEG, 280-1568px a side.
+ */
+export type ImageAsset = { type: "image"; format: "png" | "jpg" | "jpeg"; data_base64: string };
+
 export type ChoiceAnswer = {
   type: "choice";
   choice: string;

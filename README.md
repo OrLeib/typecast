@@ -20,13 +20,16 @@ npm run compare -- runs/<baseline>.json runs/<candidate>.json   # paired deltas 
 ```
 
 ### Level 2: does routing make better images?
-Renders a fixed sample of briefs with the routed model and a single default model, locally on Apple Silicon via [mflux](https://github.com/mflux-community/mflux), then judges the pairs blind.
+Renders a fixed sample of briefs with the routed model and a single default model, locally on Apple Silicon via [mflux](https://github.com/mflux-community/mflux), then judges the pairs blind, by hand or with Jev reading both images.
 ```bash
 uv tool install mflux
 npm run generate                              # 50 dev briefs -> runs/level2/<timestamp>/
 npm run judge -- runs/level2/<timestamp>      # blind side-by-side judging at http://localhost:4173
+npm run judge-jev -- runs/level2/<timestamp>  # Jev judges every pair from the images (about $0.0005 a pair)
 npm run judge-report -- runs/level2/<timestamp>  # routed win rate vs the default, with a 95% CI
+npm run judge-report -- runs/level2/<timestamp> --judge jev  # Jev's win rate, and its agreement with yours
 ```
+Set `HF_XET_HIGH_PERFORMANCE=1` for the first `generate`: it downloads about 100GB of weights, and the default downloader is several times slower on high-latency links.
 
 Point `TYPESAFE_BASE_URL` at a local Jev-compatible server (Kev, Laya, ...) to run without
 the hosted API.

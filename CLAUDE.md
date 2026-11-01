@@ -26,7 +26,7 @@ top two side by side.
    latency p50/p95, cost. ← current
 2. **Level 2 — confirm with images.** For ~50 briefs, generate with the routed model and 1–2
    alternatives (locally via mflux/Draw Things/ComfyUI on the M5 Mac, or a hosted API), judge
-   winners (by hand first, then Clef as auto-judge). Metric: routed-model win rate vs. a
+   winners (by hand first, then Jev as auto-judge, reading both images). Metric: routed-model win rate vs. a
    single default model.
 3. **Level 3 — real roster.** Replace the placeholder roster with a real product's model list.
 
@@ -109,7 +109,11 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   Output goes to `runs/level2/<timestamp>/` (images + `manifest.json`). Rerun with `--out <dir>` to resume an interrupted run.
 - `npm run judge -- <dir>` serves a blind judging page on localhost. Sides are hidden and fixed per pair; picks go to `<dir>/judgments.jsonl`.
   Only pairs where routing picked a different model are judged. Video is left out: the default image model can't make video.
-- `npm run judge-report -- <dir>` prints the routed-model win rate (ties count half) with a bootstrap 95% CI, an exact sign test, and a per-category breakdown.
+- `npm run judge-jev -- <dir>` has Jev judge every pair from the images (`src/judging/jev-judge.ts`), resuming past pairs it already judged.
+  One request per pair asks in both orders and averages them, cancelling position bias; asset references and question ids are neutral so nothing reveals which image is routed.
+  Images need the `TypeSafe-Danger-Zone-Images: true` header (the client adds it when assets are sent). They have returned brief 503s, so the CLI retries.
+- `npm run judge-report -- <dir> [--judge jev]` prints the routed-model win rate (ties count half) with a bootstrap 95% CI, an exact sign test, and a per-category breakdown.
+  For Jev it also prints agreement with hand judgments on shared pairs; trust Jev's win rate only as far as that agreement holds.
 - Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
 
 ## Conventions
