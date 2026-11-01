@@ -29,7 +29,8 @@ if (!shootout) {
 }
 const heldOut = (await loadEvidence("runs", DEFAULT_VARIANT)).filter((e) => HELD_OUT.has(e.data));
 
-await rm(args.out, { recursive: true, force: true });
+// Only the generated files are cleared: site/.vercel links the folder to its Vercel project.
+await rm(join(args.out, "images"), { recursive: true, force: true });
 await mkdir(join(args.out, "images"), { recursive: true });
 const urls = new Map<string, string>();
 for (const [url, file] of shootout.files) {
