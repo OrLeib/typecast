@@ -40,7 +40,7 @@ describe("judgeWithJev", () => {
     expect(verdict.winner).toBe("routed");
     expect(verdict.probabilities.routed).toBeCloseTo(0.8);
     expect(verdict.probabilities.default).toBeCloseTo(0.1);
-    expect(verdict).toMatchObject({ model: "fake-1.0.0", inputTokens: 100 });
+    expect(verdict).toMatchObject({ model: "fake-1.0.0", inputTokens: 100, latencyMs: 1 });
   });
 
   it("calls a tie when a judge just prefers whichever image comes first", async () => {

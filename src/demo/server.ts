@@ -5,6 +5,9 @@ import { access, readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { basename, join } from "node:path";
 import type { GenerationProgress, Generator } from "../generation/generator.ts";
+import type { DecisionClient } from "../jev/client.ts";
+import type { ImageAsset } from "../jev/parse.ts";
+import { judgeWithJev } from "../judging/jev-judge.ts";
 import { PICK_THRESHOLD, recommend } from "../routing/recommendation.ts";
 import type { Router } from "../routing/router.ts";
 import type { Evidence } from "./evidence.ts";
@@ -16,6 +19,10 @@ export type DemoConfig = {
   roster: Record<string, string>;
   /** Category -> local generator. Categories without one (e.g. video) can be routed to but not rendered. */
   generators: Record<string, Generator>;
+  /** The single model routing has to beat in Level 2, rendered on request to compare against the routed pick. */
+  defaultGenerator: Generator;
+  /** Judges a rendered routed-vs-default pair from the images. */
+  judge: DecisionClient;
   evidence: Evidence[];
   examples: string[];
   /** USD per million input tokens, to show what a route costs. */
@@ -26,6 +33,8 @@ export type DemoConfig = {
 
 /** Briefs longer than this are almost certainly pasted by mistake, and Jev bills per input token. */
 const MAX_BRIEF_CHARS = 2000;
+/** The only image URLs the demo hands out: a content hash in imagesDir. Anything else is refused before touching disk. */
+const IMAGE_URL = /^\/images\/([0-9a-f]{16}\.png)$/;
 
 export function createDemoServer(config: DemoConfig): Server {
   const renderOneAtATime = serialize();
@@ -33,6 +42,7 @@ export function createDemoServer(config: DemoConfig): Server {
   const handlers: Record<string, (body: Record<string, unknown>) => Promise<unknown>> = {
     "GET /api/config": async () => ({
       roster: Object.entries(config.roster).map(([id, description]) => ({ id, description, generator: config.generators[id]?.name ?? null })),
+      defaultGenerator: config.defaultGenerator.name,
       evidence: config.evidence,
       examples: config.examples,
       pickThreshold: PICK_THRESHOLD,
@@ -50,18 +60,42 @@ export function createDemoServer(config: DemoConfig): Server {
         recommendation: recommend(route),
       };
     },
+    "POST /api/judge": async (body) => {
+      const brief = briefFrom(body);
+      const verdict = await judgeWithJev(config.judge, {
+        brief,
+        routed: await imageFrom(body.routed, "routed"),
+        default: await imageFrom(body.default, "default"),
+      });
+      return {
+        winner: verdict.winner,
+        probabilities: verdict.probabilities,
+        model: verdict.model,
+        latencyMs: verdict.latencyMs,
+        costUsd: (verdict.inputTokens * config.inputPricePerMillion) / 1e6,
+      };
+    },
   };
+
+  /** Reads an image this demo rendered, named by the URL `/api/generate` returned for it. */
+  async function imageFrom(url: unknown, field: string): Promise<ImageAsset> {
+    const file = typeof url === "string" ? IMAGE_URL.exec(url)?.[1] : undefined;
+    if (!file) throw new HttpError(400, `${field} must be an image URL from /api/generate`);
+    const bytes = await readFile(join(config.imagesDir, file)).catch(() => {
+      throw new HttpError(404, `${field} image not found; render it first`);
+    });
+    return { type: "image", format: "png", data_base64: bytes.toString("base64") };
+  }
 
   /**
    * Streams the render as NDJSON events so the page can show progress: zero or more
    * `{ type: "progress", step, total }`, then `{ type: "done", image, generator, latencyMs, cached }` or `{ type: "error", error }`.
    * Bad requests fail before the stream starts, as plain JSON errors like every other route.
+   * The body names a routed `category`, or sets `default: true` for the default model.
    */
   async function generate(body: Record<string, unknown>, res: ServerResponse) {
     const brief = briefFrom(body);
-    const category = String(body.category ?? "");
-    const generator = config.generators[category];
-    if (!generator) throw new HttpError(400, `no local generator for "${category}"`);
+    const generator = generatorFrom(body);
     const file = `${createHash("sha256").update(`${generator.name}\n${config.seed}\n${brief}`).digest("hex").slice(0, 16)}.png`;
     const outputPath = join(config.imagesDir, file);
     const done = (latencyMs: number, cached: boolean) => ({ type: "done", image: `/images/${file}`, generator: generator.name, latencyMs, cached });
@@ -81,6 +115,14 @@ export function createDemoServer(config: DemoConfig): Server {
       emit({ type: "error", error: (e as Error).message });
     }
     res.end();
+  }
+
+  function generatorFrom(body: Record<string, unknown>): Generator {
+    if (body.default === true) return config.defaultGenerator;
+    const category = String(body.category ?? "");
+    const generator = config.generators[category];
+    if (!generator) throw new HttpError(400, `no local generator for "${category}"`);
+    return generator;
   }
 
   async function handle(req: IncomingMessage, res: ServerResponse) {

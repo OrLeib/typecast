@@ -12,6 +12,7 @@ export type JevVerdict = {
   /** The resolved model that judged, e.g. "jev-1.14.0"; recorded as the judge. */
   model: string;
   inputTokens: number;
+  latencyMs: number;
 };
 
 /**
@@ -50,7 +51,7 @@ export async function judgeWithJev(client: DecisionClient, pair: JudgedPair): Pr
     default: (a.second + b.first) / 2,
     tie: (a.tie + b.tie) / 2,
   };
-  return { winner: argmax(probabilities), probabilities, model: result.model, inputTokens: result.usage.input_tokens };
+  return { winner: argmax(probabilities), probabilities, model: result.model, inputTokens: result.usage.input_tokens, latencyMs: result.latencyMs };
 }
 
 /** On an exact draw between a side and a tie, the tie wins: no clear preference is the honest call. */

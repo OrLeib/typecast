@@ -95,6 +95,7 @@ export const DEMO_PAGE = `<!doctype html>
   .render { border-top: 1px solid var(--line); padding: 24px; }
   .render-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .render-head p { margin: 0; color: var(--text-2); font-size: 14px; }
+  .render-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .shots { display: grid; gap: 16px; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
   .shots.single { max-width: 520px; }
   .shot { display: flex; flex-direction: column; gap: 8px; }
@@ -108,7 +109,14 @@ export const DEMO_PAGE = `<!doctype html>
   .progress.known { visibility: visible; }
   .progress-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
   .shot-caption { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-2); }
-  .shot-caption code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+  .shot-caption code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); white-space: nowrap; }
+  .shot.winner .frame { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .pick-tag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); }
+  .verdict-line { display: none; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14px; color: var(--text-2); }
+  .verdict-line strong { color: var(--text); font-weight: 600; }
+  .verdict-line .odds { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .verdict-line .odds span { color: var(--muted); }
+  .verdict-line .odds b { color: var(--text-2); font-weight: 550; }
   .evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
   .evidence-head .section-title { margin: 0; }
   .segmented { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
@@ -186,8 +194,9 @@ export const DEMO_PAGE = `<!doctype html>
         </div>
       </div>
       <div class="render">
-        <div class="render-head"><p id="render-text"></p><button id="render">Render</button></div>
+        <div class="render-head"><p id="render-text"></p><div class="render-actions"><button id="render">Render</button><button id="compare-default">Compare with default</button><button id="judge">Judge with Jev</button></div></div>
         <div class="shots" id="shots"></div>
+        <div class="verdict-line" id="jev-verdict" aria-live="polite"></div>
       </div>
     </div>
   </section>
@@ -216,6 +225,9 @@ export const DEMO_PAGE = `<!doctype html>
   function pct(x, digits) { return (x * 100).toFixed(digits == null ? 0 : digits) + "%"; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function generatorOf(id) { var r = config.roster.find(function (c) { return c.id === id; }); return r && r.generator; }
+  /** A shot renders a routed category, or the default model when its target is DEFAULT. */
+  var DEFAULT = "default";
+  function generatorFor(target) { return target === DEFAULT ? config.defaultGenerator : generatorOf(target); }
   function modelName(g) { return g ? g.replace(/^mflux:/, "").replace(/@q\\d+$/, "") : null; }
 
   async function api(path, body) {
@@ -303,45 +315,139 @@ export const DEMO_PAGE = `<!doctype html>
   }
 
   function showRenderPlan(rec) {
-    var renderable = rec.shortlist.filter(generatorOf);
     var shots = $("shots"); shots.textContent = "";
-    shots.className = "shots" + (rec.shortlist.length === 1 ? " single" : "");
-    shots.style.setProperty("--cols", rec.shortlist.length);
-    rec.shortlist.forEach(function (category) {
-      var g = generatorOf(category);
-      var shot = el("div", "shot"); shot.dataset.category = category;
-      var frame = el("div", "frame");
-      frame.appendChild(el("div", "state", g ? "Not rendered yet" : "No local " + category + " model. Routing still works; rendering needs a hosted model."));
-      shot.appendChild(frame);
-      var cap = el("div", "shot-caption"); cap.appendChild(el("span", null, category)); cap.appendChild(el("code", null, modelName(g) || "none"));
-      shot.appendChild(cap);
-      shots.appendChild(shot);
-    });
+    rec.shortlist.forEach(function (category) { shots.appendChild(makeShot(category, category)); });
+    layoutShots();
+    // Routed to the default model already: its image is the default's, so there is nothing to compare.
+    var routedIsDefault = rec.shortlist.some(function (c) { return generatorOf(c) === config.defaultGenerator; });
+    var compare = $("compare-default");
+    compare.disabled = routedIsDefault;
+    clearVerdict();
+    compare.title = routedIsDefault
+      ? "Routing already picked the default model, " + modelName(config.defaultGenerator) + "."
+      : "Also render with " + modelName(config.defaultGenerator) + ", the single model routing has to beat.";
+    describeRender();
+  }
+
+  function makeShot(target, label) {
+    var g = generatorFor(target);
+    var shot = el("div", "shot"); shot.dataset.target = target;
+    var frame = el("div", "frame");
+    frame.appendChild(el("div", "state", g ? "Not rendered yet" : "No local " + target + " model. Routing still works; rendering needs a hosted model."));
+    shot.appendChild(frame);
+    var cap = el("div", "shot-caption"); cap.appendChild(el("span", null, label)); cap.appendChild(el("code", null, modelName(g) || "none"));
+    shot.appendChild(cap);
+    return shot;
+  }
+
+  function allShots() { return Array.prototype.slice.call(document.querySelectorAll("#shots .shot")); }
+  function renderable() { return allShots().filter(function (s) { return generatorFor(s.dataset.target); }); }
+  function rendered(shot) { return !!shot.querySelector(".frame img"); }
+  /** Waiting to render, or rendering: a second click must not queue it again. */
+  function pending(shot) { return !rendered(shot) && shot.dataset.busy !== "1"; }
+
+  function layoutShots() {
+    var n = allShots().length;
+    $("shots").className = "shots" + (n === 1 ? " single" : "");
+    $("shots").style.setProperty("--cols", n);
+  }
+
+  /** The routed side of a judgment is the top pick; in compare mode the runner-up stays out of it. */
+  function judgedPair() {
+    var shots = allShots();
+    var routed = shots.find(function (s) { return s.dataset.target === lastRoute.recommendation.shortlist[0]; });
+    var dflt = shots.find(function (s) { return s.dataset.target === DEFAULT; });
+    return routed && dflt && routed.dataset.image && dflt.dataset.image ? { routed: routed, default: dflt } : null;
+  }
+
+  function updateJudgeButton() {
+    var button = $("judge"), ready = lastRoute && judgedPair();
+    button.disabled = !ready || button.dataset.busy === "1";
+    button.title = ready
+      ? "Ask Jev which of the two images fulfils the brief better, looking at both."
+      : "Render the routed image and the default image first.";
+  }
+
+  function clearVerdict() {
+    $("jev-verdict").style.display = "none";
+    $("jev-verdict").textContent = "";
+    allShots().forEach(function (s) { s.classList.remove("winner"); var tag = s.querySelector(".pick-tag"); if (tag) tag.remove(); });
+  }
+
+  async function judge() {
+    var pair = judgedPair();
+    if (!pair) return;
+    var button = $("judge"); button.dataset.busy = "1"; button.textContent = "Judging…"; updateJudgeButton();
+    clearVerdict();
+    var line = $("jev-verdict");
+    try {
+      var v = await api("/api/judge", { brief: lastBrief, routed: pair.routed.dataset.image, default: pair.default.dataset.image });
+      var names = { routed: modelName(generatorFor(pair.routed.dataset.target)), default: modelName(config.defaultGenerator) };
+      var headline = el("div");
+      if (v.winner === "tie") {
+        headline.appendChild(el("strong", null, "Jev sees no clear winner"));
+        headline.appendChild(document.createTextNode(" between " + names.routed + " (routed) and " + names.default + " (default)."));
+      } else {
+        headline.appendChild(el("strong", null, "Jev prefers " + names[v.winner]));
+        headline.appendChild(document.createTextNode(v.winner === "routed" ? ", the routed pick." : ", the default model."));
+        var shot = pair[v.winner];
+        shot.classList.add("winner");
+        shot.querySelector(".shot-caption span").appendChild(el("span", "pick-tag", "Jev's pick"));
+      }
+      var odds = el("div", "odds");
+      [["routed", pct(v.probabilities.routed)], ["default", pct(v.probabilities.default)], ["tie", pct(v.probabilities.tie)],
+       [v.model, Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
+        var item = el("span"); item.appendChild(el("b", null, o[1])); item.appendChild(document.createTextNode(" " + o[0]));
+        odds.appendChild(item);
+      });
+      line.appendChild(headline); line.appendChild(odds);
+    } catch (e) {
+      line.appendChild(el("div", null, "Judging failed: " + e.message));
+    }
+    line.style.display = "block";
+    delete button.dataset.busy; button.textContent = "Judge with Jev"; updateJudgeButton();
+  }
+
+  function describeRender() {
+    updateJudgeButton();
+    var targets = renderable(), waiting = targets.filter(pending).length;
     var button = $("render");
-    button.disabled = renderable.length === 0;
-    button.textContent = renderable.length > 1 ? "Render both" : "Render";
-    $("render-text").textContent = renderable.length
-      ? "Render locally with " + renderable.map(function (c) { return modelName(generatorOf(c)); }).join(" and ") + ". The first render of a model includes loading it."
+    button.disabled = waiting === 0;
+    button.textContent = waiting === 2 ? "Render both" : waiting > 2 ? "Render all" : "Render";
+    $("render-text").textContent = targets.length
+      ? "Render locally with " + targets.map(function (s) { return modelName(generatorFor(s.dataset.target)); }).join(" and ") + ". The first render of a model includes loading it."
       : "Nothing to render locally for this route.";
+  }
+
+  function compareWithDefault() {
+    if (!lastRoute || allShots().some(function (s) { return s.dataset.target === DEFAULT; })) return;
+    $("shots").appendChild(makeShot(DEFAULT, "default, no routing"));
+    $("compare-default").disabled = true;
+    layoutShots();
+    describeRender();
+    render();
   }
 
   async function render() {
     if (!lastRoute) return;
     var button = $("render"); button.disabled = true;
-    var targets = Array.prototype.slice.call(document.querySelectorAll("#shots .shot")).filter(function (s) { return generatorOf(s.dataset.category); });
-    targets.forEach(function (s) { setState(s, "Queued"); });
+    // Images already on screen stay: adding the default model renders only the new shot.
+    var targets = renderable().filter(pending);
+    targets.forEach(function (s) { s.dataset.busy = "1"; setState(s, "Queued"); });
     for (var i = 0; i < targets.length; i++) {
       var shot = targets[i];
       try {
         var out = await renderShot(shot);
         var frame = shot.querySelector(".frame"); frame.textContent = "";
         var img = new Image(); img.alt = lastBrief; img.src = out.image; frame.appendChild(img);
+        shot.dataset.image = out.image;
         shot.querySelector("code").textContent = modelName(out.generator) + " · " + (out.cached ? "cached" : (out.latencyMs / 1000).toFixed(0) + "s");
       } catch (e) {
         setState(shot, "Render failed: " + e.message);
       }
+      delete shot.dataset.busy;
     }
-    button.disabled = false;
+    describeRender();
   }
 
   // The model loads before the first denoising step, and the image is decoded and saved after the last one,
@@ -357,7 +463,8 @@ export const DEMO_PAGE = `<!doctype html>
     tick();
     var timer = setInterval(tick, 500);
     try {
-      await stream("/api/generate", { brief: lastBrief, category: shot.dataset.category }, function (event) {
+      var target = shot.dataset.target;
+      await stream("/api/generate", target === DEFAULT ? { brief: lastBrief, default: true } : { brief: lastBrief, category: target }, function (event) {
         if (event.type === "progress") { progress = event; tick(); }
         else if (event.type === "done") out = event;
         else if (event.type === "error") throw new Error(event.error);
@@ -487,6 +594,8 @@ export const DEMO_PAGE = `<!doctype html>
 
   $("route").addEventListener("click", route);
   $("render").addEventListener("click", render);
+  $("compare-default").addEventListener("click", compareWithDefault);
+  $("judge").addEventListener("click", judge);
   $("brief").addEventListener("keydown", function (e) { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); route(); } });
   init().catch(function (e) { $("error").textContent = e.message; });
 </script>

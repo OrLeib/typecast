@@ -4,9 +4,10 @@ import { parseArgs } from "node:util";
 import { loadEvidence } from "../demo/evidence.ts";
 import { createDemoServer } from "../demo/server.ts";
 import { loadBriefs } from "../evaluation/briefs.ts";
-import { LOCAL_LINEUP } from "../generation/local-lineup.ts";
+import { LOCAL_DEFAULT, LOCAL_LINEUP } from "../generation/local-lineup.ts";
 import { createMfluxGenerator } from "../generation/mflux.ts";
 import { createJevClient, JEV_INPUT_PRICE_PER_MILLION } from "../jev/client.ts";
+import { withRetries } from "../jev/retry.ts";
 import { createDecisionRouter } from "../routing/router.ts";
 import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { jevConfigFromEnv } from "./config.ts";
@@ -22,10 +23,16 @@ const dev = await loadBriefs("data/dev.jsonl");
 const imagesDir = join(DEMO_DIR, "images");
 await mkdir(imagesDir, { recursive: true });
 
+/** Image requests to Jev have hit brief 503s; a short retry keeps the judge button from failing on one. */
+const JUDGE_RETRIES = { attempts: 3, delayMs: 1500 };
+
+const jev = createJevClient(jevConfigFromEnv());
 const server = createDemoServer({
-  router: createDecisionRouter(createJevClient(jevConfigFromEnv()), variant),
+  router: createDecisionRouter(jev, variant),
   roster: variant.roster,
   generators: Object.fromEntries(Object.entries(LOCAL_LINEUP).map(([category, model]) => [category, createMfluxGenerator(model)])),
+  defaultGenerator: createMfluxGenerator(LOCAL_DEFAULT),
+  judge: withRetries(jev, JUDGE_RETRIES),
   evidence: await loadEvidence("runs", DEFAULT_VARIANT),
   examples: EXAMPLE_IDS.flatMap((id) => dev.filter((b) => b.id === id).map((b) => b.brief)),
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
