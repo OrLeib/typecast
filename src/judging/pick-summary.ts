@@ -15,6 +15,9 @@ export type PickSummary = {
   byGenerator: Record<string, { picked: number; meanProbability: number }>;
 };
 
+/** A pick most orderings of the images did not agree on is a split call, close to a tie, and shouldn't read as a clear win. */
+export const isSplitPick = (pick: Pick<PickRecord, "agreement">): boolean => pick.agreement <= 0.5;
+
 export function summarizePicks({ meta, items }: ShootoutManifest, picks: Map<string, PickRecord>): PickSummary {
   const judged = items.flatMap((item) => {
     const pick = picks.get(item.id);

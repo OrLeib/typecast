@@ -505,27 +505,29 @@ export const DEMO_PAGE = `<!doctype html>
     var shots = $("shots"); shots.textContent = "";
     rec.shortlist.forEach(function (category) { shots.appendChild(makeShot(category, category)); });
     layoutShots();
-    // Routed to the default model already: its image is the default's, so there is nothing to compare.
-    var routedIsDefault = rec.shortlist.some(function (c) { return generatorOf(c) === config.defaultGenerator; });
-    var compare = $("compare-default");
-    compare.disabled = routedIsDefault;
+    // A shortlisted category that uses the default model already renders the default's image, so there is nothing to add.
+    var defaultShown = rec.shortlist.some(function (c) { return generatorOf(c) === config.defaultGenerator; });
+    var compare = $("compare-default"), name = modelName(config.defaultGenerator);
+    compare.disabled = defaultShown;
     clearVerdict();
-    compare.title = routedIsDefault
-      ? "Routing already picked the default model, " + modelName(config.defaultGenerator) + "."
-      : "Also render with " + modelName(config.defaultGenerator) + ", the single model routing has to beat.";
+    compare.title = topPickIsDefault() ? "Routing already picked the default model, " + name + "."
+      : defaultShown ? "The runner-up, " + rec.shortlist[1] + ", already uses the default model, " + name + "."
+      : "Also render with " + name + ", the single model routing has to beat.";
     describeRender();
-    showCachedImages(lastBrief, routedIsDefault);
+    showCachedImages(lastBrief, defaultShown);
   }
 
+  function topPickIsDefault() { return generatorOf(lastRoute.recommendation.shortlist[0]) === config.defaultGenerator; }
+
   /** Puts already-rendered images on screen right after routing; only images never rendered need a click. */
-  async function showCachedImages(brief, routedIsDefault) {
+  async function showCachedImages(brief, defaultShown) {
     var lookup = function (target) {
       return api("/api/cached-image", target === DEFAULT ? { brief: brief, default: true } : { brief: brief, category: target })
         .then(function (r) { return r.image; }, function () { return null; });
     };
     var shots = renderable();
     var images = await Promise.all(shots.map(function (s) { return lookup(s.dataset.target); }));
-    var defaultImage = routedIsDefault ? null : await lookup(DEFAULT);
+    var defaultImage = defaultShown ? null : await lookup(DEFAULT);
     if (brief !== lastBrief) return;
     shots.forEach(function (shot, i) { if (images[i] && pending(shot)) showImage(shot, images[i], "cached"); });
     // A comparison made before comes back with the brief.
@@ -569,19 +571,22 @@ export const DEMO_PAGE = `<!doctype html>
     $("shots").style.setProperty("--cols", n);
   }
 
-  /** The routed side of a judgment is the top pick; in compare mode the runner-up stays out of it. */
+  /**
+   * The routed side of a judgment is the top pick. The default side is any other shot made by the default model,
+   * which in compare mode can be the runner-up itself.
+   */
   function judgedPair() {
     var shots = allShots();
     var routed = shots.find(function (s) { return s.dataset.target === lastRoute.recommendation.shortlist[0]; });
-    var dflt = shots.find(function (s) { return s.dataset.target === DEFAULT; });
+    var dflt = shots.find(function (s) { return s !== routed && generatorFor(s.dataset.target) === config.defaultGenerator; });
     return routed && dflt && routed.dataset.image && dflt.dataset.image ? { routed: routed, default: dflt } : null;
   }
 
   function updateJudgeButton() {
     var button = $("judge"), ready = lastRoute && judgedPair();
     button.disabled = !ready || button.dataset.busy === "1";
-    button.title = ready
-      ? "Ask Jev which of the two images fulfils the brief better, looking at both."
+    button.title = ready ? "Ask Jev which of the two images fulfils the brief better, looking at both."
+      : lastRoute && topPickIsDefault() ? "Routing picked the default model, so there is no pair to judge."
       : "Render the routed image and the default image first.";
   }
 
@@ -874,8 +879,10 @@ export const DEMO_PAGE = `<!doctype html>
     var tiles = el("div", "shootout-tiles");
     var count = function (rate) { return Math.round(rate * s.picked) + " of " + s.picked; };
     var routedToDefault = s.briefs.filter(function (b) { return b.routedGenerator === s.defaultGenerator; }).length;
+    var splitWins = s.briefs.filter(function (b) { return b.split && pickedGenerator(b) === b.routedGenerator; }).length;
     [
-      ["Best image from the routed model", count(s.bestWas.routed), pct(s.bestWas.routed) + " · a random pick scores " + pct(1 / s.models)],
+      ["Best image from the routed model", count(s.bestWas.routed), "A random pick scores " + pct(1 / s.models) +
+        (splitWins ? ". " + splitWins + " of these " + (splitWins === 1 ? "was a split call" : "were split calls") + ", where fewer than half the orderings agreed" : "")],
       ["Best image from the default model", count(s.bestWas.default), modelName(s.defaultGenerator) + ", the single model routing has to beat" +
         (routedToDefault ? ". It was also the routed model on " + routedToDefault + " of " + s.briefs.length + " briefs" : "")],
       ["Agreement across orderings", pct(s.meanAgreement), "how often reordering the images kept Jev's pick"]
@@ -883,6 +890,8 @@ export const DEMO_PAGE = `<!doctype html>
     card.appendChild(tiles);
     s.briefs.forEach(function (b) { card.appendChild(shootoutBrief(b, s.defaultGenerator)); });
   }
+
+  function pickedGenerator(b) { var shot = b.shots.find(function (s) { return s.picked; }); return shot && shot.generator; }
 
   function shootoutBrief(b, defaultGenerator) {
     var row = el("div", "shootout-brief");
@@ -903,7 +912,7 @@ export const DEMO_PAGE = `<!doctype html>
       caption.appendChild(el("span", null, pct(shot.probability)));
       fig.appendChild(caption);
       var tags = el("div", "shot-tags");
-      if (shot.picked) tags.appendChild(el("span", "pick-tag", "Jev's pick"));
+      if (shot.picked) tags.appendChild(el("span", "pick-tag", b.split ? "Jev's pick, split" : "Jev's pick"));
       var routed = shot.generator === b.routedGenerator, isDefault = shot.generator === defaultGenerator;
       if (routed || isDefault) tags.appendChild(el("span", "routed-tag", routed && isDefault ? "routed = default" : routed ? "routed" : "default"));
       fig.appendChild(tags);

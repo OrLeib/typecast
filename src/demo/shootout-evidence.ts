@@ -3,12 +3,17 @@ import { readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { loadShootout, type ShootoutManifest } from "../generation/manifest.ts";
 import type { PickJudge } from "../judging/pick-judge.ts";
-import { summarizePicks, type PickSummary } from "../judging/pick-summary.ts";
+import { isSplitPick, summarizePicks, type PickSummary } from "../judging/pick-summary.ts";
 import { currentPicks, loadPicks, PICKS_FILE, type PickRecord } from "../judging/picks.ts";
 
 export type ShootoutShot = { generator: string; url: string; probability: number; picked: boolean };
 
-export type ShootoutBrief = { id: string; brief: string; expected: string; routed: string; routedGenerator: string; agreement: number; shots: ShootoutShot[] };
+export type ShootoutBrief = {
+  id: string; brief: string; expected: string; routed: string; routedGenerator: string; agreement: number;
+  /** Fewer than half the orderings agreed on the pick. */
+  split: boolean;
+  shots: ShootoutShot[];
+};
 
 export type ShootoutEvidence = Pick<PickSummary, "picked" | "models" | "bestWas" | "meanAgreement"> & {
   run: string;
@@ -51,7 +56,7 @@ function toEvidence(run: string, runDir: string, manifest: ShootoutManifest, pic
       return { generator: shot.generator, url, probability: pick.probabilities[shot.generator] ?? 0, picked: shot.generator === pick.best };
     });
     const routedGenerator = manifest.meta.lineup[item.route.choice] ?? "";
-    return [{ id: item.id, brief: item.brief, expected: item.expected, routed: item.route.choice, routedGenerator, agreement: pick.agreement, shots }];
+    return [{ id: item.id, brief: item.brief, expected: item.expected, routed: item.route.choice, routedGenerator, agreement: pick.agreement, split: isSplitPick(pick), shots }];
   });
   const { picked, models, bestWas, meanAgreement } = summarizePicks(manifest, picks);
   return { evidence: { run, data: manifest.meta.data, defaultGenerator: manifest.meta.defaultGenerator, picked, models, bestWas, meanAgreement, briefs }, files };
