@@ -9,7 +9,7 @@ import { currentPicks, loadPicks, PICKS_FILE, type PickRecord } from "../judging
 export type ShootoutShot = { generator: string; url: string; probability: number; picked: boolean };
 
 export type ShootoutBrief = {
-  id: string; brief: string; expected: string; routed: string; routedGenerator: string; agreement: number;
+  id: string; brief: string; expected: string; routed: string; confidence: number; routedGenerator: string; agreement: number;
   /** Fewer than half the orderings agreed on the pick. */
   split: boolean;
   shots: ShootoutShot[];
@@ -56,7 +56,7 @@ function toEvidence(run: string, runDir: string, manifest: ShootoutManifest, pic
       return { generator: shot.generator, url, probability: pick.probabilities[shot.generator] ?? 0, picked: shot.generator === pick.best };
     });
     const routedGenerator = manifest.meta.lineup[item.route.choice] ?? "";
-    return [{ id: item.id, brief: item.brief, expected: item.expected, routed: item.route.choice, routedGenerator, agreement: pick.agreement, split: isSplitPick(pick), shots }];
+    return [{ id: item.id, brief: item.brief, expected: item.expected, routed: item.route.choice, confidence: item.route.confidence, routedGenerator, agreement: pick.agreement, split: isSplitPick(pick), shots }];
   });
   const { picked, models, bestWas, meanAgreement } = summarizePicks(manifest, picks);
   return { evidence: { run, data: manifest.meta.data, defaultGenerator: manifest.meta.defaultGenerator, picked, models, bestWas, meanAgreement, briefs }, files };

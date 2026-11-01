@@ -53,7 +53,7 @@ Nothing below `cli/` reads `process.env`.
 | `comparison/` | Run comparison and report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, shootout runner (every lineup model on every brief), manifest store |
 | `judging/` | `PairJudge` interface and the Jev judge, `PickJudge` (best of N) and the Jev picker, picks store, pick summary and contact sheet, judgments store (append-only, with undo rows), blind side and order, win-rate statistics, report formatting, the local judging server and page |
-| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence, latest judged shootout. Images, routes and judgments are cached on disk under `runs/demo/` |
+| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence, latest judged shootout. Images, routes and judgments are cached on disk under `runs/demo/`. Also the static showcase page |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
 
 SOLID, and where it lives:
@@ -141,6 +141,8 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   It prints how often the best image came from the routed model, the expected category's model and the default, against chance (1 / models), and writes `<dir>/picks.html`, a contact sheet for checking the picks by eye.
   The demo shows the newest shootout run the picker has picked, brief by brief.
   Nothing has measured the picker against people yet, so treat its picks as Jev's opinion, not ground truth.
+- `npm run showcase` writes `site/`, a static one-page showcase to send people who won't run the demo: the held-out routing numbers and every brief of the newest picked shootout, routed beside default, images as JPEG.
+  It is live at https://typecast-six.vercel.app; redeploy with `vercel deploy site --prod`.
 - Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
 
 ## Conventions

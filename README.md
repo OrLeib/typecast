@@ -31,6 +31,13 @@ npm run judge-report -- runs/level2/<timestamp> --judge jev  # Jev's win rate, a
 ```
 Set `HF_XET_HIGH_PERFORMANCE=1` for the first `generate`: it downloads about 100GB of weights, and the default downloader is several times slower on high-latency links.
 
+### Showcase
+A static one-page summary of the results, live at https://typecast-six.vercel.app.
+```bash
+npm run showcase              # writes site/ from the latest eval runs and picked shootout
+vercel deploy site --prod
+```
+
 Point `TYPESAFE_BASE_URL` at a local Jev-compatible server (Kev, Laya, ...) to run without
 the hosted API.
 

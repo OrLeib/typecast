@@ -48,6 +48,20 @@
         "4183"
       ],
       "port": 4183
+    },
+    {
+      "name": "showcase",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4184",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "site"
+      ],
+      "port": 4184
     }
   ]
 }

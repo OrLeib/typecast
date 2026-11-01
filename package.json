@@ -22,7 +22,8 @@
     "judge-jev": "node --env-file=.env --experimental-strip-types src/cli/judge-jev.ts",
     "pick-jev": "node --env-file=.env --experimental-strip-types src/cli/pick-jev.ts",
     "judge-report": "node --experimental-strip-types src/cli/judge-report.ts",
-    "demo": "node --env-file=.env --experimental-strip-types src/cli/demo.ts"
+    "demo": "node --env-file=.env --experimental-strip-types src/cli/demo.ts",
+    "showcase": "node --env-file=.env --experimental-strip-types src/cli/showcase.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
