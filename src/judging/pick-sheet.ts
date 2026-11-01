@@ -11,7 +11,7 @@ export const PICK_SHEET_FILE = "picks.html";
 const STYLE = `
   :root {
     --bg: #f4f4f2; --surface: #ffffff; --text: #1c1c1a; --muted: #6b6b66; --line: #dcdcd7; --frame: #e8e8e4;
-    --accent: #2f6fde; --bar: #c9c9c3;
+    --accent: #2a62c4; --bar: #c9c9c3;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #161615; --surface: #1f1f1d; --text: #ededea; --muted: #9a9a94; --line: #34342f; --frame: #262624; --accent: #6ea0ff; --bar: #4a4a45; }

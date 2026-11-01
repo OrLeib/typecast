@@ -10,8 +10,8 @@ export const DEMO_PAGE = `<!doctype html>
   :root {
     color-scheme: light;
     --bg: #f4f4f1; --surface: #fcfcfb; --surface-2: #f0efec; --line: #e2e1dc;
-    --text: #0b0b0b; --text-2: #52514e; --muted: #7c7b76;
-    --accent: #2a78d6; --accent-soft: #cde2fb; --track: #ebeae6; --bar-rest: #c9c8c2;
+    --text: #0b0b0b; --text-2: #52514e; --muted: #6b6a65;
+    --accent: #2a78d6; --accent-2: #7aaae8; --accent-soft: #cde2fb; --accent-text: #1b5cb0; --track: #ebeae6; --bar-rest: #c9c8c2;
     --good: #0ca30c; --good-text: #006300; --good-bg: #e3f4e3;
     --warn: #fab219; --warn-text: #7a4f00; --warn-bg: #fdf1d6;
     --danger: #d03b3b;
@@ -22,7 +22,7 @@ export const DEMO_PAGE = `<!doctype html>
       color-scheme: dark;
       --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #2f2f2c;
       --text: #f0efec; --text-2: #c3c2b7; --muted: #8e8d86;
-      --accent: #3987e5; --accent-soft: #1c3557; --track: #2a2a27; --bar-rest: #4a4a45;
+      --accent: #3987e5; --accent-2: #3a6eac; --accent-soft: #1c3557; --accent-text: #a9cdf7; --track: #2a2a27; --bar-rest: #4a4a45;
       --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
       --shadow: none;
     }
@@ -31,7 +31,7 @@ export const DEMO_PAGE = `<!doctype html>
     color-scheme: dark;
     --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #2f2f2c;
     --text: #f0efec; --text-2: #c3c2b7; --muted: #8e8d86;
-    --accent: #3987e5; --accent-soft: #1c3557; --track: #2a2a27; --bar-rest: #4a4a45;
+    --accent: #3987e5; --accent-2: #3a6eac; --accent-soft: #1c3557; --accent-text: #a9cdf7; --track: #2a2a27; --bar-rest: #4a4a45;
     --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
     --shadow: none;
   }
@@ -90,8 +90,11 @@ export const DEMO_PAGE = `<!doctype html>
   .badge svg { width: 14px; height: 14px; }
   .badge.pick { color: var(--good-text); background: var(--good-bg); }
   .badge.compare { color: var(--warn-text); background: var(--warn-bg); }
-  .choice { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; }
-  .choice .vs { color: var(--muted); font-weight: 500; font-size: 20px; margin: 0 6px; }
+  .choice { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 12px; }
+  .choice-model { display: flex; flex-direction: column; gap: 2px; }
+  .choice-model b { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; }
+  .choice-model span { font-size: 13px; color: var(--text-2); }
+  .choice .vs { color: var(--muted); font-weight: 500; font-size: 20px; line-height: 33px; }
   .confidence { display: flex; align-items: baseline; gap: 8px; }
   .confidence b { font-size: 44px; font-weight: 650; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
   .confidence span { color: var(--text-2); }
@@ -108,7 +111,8 @@ export const DEMO_PAGE = `<!doctype html>
   .track { position: relative; height: 10px; background: var(--track); border-radius: 5px; }
   .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--bar-rest); transition: width .5s cubic-bezier(.2,.8,.2,1); }
   .bar-row.on .fill { background: var(--accent); }
-  .bar-row.second .fill { background: var(--accent-soft); }
+  .bar-row.second .fill { background: var(--accent-2); }
+  .bar-row.second .bar-label { color: var(--text); }
   .threshold { position: absolute; top: -5px; bottom: -5px; width: 0; border-left: 1.5px dashed var(--muted); }
   .pick-line { display: flex; align-items: center; gap: 8px; margin: -6px 0 0; color: var(--muted); font-size: 12px; }
   .pick-line i { width: 0; height: 12px; border-left: 1.5px dashed var(--muted); }
@@ -117,7 +121,8 @@ export const DEMO_PAGE = `<!doctype html>
   .render-head p { margin: 0; color: var(--text-2); font-size: 14px; }
   .render-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .shots { display: grid; gap: 16px; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
-  .shots.single { max-width: 520px; }
+  /* Capped so a route and its images fit on one laptop screen. */
+  #shots { grid-template-columns: repeat(var(--cols, 1), minmax(0, min(340px, 34vh))); }
   .shot { display: flex; flex-direction: column; gap: 8px; }
   .frame { aspect-ratio: 1; border-radius: 10px; background: var(--surface-2); overflow: hidden; display: grid; place-items: center; position: relative; }
   .frame img { width: 100%; height: 100%; object-fit: cover; display: block; animation: fade .4s ease; }
@@ -131,7 +136,7 @@ export const DEMO_PAGE = `<!doctype html>
   .shot-caption { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-2); }
   .shot-caption code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); white-space: nowrap; }
   .shot.winner .frame { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .pick-tag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); }
+  .pick-tag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--accent-text); background: var(--accent-soft); }
   .verdict-line { display: none; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14px; color: var(--text-2); }
   .verdict-line strong { color: var(--text); font-weight: 600; }
   .verdict-line .odds { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-variant-numeric: tabular-nums; }
@@ -139,7 +144,7 @@ export const DEMO_PAGE = `<!doctype html>
   .verdict-line .odds b { color: var(--text-2); font-weight: 550; }
   .evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
   .evidence-head .section-title { margin: 0; }
-  .set-about { margin: -4px 0 12px; font-size: 14px; color: var(--text-2); }
+  .set-about { margin: -4px 0 12px; font-size: 14px; color: var(--text-2); max-width: 62ch; }
   .segmented { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
   .segmented button { border: 0; background: transparent; padding: 5px 12px; font-size: 13px; color: var(--text-2); border-radius: 7px; }
   .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
@@ -148,7 +153,7 @@ export const DEMO_PAGE = `<!doctype html>
   .outcome { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 12px; background: var(--surface-2); }
   .outcome .value { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
   .outcome .value span { font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--text-2); }
-  .outcome p { margin: 0; font-size: 13px; color: var(--text-2); }
+  .outcome p { margin: 0; font-size: 13px; color: var(--text-2); text-wrap: pretty; }
   .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; border-top: 1px solid var(--line); }
   .evidence-foot { margin: 0; padding: 0 24px 18px; font-size: 13px; color: var(--muted); }
   .evidence-foot b { color: var(--text-2); font-weight: 550; }
@@ -197,7 +202,7 @@ export const DEMO_PAGE = `<!doctype html>
     .stats { grid-template-columns: 1fr 1fr; }
     .evidence-foot { padding: 0 16px 16px; }
     details { padding: 14px 16px; }
-    .shots { grid-template-columns: 1fr; }
+    .shots, #shots { grid-template-columns: 1fr; }
     #shootout .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .shootout-tiles { grid-template-columns: 1fr; }
     .shootout-brief { padding: 16px; }
@@ -467,15 +472,15 @@ export const DEMO_PAGE = `<!doctype html>
     badge.className = "badge " + rec.mode;
     badge.innerHTML = ICONS[rec.mode] + (compare ? "Unsure: compare two" : "Confident: just pick");
     var choice = $("choice"); choice.textContent = "";
-    choice.appendChild(document.createTextNode(rec.shortlist[0]));
-    if (compare) { choice.appendChild(el("span", "vs", "or")); choice.appendChild(document.createTextNode(rec.shortlist[1])); }
+    choice.appendChild(choiceModel(rec.shortlist[0]));
+    if (compare) { choice.appendChild(el("span", "vs", "or")); choice.appendChild(choiceModel(rec.shortlist[1])); }
     $("confidence").textContent = pct(r.confidence);
     growBar($("confidence-fill"), r.confidence);
     $("explain").textContent = compare
       ? "Below the " + pct(config.pickThreshold) + " pick line, so the UI should render both and let the user choose."
       : "At or above the " + pct(config.pickThreshold) + " pick line, so the UI can use this model without asking.";
     var meta = $("meta"); meta.textContent = "";
-    [r.cached ? ["From cache", "instant"] : ["Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model, "version"]].forEach(function (m) {
+    [[r.cached ? "Latency, cached" : "Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model, "version"]].forEach(function (m) {
       var span = el("span"), strong = el("strong", null, m[1]);
       span.appendChild(m[2] ? markTerm(strong, m[2]) : strong); span.appendChild(document.createTextNode(" " + m[0].toLowerCase()));
       meta.appendChild(span);
@@ -495,6 +500,14 @@ export const DEMO_PAGE = `<!doctype html>
     showRenderPlan(rec);
   }
 
+  /** The model a category routes to, named first, since the question is which model; categories without a local model name only the category. */
+  function choiceModel(category) {
+    var model = modelName(generatorOf(category)), box = el("span", "choice-model");
+    box.appendChild(el("b", null, model || category));
+    box.appendChild(el("span", null, model ? category : "no local model"));
+    return box;
+  }
+
   /** Animates a bar from empty, so every new route visibly fills in. */
   function growBar(fill, share) {
     fill.style.width = "0%";
@@ -503,14 +516,16 @@ export const DEMO_PAGE = `<!doctype html>
 
   function showRenderPlan(rec) {
     var shots = $("shots"); shots.textContent = "";
-    rec.shortlist.forEach(function (category) { shots.appendChild(makeShot(category, category)); });
+    rec.shortlist.filter(generatorOf).forEach(function (category) { shots.appendChild(makeShot(category, category)); });
     layoutShots();
     // A shortlisted category that uses the default model already renders the default's image, so there is nothing to add.
     var defaultShown = rec.shortlist.some(function (c) { return generatorOf(c) === config.defaultGenerator; });
     var compare = $("compare-default"), name = modelName(config.defaultGenerator);
-    compare.disabled = defaultShown;
+    var topRenders = !!generatorOf(rec.shortlist[0]);
+    compare.disabled = defaultShown || !topRenders;
     clearVerdict();
-    compare.title = topPickIsDefault() ? "Routing already picked the default model, " + name + "."
+    compare.title = !topRenders ? "There is no local " + rec.shortlist[0] + " model to compare with " + name + "."
+      : topPickIsDefault() ? "Routing already picked the default model, " + name + "."
       : defaultShown ? "The runner-up, " + rec.shortlist[1] + ", already uses the default model, " + name + "."
       : "Also render with " + name + ", the single model routing has to beat.";
     describeRender();
@@ -525,7 +540,7 @@ export const DEMO_PAGE = `<!doctype html>
       return api("/api/cached-image", target === DEFAULT ? { brief: brief, default: true } : { brief: brief, category: target })
         .then(function (r) { return r.image; }, function () { return null; });
     };
-    var shots = renderable();
+    var shots = allShots();
     var images = await Promise.all(shots.map(function (s) { return lookup(s.dataset.target); }));
     var defaultImage = defaultShown ? null : await lookup(DEFAULT);
     if (brief !== lastBrief) return;
@@ -552,23 +567,20 @@ export const DEMO_PAGE = `<!doctype html>
     var g = generatorFor(target);
     var shot = el("div", "shot"); shot.dataset.target = target;
     var frame = el("div", "frame");
-    frame.appendChild(el("div", "state", g ? "Not rendered yet" : "No local " + target + " model. Routing still works; rendering needs a hosted model."));
+    frame.appendChild(el("div", "state", "Not rendered yet"));
     shot.appendChild(frame);
-    var cap = el("div", "shot-caption"); cap.appendChild(el("span", null, label)); cap.appendChild(el("code", null, modelName(g) || "none"));
+    var cap = el("div", "shot-caption"); cap.appendChild(el("span", null, label)); cap.appendChild(el("code", null, modelName(g)));
     shot.appendChild(cap);
     return shot;
   }
 
   function allShots() { return Array.prototype.slice.call(document.querySelectorAll("#shots .shot")); }
-  function renderable() { return allShots().filter(function (s) { return generatorFor(s.dataset.target); }); }
   function rendered(shot) { return !!shot.querySelector(".frame img"); }
   /** Waiting to render, or rendering: a second click must not queue it again. */
   function pending(shot) { return !rendered(shot) && shot.dataset.busy !== "1"; }
 
   function layoutShots() {
-    var n = allShots().length;
-    $("shots").className = "shots" + (n === 1 ? " single" : "");
-    $("shots").style.setProperty("--cols", n);
+    $("shots").style.setProperty("--cols", allShots().length);
   }
 
   /**
@@ -618,7 +630,7 @@ export const DEMO_PAGE = `<!doctype html>
       }
       var odds = el("div", "odds");
       [["routed", pct(v.probabilities.routed)], ["default", pct(v.probabilities.default)], ["tie", pct(v.probabilities.tie)],
-       [v.model, v.cached ? "cached" : Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
+       [v.model + (v.cached ? ", cached" : ""), Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
         var item = el("span"); item.appendChild(el("b", null, o[1])); item.appendChild(document.createTextNode(" " + o[0]));
         odds.appendChild(item);
       });
@@ -632,16 +644,17 @@ export const DEMO_PAGE = `<!doctype html>
 
   function describeRender() {
     updateJudgeButton();
-    var targets = renderable(), waiting = targets.filter(pending).length;
+    var targets = allShots(), waiting = targets.filter(pending).length;
     var button = $("render");
     button.disabled = waiting === 0;
     button.textContent = waiting === 2 ? "Render both" : waiting > 2 ? "Render all" : "Render";
     var models = targets.map(function (s) { return modelName(generatorFor(s.dataset.target)); }).join(" and ");
-    $("render-text").textContent = !targets.length
-      ? "Nothing to render locally for this route."
-      : waiting || allShots().some(function (s) { return s.dataset.busy === "1"; })
+    var missing = lastRoute.recommendation.shortlist.filter(function (c) { return !generatorOf(c); });
+    var noLocal = missing.length ? "No local " + missing.join(" or ") + " model; routing still works, rendering needs a hosted one." : "";
+    $("render-text").textContent = !targets.length ? noLocal
+      : (waiting || targets.some(function (s) { return s.dataset.busy === "1"; })
         ? "Render locally with " + models + ". The first render of a model includes loading it."
-        : "Rendered locally with " + models + ".";
+        : "Rendered locally with " + models + ".") + (noLocal && " " + noLocal);
   }
 
   function compareWithDefault() {
@@ -657,7 +670,7 @@ export const DEMO_PAGE = `<!doctype html>
     if (!lastRoute) return;
     var button = $("render"); button.disabled = true;
     // Images already on screen stay: adding the default model renders only the new shot.
-    var targets = renderable().filter(pending);
+    var targets = allShots().filter(pending);
     targets.forEach(function (s) { s.dataset.busy = "1"; setState(s, "Queued"); });
     for (var i = 0; i < targets.length; i++) {
       var shot = targets[i];
