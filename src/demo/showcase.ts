@@ -69,6 +69,9 @@ const STYLE = `
   figcaption b { color: var(--text); font-weight: 600; }
   code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
   .tag { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--accent-text); background: var(--accent-soft); }
+  .verdict { margin: 16px 0 0; padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+  .verdict.hit { background: var(--pick-bg); color: var(--pick-text); }
+  .verdict.miss { background: var(--compare-bg); color: var(--compare-text); }
   .lineup { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto repeat(5, minmax(0, 72px)); align-items: center; gap: 10px; }
   .lineup p { margin: 0; font-size: 13px; color: var(--muted); max-width: 26ch; }
   .lineup figure { gap: 4px; }
@@ -160,19 +163,26 @@ function pairOf(brief: ShootoutBrief, defaultGenerator: string) {
   return bigShot(routed, "Routed, also the default") + bigShot(other, other?.picked ? "Judge's pick" : "Runner-up");
 }
 
+const routedWon = (brief: ShootoutBrief) => brief.shots.some((shot) => shot.picked && shot.generator === brief.routedGenerator);
+
 /** Clear routed wins first, then split calls, then losses: the reader meets the claim before its exceptions. */
-const showOrder = (brief: ShootoutBrief) => {
-  const routedWon = brief.shots.some((shot) => shot.picked && shot.generator === brief.routedGenerator);
-  return (routedWon ? 0 : 2) + (brief.split ? 1 : 0);
-};
+const showOrder = (brief: ShootoutBrief) => (routedWon(brief) ? 0 : 2) + (brief.split ? 1 : 0);
+
+/** Says outright which image the judge picked, so a reader never has to work out a miss from an outline. */
+function verdict(brief: ShootoutBrief, defaultGenerator: string) {
+  const best = modelName(brief.shots.find((shot) => shot.picked)?.generator ?? "");
+  const split = brief.split ? ` A split call: most orderings of the images disagreed.` : "";
+  if (routedWon(brief)) return `<p class="verdict hit"><b>Judge's pick: the routed model</b> (${escapeHtml(best)}).${split}</p>`;
+  const whose = best === modelName(defaultGenerator) ? "the default model" : "neither the routed nor the default model";
+  return `<p class="verdict miss"><b>Routing missed.</b> Judge's pick: ${escapeHtml(best)}, ${whose}.${split}</p>`;
+}
 
 function briefCard(brief: ShootoutBrief, defaultGenerator: string, pickThreshold: number) {
-  const pair = pairOf(brief, defaultGenerator);
-  const split = brief.split ? " A split call: most orderings of the images disagreed." : "";
   return `<article>
   <div class="brief-head"><blockquote>${escapeHtml(brief.brief)}</blockquote>${routeChip(brief, pickThreshold)}</div>
-  <div class="pair">${pair}</div>
-  <div class="lineup"><p>All 5 models, same prompt and seed. Outlined: the judge's pick.${split}</p>${brief.shots.map(thumb).join("")}</div>
+  <div class="pair">${pairOf(brief, defaultGenerator)}</div>
+  ${verdict(brief, defaultGenerator)}
+  <div class="lineup"><p>All 5 models, same prompt and seed. Outlined: the judge's pick.</p>${brief.shots.map(thumb).join("")}</div>
 </article>`;
 }
 

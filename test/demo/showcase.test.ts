@@ -43,6 +43,12 @@ describe("showcasePage", () => {
     expect(page([brief("a", DEFAULT, DEFAULT)])).toMatch(/Routed, also the default[\s\S]*Runner-up/);
   });
 
+  it("says outright whether the judge picked the routed model, the default, or neither", () => {
+    expect(page([brief("a", "mflux:photo@q8", "mflux:photo@q8")])).toContain("Judge's pick: the routed model</b> (photo)");
+    expect(page([brief("a", "mflux:photo@q8", DEFAULT)])).toContain("Routing missed.</b> Judge's pick: dflt, the default model.");
+    expect(page([brief("a", "mflux:photo@q8", "mflux:draw@q8")])).toContain("Judge's pick: draw, neither the routed nor the default model.");
+  });
+
   it("leads with clear routed wins, then split calls, then losses, and keeps every brief", () => {
     const html = page([brief("loss", "mflux:photo@q8", DEFAULT), brief("split", "mflux:photo@q8", "mflux:photo@q8", true), brief("win", "mflux:photo@q8", "mflux:photo@q8")]);
     const at = (id: string) => html.indexOf(`brief &lt;${id}&gt;`);
