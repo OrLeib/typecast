@@ -9,7 +9,11 @@
     "eval": "node --env-file=.env --experimental-strip-types src/cli/eval.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "compare": "node --experimental-strip-types src/cli/compare.ts"
+    "compare": "node --experimental-strip-types src/cli/compare.ts",
+    "generate": "node --env-file=.env --experimental-strip-types src/cli/generate.ts",
+    "judge": "node --experimental-strip-types src/cli/judge.ts",
+    "judge-report": "node --experimental-strip-types src/cli/judge-report.ts",
+    "demo": "node --env-file=.env --experimental-strip-types src/cli/demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

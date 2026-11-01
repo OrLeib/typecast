@@ -12,10 +12,20 @@ calibrated choices instead of text.
 ```bash
 cp .env.example .env        # add your TYPESAFE_API_KEY
 npm install
+npm run demo                # local web UI at http://localhost:4180
 npm run route -- "Hero image for a spring sneaker campaign, studio lighting"
 npm run eval                # runs data/dev.jsonl, prints accuracy + calibration
 npm run eval -- --data data/test.jsonl --variant baseline --repeats 3
 npm run compare -- runs/<baseline>.json runs/<candidate>.json   # paired deltas + CIs
+```
+
+### Level 2: does routing make better images?
+Renders a fixed sample of briefs with the routed model and a single default model, locally on Apple Silicon via [mflux](https://github.com/mflux-community/mflux), then judges the pairs blind.
+```bash
+uv tool install mflux
+npm run generate                              # 50 dev briefs -> runs/level2/<timestamp>/
+npm run judge -- runs/level2/<timestamp>      # blind side-by-side judging at http://localhost:4173
+npm run judge-report -- runs/level2/<timestamp>  # routed win rate vs the default, with a 95% CI
 ```
 
 Point `TYPESAFE_BASE_URL` at a local Jev-compatible server (Kev, Laya, ...) to run without

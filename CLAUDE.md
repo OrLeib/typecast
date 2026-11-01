@@ -37,15 +37,18 @@ top two side by side.
 - Data as JSON/JSONL under `data/`.
 
 ## Architecture
-Dependencies point inward: `cli/` -> `comparison/`, `evaluation/` -> `routing/` -> `jev/`. Nothing below `cli/` reads `process.env`.
+Dependencies point inward: `cli/` -> `demo/`, `judging/`, `generation/`, `comparison/`, `evaluation/` -> `routing/` -> `jev/`. Nothing below `cli/` reads `process.env`.
 
 | Module | Responsibility |
 |---|---|
 | `jev/parse.ts` | Wire types and strict response validation |
 | `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |
-| `routing/` | `Router` interface, the decision-model router, the keyword difficulty probe, roster and variants |
+| `routing/` | `Router` interface, the decision-model router, the pick-or-compare recommendation, the keyword difficulty probe, roster and variants |
 | `evaluation/` | Briefs, pure metrics, metric registry, runner, summary, report formatting, run store |
 | `comparison/` | Paired statistics, run comparison, report formatting |
+| `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, manifest store |
+| `judging/` | Judgments store, blind side and order, win-rate statistics, report formatting, the local judging server and page |
+| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, latest eval evidence |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
 
 SOLID, and where it lives:
@@ -99,6 +102,15 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   It was written blind by one agent, relabelled blind by another (200/200 agreement), filtered to briefs both were sure of,
   and then to briefs the keyword router gets wrong, so its 9% keyword accuracy is by construction, not a difficulty measure.
   Same rules as `test.jsonl`: score it only on final candidates.
+
+## Level 2: judging images
+- `npm run generate` routes a fixed sample of dev briefs (10 per non-video category, seeded) and renders each with the routed model and the default model, locally through mflux (`uv tool install mflux`).
+  `src/generation/local-lineup.ts` maps each placeholder category to a local model; `LOCAL_DEFAULT` is the single model routing has to beat.
+  Output goes to `runs/level2/<timestamp>/` (images + `manifest.json`). Rerun with `--out <dir>` to resume an interrupted run.
+- `npm run judge -- <dir>` serves a blind judging page on localhost. Sides are hidden and fixed per pair; picks go to `<dir>/judgments.jsonl`.
+  Only pairs where routing picked a different model are judged. Video is left out: the default image model can't make video.
+- `npm run judge-report -- <dir>` prints the routed-model win rate (ties count half) with a bootstrap 95% CI, an exact sign test, and a per-category breakdown.
+- Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
 
 ## Conventions
 - Never commit `.env`. The repo is public.
