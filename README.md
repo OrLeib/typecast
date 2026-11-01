@@ -1,3 +1,5 @@
+<img src="docs/brand/logo.svg" width="96" alt="Typecast logo">
+
 # Typecast
 
 Pick the right image model for a creative brief — in ~200ms, with a confidence you can trust.
