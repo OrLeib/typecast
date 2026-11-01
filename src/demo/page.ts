@@ -143,24 +143,34 @@ export const DEMO_PAGE = `<!doctype html>
   .segmented { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
   .segmented button { border: 0; background: transparent; padding: 5px 12px; font-size: 13px; color: var(--text-2); border-radius: 7px; }
   .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-  .evidence-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; padding: 8px; gap: 0; border-right: 1px solid var(--line); align-content: start; }
+  .evidence-headline { margin: 0; padding: 22px 24px 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.01em; max-width: 64ch; text-wrap: pretty; }
+  .outcomes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px 24px 24px; }
+  .outcome { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 12px; background: var(--surface-2); }
+  .outcome .value { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .outcome .value span { font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--text-2); }
+  .outcome p { margin: 0; font-size: 13px; color: var(--text-2); }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; border-top: 1px solid var(--line); }
+  .evidence-foot { margin: 0; padding: 0 24px 18px; font-size: 13px; color: var(--muted); }
+  .evidence-foot b { color: var(--text-2); font-weight: 550; }
+  .term { border-bottom: 1px dotted currentColor; cursor: help; }
+  .term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
   .tile { padding: 16px; }
   .tile .label { font-size: 13px; color: var(--text-2); }
   .tile .value { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .tile .sub { font-size: 12px; color: var(--muted); }
-  .chart { padding: 20px 24px; position: relative; }
-  .chart h3 { margin: 0; font-size: 14px; font-weight: 600; }
-  .chart p { margin: 2px 0 8px; font-size: 13px; color: var(--muted); }
+  .chart { padding: 12px 0 4px; max-width: 520px; }
+  .chart p { margin: 0 0 10px; font-size: 13px; color: var(--text-2); max-width: 62ch; }
   .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
   .chart .axis text { fill: var(--muted); font-size: 11px; }
   .chart .grid line { stroke: var(--line); }
-  .chart .count { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
-  .tooltip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; padding: 6px 9px; border-radius: 7px; white-space: nowrap; opacity: 0; transition: opacity .1s; font-variant-numeric: tabular-nums; }
-  details { padding: 0 24px 20px; color: var(--text-2); font-size: 13px; }
-  summary { cursor: pointer; color: var(--muted); }
+  /* The halo keeps a count readable where it crosses the dashed diagonal. */
+  .chart .count { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  .tooltip { position: absolute; z-index: 10; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; line-height: 1.45; padding: 6px 9px; border-radius: 7px; width: max-content; max-width: min(300px, calc(100vw - 32px)); opacity: 0; transition: opacity .1s; font-variant-numeric: tabular-nums; }
+  details { padding: 14px 24px; border-top: 1px solid var(--line); color: var(--text-2); font-size: 13px; }
+  summary { cursor: pointer; color: var(--text-2); font-weight: 550; }
   table { border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
   th, td { text-align: right; padding: 4px 12px 4px 0; }
+  th:first-child, td:first-child { text-align: left; }
   th { font-weight: 550; color: var(--muted); }
   .empty { padding: 24px; color: var(--muted); font-size: 14px; }
   .shootout-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; }
@@ -180,9 +190,13 @@ export const DEMO_PAGE = `<!doctype html>
     .wrap { padding: 0 16px; }
     header.top { padding: 28px 0 20px; }
     h1 { font-size: 27px; }
-    .result-grid, .evidence-grid { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: 1fr; }
     .verdict { border-right: 0; border-bottom: 1px solid var(--line); }
-    .tiles { border-right: 0; border-bottom: 1px solid var(--line); }
+    .evidence-headline { padding: 18px 16px 0; font-size: 17px; }
+    .outcomes { grid-template-columns: 1fr; padding: 14px 16px 18px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .evidence-foot { padding: 0 16px 16px; }
+    details { padding: 14px 16px; }
     .shots { grid-template-columns: 1fr; }
     #shootout .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .shootout-tiles { grid-template-columns: 1fr; }
@@ -202,7 +216,7 @@ export const DEMO_PAGE = `<!doctype html>
   <header class="top">
     <div class="brand"><span class="brand-mark">T</span>Typecast</div>
     <h1>Which image model should make this?</h1>
-    <p class="lede">Describe what you want. A decision model picks the model category in about 200ms, and its confidence says whether to just pick or to show the top two side by side.</p>
+    <p class="lede">Describe what you want. A <span data-term="jev">decision model</span> picks the model category in about 200ms, and its confidence says whether to just pick or to show the top two side by side.</p>
   </header>
 
   <div class="card composer">
@@ -230,7 +244,7 @@ export const DEMO_PAGE = `<!doctype html>
         <div class="verdict">
           <span class="badge" id="badge"></span>
           <div class="choice" id="choice"></div>
-          <div class="confidence"><b id="confidence"></b><span>confidence</span></div>
+          <div class="confidence"><b id="confidence"></b><span data-term="confidence">confidence</span></div>
           <div class="track meter"><div class="fill" id="confidence-fill"></div><div class="threshold" id="pick-mark"></div></div>
           <p class="pick-line"><i></i><span id="threshold-label"></span></p>
           <p class="explain" id="explain"></p>
@@ -265,9 +279,9 @@ export const DEMO_PAGE = `<!doctype html>
     <div class="card" id="shootout-card"></div>
   </section>
 
-  <footer>Runs locally. Routing calls the Jev decision API; images render on this Mac with mflux.</footer>
+  <footer>Runs locally. Routing calls the <span data-term="jev">Jev</span> decision API; images render on this Mac with mflux.</footer>
 </div>
-<div class="tooltip" id="tooltip"></div>
+<div class="tooltip" id="tooltip" role="tooltip"></div>
 
 <script>
   var $ = function (id) { return document.getElementById(id); };
@@ -283,6 +297,38 @@ export const DEMO_PAGE = `<!doctype html>
     { data: "data/test.jsonl", name: "Test", about: "Everyday briefs, written blind and never tuned against." },
     { data: "data/hard.jsonl", name: "Hard", about: "Tricky briefs whose deciding cue is implied, buried or contradicted. Never tuned against." }
   ];
+
+  /** Plain-words definitions behind the dotted-underlined terms. */
+  function termText(key) {
+    return {
+      jev: "Jev is a decision model from TypeSafe. Instead of writing text like a chatbot, it answers a multiple-choice question and gives a probability for each option. Typecast asks it which model category fits the brief.",
+      confidence: "How sure Jev is about its pick, from 0 to 100%. At " + pct(config.pickThreshold) + " or more Typecast just uses that model; below it, it shows the top two side by side.",
+      ece: "Expected Calibration Error: the average gap between how sure Jev said it was and how often it was actually right. 0 is perfect; 0.05 means about 5 points off.",
+      latency: "Median time for one decision, including the round trip to Jev's API.",
+      cost: "Jev bills only the text sent to it (input tokens). Its answer is free.",
+      version: "The exact Jev version that answered. Typecast asks for jev-latest, and the API reports which version that was.",
+      variant: "The wording sent to Jev: the question plus a one-line description of each category. Typecast tries different wordings and keeps the one that scores best on briefs it was never tuned on.",
+      route: "One decision: one brief sent to Jev once. Each brief was routed more than once, because Jev's numbers can shift slightly between calls."
+    }[key];
+  }
+  function markTerm(node, key) {
+    node.dataset.term = key; node.classList.add("term"); node.tabIndex = 0; node.setAttribute("aria-describedby", "tooltip");
+    return node;
+  }
+  function term(text, key) { return markTerm(el("span", null, text), key); }
+  function showTerm(node) {
+    var tip = $("tooltip"), box = node.getBoundingClientRect();
+    tip.textContent = termText(node.dataset.term);
+    tip.style.left = Math.max(8, Math.min(box.left, window.innerWidth - tip.offsetWidth - 8)) + "px";
+    tip.style.top = (box.bottom + window.scrollY + 6) + "px";
+    tip.style.opacity = 1;
+  }
+  function termAt(target) { return config && target.closest ? target.closest("[data-term]") : null; }
+  function hideTermLeaving(e) { var t = termAt(e.target); if (t && !t.contains(e.relatedTarget)) $("tooltip").style.opacity = 0; }
+  document.addEventListener("mouseover", function (e) { var t = termAt(e.target); if (t) showTerm(t); });
+  document.addEventListener("focusin", function (e) { var t = termAt(e.target); if (t) showTerm(t); });
+  document.addEventListener("mouseout", hideTermLeaving);
+  document.addEventListener("focusout", hideTermLeaving);
 
   function pct(x, digits) { return (x * 100).toFixed(digits == null ? 0 : digits) + "%"; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -316,6 +362,7 @@ export const DEMO_PAGE = `<!doctype html>
 
   async function init() {
     config = await api("/api/config");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-term]"), function (n) { markTerm(n, n.dataset.term); });
     renderFilters();
     renderExamples();
     $("threshold-label").textContent = "Pick line at " + pct(config.pickThreshold) + ". Below it, compare the top two.";
@@ -428,8 +475,9 @@ export const DEMO_PAGE = `<!doctype html>
       ? "Below the " + pct(config.pickThreshold) + " pick line, so the UI should render both and let the user choose."
       : "At or above the " + pct(config.pickThreshold) + " pick line, so the UI can use this model without asking.";
     var meta = $("meta"); meta.textContent = "";
-    [r.cached ? ["From cache", "instant"] : ["Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model]].forEach(function (m) {
-      var span = el("span"); span.appendChild(el("strong", null, m[1])); span.appendChild(document.createTextNode(" " + m[0].toLowerCase()));
+    [r.cached ? ["From cache", "instant"] : ["Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model, "version"]].forEach(function (m) {
+      var span = el("span"), strong = el("strong", null, m[1]);
+      span.appendChild(m[2] ? markTerm(strong, m[2]) : strong); span.appendChild(document.createTextNode(" " + m[0].toLowerCase()));
       meta.appendChild(span);
     });
     var bars = $("bars"); bars.textContent = "";
@@ -688,31 +736,83 @@ export const DEMO_PAGE = `<!doctype html>
       group.appendChild(b);
     });
     var s = sets.find(function (x) { return x.data === currentSet; });
-    $("set-about").textContent = s.about + " " + s.n + " briefs.";
+    $("set-about").textContent = s.about + " " + s.n + " briefs, each routed " + s.repeats + " times.";
     var card = $("evidence-card"); card.textContent = "";
-    var grid = el("div", "evidence-grid"), tiles = el("div", "tiles");
-    var m = s.metrics;
+    card.appendChild(el("p", "evidence-headline", evidenceHeadline(s.outcomes)));
+    card.appendChild(outcomeTiles(s.outcomes, s.n * s.repeats));
+    var stats = el("div", "stats");
     [
-      ["Accuracy", pct(m.accuracy, 1), s.n + " briefs × " + s.repeats + " runs"],
-      ["Calibration error", m.ece.toFixed(3), "ECE, lower is better"],
-      ["Confident misses", String(+m.confidentMissesPerRepeat.toFixed(1)), "wrong at ≥ " + pct(config.pickThreshold) + ", per run"],
-      ["Latency", Math.round(s.latencyP50) + " ms", "p95 " + Math.round(s.latencyP95) + " ms"],
-      ["Cost", "$" + s.costPer1000Usd.toFixed(3), "per 1,000 routes"],
-      ["Model", s.model, "variant " + s.variant]
+      ["Right overall", pct(s.metrics.accuracy), "first pick matched the label", null],
+      ["Calibration error", s.metrics.ece.toFixed(2), "lower is better", "ece"],
+      ["Speed", seconds(s.latencyP50), "95% within " + seconds(s.latencyP95), "latency"],
+      ["Cost", "$" + s.costPer1000Usd.toFixed(3), "per 1,000 decisions", "cost"]
+    ].forEach(function (t) { stats.appendChild(tile(t[3] ? term(t[0], t[3]) : t[0], t[1], t[2])); });
+    card.appendChild(stats);
+    var foot = el("p", "evidence-foot");
+    foot.appendChild(document.createTextNode("Decided by "));
+    foot.appendChild(term("Jev", "jev"));
+    foot.appendChild(document.createTextNode(" "));
+    foot.appendChild(markTerm(el("b", null, s.model), "version"));
+    foot.appendChild(document.createTextNode(" using the "));
+    foot.appendChild(markTerm(el("b", null, s.variant), "variant"));
+    foot.appendChild(document.createTextNode(" wording."));
+    card.appendChild(foot);
+    card.appendChild(calibrationDetails(s.bins));
+  }
+
+  function seconds(ms) { return (ms / 1000).toFixed(2) + " s"; }
+
+  /** The takeaway in one or two sentences, worded from the numbers so it can't overclaim. */
+  function evidenceHeadline(o) {
+    var parts = [];
+    if (o.picked) {
+      parts.push(o.pickedRight === o.picked
+        ? "When Typecast was sure enough to pick a model, it was right every time."
+        : "When Typecast was sure enough to pick a model, it was right " + pct(o.pickedRight / o.picked) + " of the time.");
+    }
+    if (o.compared) parts.push("When it wasn't, the right model was one of the two it showed in " + o.comparedInShortlist + " of " + o.compared + " cases.");
+    return parts.join(" ");
+  }
+
+  function outcomeTiles(o, routes) {
+    var wrap = el("div", "outcomes");
+    [
+      ["pick", "Picked for you", o.pickedRight, o.picked, "right",
+        [o.picked + " of " + routes + " ", term("routes", "route"), ". Jev was ", term(pct(config.pickThreshold) + "+ sure", "confidence"), ", so the UI used its pick without asking."]],
+      ["compare", "Shown side by side", o.comparedInShortlist, o.compared, "had the right model in the pair",
+        [o.compared + " of " + routes + " ", term("routes", "route"), ". Jev was ", term("less sure", "confidence"), ", so the UI showed its top two and let the user choose."]]
     ].forEach(function (t) {
-      var tile = el("div", "tile"); tile.appendChild(el("div", "label", t[0])); tile.appendChild(el("div", "value", t[1])); tile.appendChild(el("div", "sub", t[2]));
-      tiles.appendChild(tile);
+      var box = el("div", "outcome");
+      var badge = el("span", "badge " + t[0]); badge.innerHTML = ICONS[t[0]]; badge.appendChild(document.createTextNode(t[1]));
+      box.appendChild(badge);
+      var value = el("div", "value", t[3] ? pct(t[2] / t[3]) : "None");
+      if (t[3]) value.appendChild(el("span", null, t[4]));
+      box.appendChild(value);
+      var p = el("p");
+      t[5].forEach(function (part) { p.appendChild(typeof part === "string" ? document.createTextNode(part) : part); });
+      box.appendChild(p);
+      wrap.appendChild(box);
     });
-    grid.appendChild(tiles);
-    grid.appendChild(reliabilityChart(s.bins));
-    card.appendChild(grid);
-    card.appendChild(binTable(s.bins));
+    return wrap;
+  }
+
+  function tile(label, value, sub) {
+    var t = el("div", "tile"), l = el("div", "label");
+    l.appendChild(typeof label === "string" ? document.createTextNode(label) : label);
+    t.appendChild(l); t.appendChild(el("div", "value", value)); t.appendChild(el("div", "sub", sub));
+    return t;
+  }
+
+  function calibrationDetails(bins) {
+    var details = el("details"); details.appendChild(el("summary", null, "How sure vs. how often right"));
+    details.appendChild(reliabilityChart(bins));
+    details.appendChild(binTable(bins));
+    return details;
   }
 
   function reliabilityChart(bins) {
     var wrap = el("div", "chart");
-    wrap.appendChild(el("h3", null, "Reliability"));
-    wrap.appendChild(el("p", null, "Accuracy within each confidence band, with the number of routes above each bar. On the dashed line, confidence means exactly what it says."));
+    wrap.appendChild(el("p", null, "Routes grouped by how sure Jev was. Bar height is how often each group was right; the number on top is how many routes it holds. A bar that reaches the dashed line means Jev was exactly as sure as it should have been."));
     var W = 360, H = 240, L = 34, R = 8, T = 8, B = 26, iw = W - L - R, ih = H - T - B;
     var x = function (v) { return L + v * iw; }, y = function (v) { return T + (1 - v) * ih; };
     var ns = "http://www.w3.org/2000/svg";
@@ -725,14 +825,14 @@ export const DEMO_PAGE = `<!doctype html>
       var t = add(axis, "text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }); t.textContent = pct(v);
     });
     [0, 0.5, 1].forEach(function (v) { var t = add(axis, "text", { x: x(v), y: H - 6, "text-anchor": v === 0 ? "start" : v === 1 ? "end" : "middle" }); t.textContent = pct(v); });
-    var tooltip = $("tooltip");
+    var tooltip = $("tooltip"), counts = add(svg, "g", {});
     bins.forEach(function (b) {
       if (!b.count) return;
       var gap = 2, bx = x(b.lo) + gap / 2, bw = x(b.hi) - x(b.lo) - gap, top = y(b.accuracy), h = Math.max(y(0) - top, 0);
       var r = Math.min(4, bw / 2, h);
       var path = "M" + bx + "," + y(0) + "V" + (top + r) + "Q" + bx + "," + top + " " + (bx + r) + "," + top + "H" + (bx + bw - r) + "Q" + (bx + bw) + "," + top + " " + (bx + bw) + "," + (top + r) + "V" + y(0) + "Z";
       var bar = add(svg, "path", { d: path, fill: "var(--accent)" });
-      var count = add(svg, "text", { x: bx + bw / 2, y: top - 5, "text-anchor": "middle", class: "count" }); count.textContent = b.count;
+      var count = add(counts, "text", { x: bx + bw / 2, y: top - 5, "text-anchor": "middle", class: "count" }); count.textContent = b.count;
       var hit = add(svg, "rect", { x: x(b.lo), y: T, width: x(b.hi) - x(b.lo), height: ih, fill: "transparent" });
       hit.addEventListener("mousemove", function (e) {
         tooltip.textContent = "Confidence " + pct(b.lo) + "–" + pct(b.hi) + ": " + pct(b.accuracy, 1) + " right, n=" + b.count;
@@ -745,22 +845,22 @@ export const DEMO_PAGE = `<!doctype html>
     });
     add(svg, "line", { x1: x(0), y1: y(0), x2: x(1), y2: y(1), stroke: "var(--muted)", "stroke-width": 1.5, "stroke-dasharray": "4 4" });
     add(svg, "line", { x1: L, x2: W - R, y1: y(0), y2: y(0), stroke: "var(--muted)", "stroke-width": 1 });
+    // Counts go last so the dashed diagonal never draws over one.
+    svg.appendChild(counts);
     wrap.appendChild(svg);
     return wrap;
   }
 
   function binTable(bins) {
-    var details = el("details"); details.appendChild(el("summary", null, "Show as table"));
     var table = el("table"), head = el("tr");
-    ["Confidence band", "Briefs", "Avg confidence", "Accuracy"].forEach(function (h) { head.appendChild(el("th", null, h)); });
+    ["How sure", "Routes", "Said on average", "Was right"].forEach(function (h) { head.appendChild(el("th", null, h)); });
     table.appendChild(head);
     bins.filter(function (b) { return b.count; }).forEach(function (b) {
       var tr = el("tr");
       [pct(b.lo) + "–" + pct(b.hi), b.count, pct(b.avgConfidence, 1), pct(b.accuracy, 1)].forEach(function (v) { tr.appendChild(el("td", null, String(v))); });
       table.appendChild(tr);
     });
-    details.appendChild(table);
-    return details;
+    return table;
   }
 
   function renderShootout() {
@@ -779,10 +879,7 @@ export const DEMO_PAGE = `<!doctype html>
       ["Best image from the default model", count(s.bestWas.default), modelName(s.defaultGenerator) + ", the single model routing has to beat" +
         (routedToDefault ? ". It was also the routed model on " + routedToDefault + " of " + s.briefs.length + " briefs" : "")],
       ["Agreement across orderings", pct(s.meanAgreement), "how often reordering the images kept Jev's pick"]
-    ].forEach(function (t) {
-      var tile = el("div", "tile"); tile.appendChild(el("div", "label", t[0])); tile.appendChild(el("div", "value", t[1])); tile.appendChild(el("div", "sub", t[2]));
-      tiles.appendChild(tile);
-    });
+    ].forEach(function (t) { tiles.appendChild(tile(t[0], t[1], t[2])); });
     card.appendChild(tiles);
     s.briefs.forEach(function (b) { card.appendChild(shootoutBrief(b, s.defaultGenerator)); });
   }
