@@ -66,12 +66,15 @@ ${manifest.items.map((item) => renderItem(item, manifest, picks.get(item.id))).j
 
 function renderItem(item: ShootoutItem, { meta }: ShootoutManifest, pick: PickRecord | undefined): string {
   const verdict = pick ? `agreement across orders ${percent(pick.agreement, 0)}` : "not picked yet";
-  const tagsFor = (shot: Shot) => [
-    ...(shot.generator === pick?.best ? ["pick"] : []),
-    ...(shot.generator === meta.lineup[item.route.choice] ? ["routed"] : []),
-    ...(shot.generator === meta.lineup[item.expected] ? ["expected"] : []),
-    ...(shot.generator === meta.defaultGenerator ? ["default"] : []),
-  ];
+  const tagsFor = (shot: Shot) => {
+    const routed = shot.generator === meta.lineup[item.route.choice];
+    const isDefault = shot.generator === meta.defaultGenerator;
+    return [
+      ...(shot.generator === pick?.best ? ["pick"] : []),
+      ...(routed && isDefault ? ["routed = default"] : routed ? ["routed"] : isDefault ? ["default"] : []),
+      ...(shot.generator === meta.lineup[item.expected] ? ["expected"] : []),
+    ];
+  };
   return `<section>
   <h2>${escapeHtml(item.brief)}</h2>
   <p class="meta">${escapeHtml(item.id)} · expected ${escapeHtml(item.expected)} · routed ${escapeHtml(item.route.choice)} (${item.route.confidence.toFixed(2)}) · ${verdict}</p>
@@ -87,7 +90,7 @@ function renderShot(shot: Shot, probability: number | undefined, tags: string[])
       <figcaption>
         <div class="model" title="${escapeHtml(shot.generator)}">${escapeHtml(shot.generator)}</div>
         <div class="row"><div class="bar"><span style="width:${width.toFixed(1)}%"></span></div><span class="pct">${probability === undefined ? "" : percent(probability, 0)}</span></div>
-        <div class="tags">${tags.map((t) => `<span class="tag ${t}">${t}</span>`).join("")}</div>
+        <div class="tags">${tags.map((t) => `<span class="tag${t === "pick" ? " pick" : ""}">${t}</span>`).join("")}</div>
       </figcaption>
     </figure>`;
 }

@@ -18,6 +18,15 @@ describe("renderPickSheet", () => {
     expect(html).toContain("not picked yet");
   });
 
+  it("tags the default model, and says so once when routing picked it", () => {
+    const routedToDefault = shootoutOf([{ id: "t", choice: "typography" }]);
+    routedToDefault.meta.lineup.typography = "dflt";
+    const sheet = renderPickSheet(routedToDefault, new Map(), "jev");
+    expect(sheet).toContain(`<span class="tag">routed = default</span>`);
+    expect(sheet).not.toMatch(/>routed<\/span><span class="tag">default</);
+    expect(html).toContain(`<span class="tag">default</span>`);
+  });
+
   it("escapes brief text", () => {
     expect(html).toContain("brief &lt;a&gt;");
     expect(html).not.toContain("brief <a>");

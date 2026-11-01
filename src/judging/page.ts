@@ -20,16 +20,18 @@ export function judgePage(dir: string): string {
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
-  body { font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  /* One pair and its buttons fit a laptop screen without scrolling: the images take whatever height is left. */
+  body { font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
   header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--line); }
   header h1 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   #progress { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  main { flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 24px; max-width: 1440px; width: 100%; margin: 0 auto; }
+  main { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; padding: 24px; max-width: 1440px; width: 100%; margin: 0 auto; }
   #brief { margin: 0; font-size: 20px; line-height: 1.4; font-weight: 500; max-width: 70ch; text-wrap: pretty; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
-  .frame { aspect-ratio: 1; background: var(--frame); border-radius: 8px; overflow: hidden; }
+  .pair { flex: 1; min-height: 320px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr); gap: 20px; }
+  figure { margin: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
+  .frame { min-height: 0; background: var(--frame); border-radius: 8px; overflow: hidden; }
   .frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .frame img:not([src]) { visibility: hidden; }
   figcaption { display: flex; }
   button { font: inherit; font-weight: 500; border-radius: 8px; padding: 10px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
   button:hover { border-color: var(--muted); }
@@ -44,7 +46,9 @@ export function judgePage(dir: string): string {
   #error { color: #c4372c; min-height: 1.5em; margin: 0; text-align: center; }
   @media (max-width: 720px) {
     header, main { padding-left: 16px; padding-right: 16px; }
-    .pair { grid-template-columns: 1fr; }
+    body { height: auto; min-height: 100vh; }
+    .pair { flex: none; grid-template-columns: 1fr; grid-template-rows: none; }
+    .frame { aspect-ratio: 1; }
     #brief { font-size: 17px; }
     kbd { display: none; }
   }
@@ -72,17 +76,20 @@ export function judgePage(dir: string): string {
   let busy = false;
   const $ = (id) => document.getElementById(id);
 
-  function render(state) {
-    $("progress").textContent = state.judged + " of " + state.total + " judged";
+  // Picks stay blocked until both new images are on screen, so a quick key press can't judge the previous pair.
+  async function render(state) {
+    const finished = !state.pair;
+    if (!finished) {
+      $("left").src = state.pair.left;
+      $("right").src = state.pair.right;
+      await Promise.all([$("left").decode(), $("right").decode()]).catch(() => {});
+      $("brief").textContent = state.pair.brief;
+    }
     current = state.pair;
-    const finished = !current;
+    $("progress").textContent = state.judged + " of " + state.total + " judged";
     for (const id of ["judging", "pair", "actions"]) $(id).style.display = finished ? "none" : "";
     $("done").style.display = finished ? "block" : "none";
     $("undo").disabled = state.judged === 0;
-    if (finished) return;
-    $("brief").textContent = current.brief;
-    $("left").src = current.left;
-    $("right").src = current.right;
   }
 
   async function call(path, body) {
@@ -93,7 +100,7 @@ export function judgePage(dir: string): string {
       const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
-      render(data);
+      await render(data);
     } catch (e) {
       $("error").textContent = e.message;
     } finally {

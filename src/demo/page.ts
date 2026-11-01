@@ -76,6 +76,7 @@ export const DEMO_PAGE = `<!doctype html>
   .examples-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
   .examples-foot button { font-size: 13px; padding: 6px 12px; }
   .label-check { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--text-2); }
+  .label-check[hidden] { display: none; }
   .label-check svg { width: 14px; height: 14px; flex: none; }
   .label-check.match svg { color: var(--good); }
   .label-check.miss svg { color: var(--danger); }
@@ -99,7 +100,9 @@ export const DEMO_PAGE = `<!doctype html>
   .meta strong { color: var(--text-2); font-weight: 550; }
   .bars { padding: 24px; }
   .bars-title { margin: 0 0 6px; font-size: 13px; font-weight: 550; color: var(--text-2); }
-  .bar-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 48px; align-items: center; gap: 12px; padding: 7px 0; }
+  .meter { margin-top: -4px; }
+  .meter .fill { background: var(--accent); }
+  .bar-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 12px; padding: 7px 0; }
   .bar-label { font-size: 14px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bar-row.on .bar-label { color: var(--text); font-weight: 600; }
   .track { position: relative; height: 10px; background: var(--track); border-radius: 5px; }
@@ -107,11 +110,8 @@ export const DEMO_PAGE = `<!doctype html>
   .bar-row.on .fill { background: var(--accent); }
   .bar-row.second .fill { background: var(--accent-soft); }
   .threshold { position: absolute; top: -5px; bottom: -5px; width: 0; border-left: 1.5px dashed var(--muted); }
-  .bar-value { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text-2); }
-  .bar-row.on .bar-value { color: var(--text); font-weight: 600; }
-  .bars-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--muted); font-size: 12px; }
-  .bars-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
-  .bars-foot i { width: 0; height: 12px; border-left: 1.5px dashed var(--muted); }
+  .pick-line { display: flex; align-items: center; gap: 8px; margin: -6px 0 0; color: var(--muted); font-size: 12px; }
+  .pick-line i { width: 0; height: 12px; border-left: 1.5px dashed var(--muted); }
   .render { border-top: 1px solid var(--line); padding: 24px; }
   .render-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .render-head p { margin: 0; color: var(--text-2); font-size: 14px; }
@@ -188,7 +188,7 @@ export const DEMO_PAGE = `<!doctype html>
     .shootout-tiles { grid-template-columns: 1fr; }
     .shootout-brief { padding: 16px; }
     .hint { display: none; }
-    .bar-row { grid-template-columns: 96px minmax(0, 1fr) 44px; }
+    .bar-row { grid-template-columns: 96px minmax(0, 1fr); }
     .examples { grid-template-columns: 1fr; }
     .example { min-height: 0; }
   }
@@ -231,6 +231,8 @@ export const DEMO_PAGE = `<!doctype html>
           <span class="badge" id="badge"></span>
           <div class="choice" id="choice"></div>
           <div class="confidence"><b id="confidence"></b><span>confidence</span></div>
+          <div class="track meter"><div class="fill" id="confidence-fill"></div><div class="threshold" id="pick-mark"></div></div>
+          <p class="pick-line"><i></i><span id="threshold-label"></span></p>
           <p class="explain" id="explain"></p>
           <p class="label-check" id="label-check" hidden></p>
           <div class="meta" id="meta"></div>
@@ -238,8 +240,6 @@ export const DEMO_PAGE = `<!doctype html>
         <div class="bars">
           <h3 class="bars-title">Probability per category</h3>
           <div id="bars"></div>
-          <div class="bars-foot"><i></i><span id="threshold-label"></span></div>
-          <p class="bars-note">The decision model reports its confidence separately from these probabilities, so the two can differ by a few points.</p>
         </div>
       </div>
       <div class="render">
@@ -319,6 +319,7 @@ export const DEMO_PAGE = `<!doctype html>
     renderFilters();
     renderExamples();
     $("threshold-label").textContent = "Pick line at " + pct(config.pickThreshold) + ". Below it, compare the top two.";
+    $("pick-mark").style.left = pct(config.pickThreshold, 1);
     renderEvidence();
     renderShootout();
   }
@@ -422,6 +423,7 @@ export const DEMO_PAGE = `<!doctype html>
     choice.appendChild(document.createTextNode(rec.shortlist[0]));
     if (compare) { choice.appendChild(el("span", "vs", "or")); choice.appendChild(document.createTextNode(rec.shortlist[1])); }
     $("confidence").textContent = pct(r.confidence);
+    growBar($("confidence-fill"), r.confidence);
     $("explain").textContent = compare
       ? "Below the " + pct(config.pickThreshold) + " pick line, so the UI should render both and let the user choose."
       : "At or above the " + pct(config.pickThreshold) + " pick line, so the UI can use this model without asking.";
@@ -436,15 +438,19 @@ export const DEMO_PAGE = `<!doctype html>
       var desc = (config.roster.find(function (c) { return c.id === entry[0]; }) || {}).description || "";
       row.title = entry[0] + ": " + pct(entry[1], 1) + (desc ? "\\n" + desc : "");
       row.appendChild(el("span", "bar-label", entry[0]));
-      var track = el("div", "track"), fill = el("div", "fill"), mark = el("div", "threshold");
-      fill.style.width = "0%"; mark.style.left = pct(config.pickThreshold, 1);
-      track.appendChild(fill); track.appendChild(mark); row.appendChild(track);
-      row.appendChild(el("span", "bar-value", pct(entry[1])));
+      var track = el("div", "track"), fill = el("div", "fill");
+      track.appendChild(fill); row.appendChild(track);
       bars.appendChild(row);
-      requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct(entry[1], 1); }); });
+      growBar(fill, entry[1]);
     });
     showLabelCheck(rec);
     showRenderPlan(rec);
+  }
+
+  /** Animates a bar from empty, so every new route visibly fills in. */
+  function growBar(fill, share) {
+    fill.style.width = "0%";
+    requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct(share, 1); }); });
   }
 
   function showRenderPlan(rec) {
@@ -767,19 +773,21 @@ export const DEMO_PAGE = `<!doctype html>
     var card = $("shootout-card"); card.textContent = "";
     var tiles = el("div", "shootout-tiles");
     var count = function (rate) { return Math.round(rate * s.picked) + " of " + s.picked; };
+    var routedToDefault = s.briefs.filter(function (b) { return b.routedGenerator === s.defaultGenerator; }).length;
     [
       ["Best image from the routed model", count(s.bestWas.routed), pct(s.bestWas.routed) + " · a random pick scores " + pct(1 / s.models)],
-      ["Best image from the default model", count(s.bestWas.default), modelName(s.defaultGenerator) + ", the single model routing has to beat"],
+      ["Best image from the default model", count(s.bestWas.default), modelName(s.defaultGenerator) + ", the single model routing has to beat" +
+        (routedToDefault ? ". It was also the routed model on " + routedToDefault + " of " + s.briefs.length + " briefs" : "")],
       ["Agreement across orderings", pct(s.meanAgreement), "how often reordering the images kept Jev's pick"]
     ].forEach(function (t) {
       var tile = el("div", "tile"); tile.appendChild(el("div", "label", t[0])); tile.appendChild(el("div", "value", t[1])); tile.appendChild(el("div", "sub", t[2]));
       tiles.appendChild(tile);
     });
     card.appendChild(tiles);
-    s.briefs.forEach(function (b) { card.appendChild(shootoutBrief(b)); });
+    s.briefs.forEach(function (b) { card.appendChild(shootoutBrief(b, s.defaultGenerator)); });
   }
 
-  function shootoutBrief(b) {
+  function shootoutBrief(b, defaultGenerator) {
     var row = el("div", "shootout-brief");
     row.appendChild(el("p", "shootout-text", b.brief));
     var meta = el("p", "shootout-meta");
@@ -799,7 +807,8 @@ export const DEMO_PAGE = `<!doctype html>
       fig.appendChild(caption);
       var tags = el("div", "shot-tags");
       if (shot.picked) tags.appendChild(el("span", "pick-tag", "Jev's pick"));
-      if (shot.generator === b.routedGenerator) tags.appendChild(el("span", "routed-tag", "routed"));
+      var routed = shot.generator === b.routedGenerator, isDefault = shot.generator === defaultGenerator;
+      if (routed || isDefault) tags.appendChild(el("span", "routed-tag", routed && isDefault ? "routed = default" : routed ? "routed" : "default"));
       fig.appendChild(tags);
       shots.appendChild(fig);
     });
