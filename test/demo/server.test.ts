@@ -14,7 +14,7 @@ const router: Router = {
   async route(brief) {
     routeCalls++;
     const unsure = brief.includes("maybe");
-    return { type: "choice", choice: "photo", confidence: unsure ? 0.6 : 0.95, probabilities: unsure ? { photo: 0.6, video: 0.4 } : { photo: 0.95, video: 0.05 }, model: "jev-test", inputTokens: 500, latencyMs: 180 };
+    return { choice: "photo", confidence: unsure ? 0.6 : 0.95, probabilities: unsure ? { photo: 0.6, video: 0.4 } : { photo: 0.95, video: 0.05 }, model: "jev-test", inputTokens: 500, latencyMs: 180 };
   },
 };
 const photo = createFakeGenerator("mflux:photo@q8", 4200, 2);
@@ -27,7 +27,7 @@ const server = createDemoServer({
   defaultGenerator: fallback,
   judge,
   evidence: [],
-  examples: ["a brief"],
+  examples: [{ brief: "a brief", expected: "photo" }],
   inputPricePerMillion: 0.04,
   imagesDir: dir,
   cacheDir: join(dir, "cache"),
@@ -54,7 +54,7 @@ describe("demo server", () => {
     expect(config).toMatchObject({
       roster: [{ id: "photo", description: "Photos", generator: "mflux:photo@q8" }, { id: "video", description: "Clips", generator: null }],
       defaultGenerator: "mflux:default@q8",
-      examples: ["a brief"],
+      examples: [{ brief: "a brief", expected: "photo" }],
       pickThreshold: 0.85,
     });
   });

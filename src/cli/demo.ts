@@ -12,8 +12,6 @@ import { createDecisionRouter } from "../routing/router.ts";
 import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { jevConfigFromEnv } from "./config.ts";
 
-/** Dev briefs offered as one-click examples: one per category, two of them labelled borderline. */
-const EXAMPLE_IDS = ["b01", "b02", "b03", "b77", "b90", "b20"];
 const DEMO_DIR = join("runs", "demo");
 
 const { values: args } = parseArgs({ options: { port: { type: "string", default: process.env.PORT ?? "4180" }, seed: { type: "string", default: "1" } } });
@@ -35,7 +33,7 @@ const server = createDemoServer({
   defaultGenerator: createMfluxGenerator(LOCAL_DEFAULT),
   judge: withRetries(jev, JUDGE_RETRIES),
   evidence: await loadEvidence("runs", DEFAULT_VARIANT),
-  examples: EXAMPLE_IDS.flatMap((id) => dev.filter((b) => b.id === id).map((b) => b.brief)),
+  examples: dev.map(({ brief, expected, note }) => ({ brief, expected, note })),
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
   imagesDir,
   cacheDir: join(DEMO_DIR, "cache"),

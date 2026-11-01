@@ -53,13 +53,33 @@ export const DEMO_PAGE = `<!doctype html>
   kbd { font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }
   button { font: inherit; font-weight: 550; border-radius: 9px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); transition: background .12s, border-color .12s, opacity .12s; }
   button:hover:not(:disabled) { border-color: var(--muted); }
-  button:focus-visible, textarea:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button:disabled { opacity: .45; cursor: default; }
   button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
   button.primary:hover:not(:disabled) { opacity: .88; border-color: var(--text); }
-  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
-  .chip { font-size: 13px; font-weight: 450; color: var(--text-2); padding: 6px 11px; border-radius: 999px; background: transparent; border: 1px solid var(--line); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chip:hover:not(:disabled) { color: var(--text); }
+  .examples-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .examples-head .section-title { margin: 0; }
+  .filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filters button { flex: none; font-size: 13px; font-weight: 500; padding: 5px 11px; border-radius: 999px; color: var(--text-2); background: transparent; }
+  .filters button span { color: var(--muted); font-weight: 450; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .filters button[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+  .filters button[aria-pressed="true"] span { color: inherit; opacity: .7; }
+  .examples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .example { display: flex; flex-direction: column; gap: 8px; text-align: left; font-weight: 400; padding: 12px 14px; border-radius: 12px; background: var(--surface); min-height: 112px; }
+  .example:hover:not(:disabled) { border-color: var(--muted); }
+  .example.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .example-tags { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .example-tags b { color: var(--text-2); font-weight: 600; }
+  .example-tags .borderline { padding: 0 6px; border-radius: 999px; border: 1px dashed var(--muted); line-height: 17px; }
+  .example-text { font-size: 14px; line-height: 1.45; color: var(--text); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .examples-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .examples-foot button { font-size: 13px; padding: 6px 12px; }
+  .label-check { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--text-2); }
+  .label-check svg { width: 14px; height: 14px; flex: none; }
+  .label-check.match svg { color: var(--good); }
+  .label-check.miss svg { color: var(--danger); }
+  .label-check b { color: var(--text); font-weight: 600; }
   section { margin-top: 28px; }
   .section-title { font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
   #result { display: none; }
@@ -155,6 +175,11 @@ export const DEMO_PAGE = `<!doctype html>
     .shots { grid-template-columns: 1fr; }
     .hint { display: none; }
     .bar-row { grid-template-columns: 96px minmax(0, 1fr) 44px; }
+    .examples { grid-template-columns: 1fr; }
+    .example { min-height: 0; }
+  }
+  @media (min-width: 761px) and (max-width: 960px) {
+    .examples { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 </style>
 </head>
@@ -173,8 +198,16 @@ export const DEMO_PAGE = `<!doctype html>
       <button class="primary" id="route">Route brief</button>
     </div>
   </div>
-  <div class="examples" id="examples"></div>
   <p id="error" role="alert"></p>
+
+  <section id="examples-section" aria-labelledby="examples-title">
+    <div class="examples-head">
+      <h2 class="section-title" id="examples-title">Try a labelled brief</h2>
+      <div class="filters" id="filters" role="group" aria-label="Filter examples by label"></div>
+    </div>
+    <div class="examples" id="examples"></div>
+    <div class="examples-foot"><span id="examples-count"></span><button id="more-examples">Show more</button></div>
+  </section>
 
   <section id="result" aria-live="polite">
     <h2 class="section-title">Routing</h2>
@@ -185,6 +218,7 @@ export const DEMO_PAGE = `<!doctype html>
           <div class="choice" id="choice"></div>
           <div class="confidence"><b id="confidence"></b><span>confidence</span></div>
           <p class="explain" id="explain"></p>
+          <p class="label-check" id="label-check" hidden></p>
           <div class="meta" id="meta"></div>
         </div>
         <div class="bars">
@@ -220,6 +254,8 @@ export const DEMO_PAGE = `<!doctype html>
   var config = null, lastRoute = null, lastBrief = "", busy = false;
   var ICONS = {
     pick: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
+    match: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
+    miss: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
     compare: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="5" height="10" rx="1.2"/><rect x="9" y="3" width="5" height="10" rx="1.2"/></svg>'
   };
   // Only held-out sets: dev was tuned against, so its numbers would flatter the router.
@@ -260,14 +296,82 @@ export const DEMO_PAGE = `<!doctype html>
 
   async function init() {
     config = await api("/api/config");
-    config.examples.forEach(function (text) {
-      var chip = el("button", "chip", text);
-      chip.title = text;
-      chip.addEventListener("click", function () { $("brief").value = text; route(); });
-      $("examples").appendChild(chip);
-    });
+    renderFilters();
+    renderExamples();
     $("threshold-label").textContent = "Pick line at " + pct(config.pickThreshold) + ". Below it, compare the top two.";
     renderEvidence();
+  }
+
+  /** Examples shown per page, and more on each "Show more": two rows of three. */
+  var EXAMPLES_PAGE = 6;
+  var BORDERLINE = "borderline";
+  var exampleFilter = "all", examplesShown = EXAMPLES_PAGE;
+
+  /** Interleaves labels so the first page of "All" shows every category, not one cluster of the file. */
+  function interleaved(examples) {
+    var byLabel = config.roster.map(function (c) { return examples.filter(function (e) { return e.expected === c.id; }); });
+    var out = [];
+    for (var i = 0; out.length < examples.length; i++) byLabel.forEach(function (list) { if (list[i]) out.push(list[i]); });
+    return out;
+  }
+  function filteredExamples() {
+    if (exampleFilter === "all") return interleaved(config.examples);
+    return config.examples.filter(function (e) { return exampleFilter === BORDERLINE ? e.note : e.expected === exampleFilter; });
+  }
+  function exampleFor(brief) { return config.examples.find(function (e) { return e.brief === brief; }); }
+
+  function renderFilters() {
+    var options = [["all", "All", config.examples.length]].concat(
+      config.roster.map(function (c) { return [c.id, c.id, config.examples.filter(function (e) { return e.expected === c.id; }).length]; }),
+      [[BORDERLINE, "Borderline", config.examples.filter(function (e) { return e.note; }).length]]);
+    var filters = $("filters"); filters.textContent = "";
+    options.filter(function (o) { return o[2] > 0; }).forEach(function (o) {
+      var b = el("button", null, o[1]);
+      b.appendChild(el("span", null, String(o[2])));
+      b.setAttribute("aria-pressed", String(o[0] === exampleFilter));
+      b.addEventListener("click", function () { exampleFilter = o[0]; examplesShown = EXAMPLES_PAGE; renderFilters(); renderExamples(); });
+      filters.appendChild(b);
+    });
+  }
+
+  function renderExamples() {
+    var all = filteredExamples(), shown = all.slice(0, examplesShown);
+    var grid = $("examples"); grid.textContent = "";
+    shown.forEach(function (ex) {
+      var card = el("button", "example" + (ex.brief === $("brief").value.trim() ? " active" : ""));
+      var tags = el("span", "example-tags");
+      tags.appendChild(el("span", null, "Labelled"));
+      tags.appendChild(el("b", null, ex.expected));
+      if (ex.note) { tags.appendChild(el("span", "borderline", "borderline")); card.title = ex.note; }
+      card.appendChild(tags);
+      card.appendChild(el("span", "example-text", ex.brief));
+      card.addEventListener("click", function () { $("brief").value = ex.brief; markActiveExample(); route(); });
+      grid.appendChild(card);
+    });
+    $("examples-count").textContent = "Showing " + shown.length + " of " + all.length + " dev briefs";
+    $("more-examples").hidden = shown.length >= all.length;
+  }
+  function markActiveExample() {
+    var brief = $("brief").value.trim();
+    Array.prototype.forEach.call(document.querySelectorAll("#examples .example"), function (card) {
+      card.classList.toggle("active", card.querySelector(".example-text").textContent === brief);
+    });
+  }
+
+  /** For a labelled example, says whether the route agrees with its label. */
+  function showLabelCheck(rec) {
+    var check = $("label-check"), ex = exampleFor(lastBrief);
+    check.hidden = !ex;
+    if (!ex) return;
+    var rank = rec.shortlist.indexOf(ex.expected);
+    check.className = "label-check " + (rank === -1 ? "miss" : "match");
+    check.innerHTML = rank === -1 ? ICONS.miss : ICONS.match;
+    var text = el("span");
+    text.appendChild(document.createTextNode("Labelled "));
+    text.appendChild(el("b", null, ex.expected));
+    text.appendChild(document.createTextNode(rank === 0 ? ", same as the pick" : rank === 1 ? ", the second of the two" : ", not in the shortlist"));
+    check.appendChild(text);
+    if (ex.note) check.title = ex.note; else check.removeAttribute("title");
   }
 
   async function route() {
@@ -278,6 +382,7 @@ export const DEMO_PAGE = `<!doctype html>
       lastRoute = await api("/api/route", { brief: brief });
       lastBrief = brief;
       showRoute(lastRoute);
+      markActiveExample();
       $("result").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (e) {
       $("error").textContent = e.message;
@@ -317,6 +422,7 @@ export const DEMO_PAGE = `<!doctype html>
       bars.appendChild(row);
       requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct(entry[1], 1); }); });
     });
+    showLabelCheck(rec);
     showRenderPlan(rec);
   }
 
@@ -631,6 +737,7 @@ export const DEMO_PAGE = `<!doctype html>
   }
 
   $("route").addEventListener("click", route);
+  $("more-examples").addEventListener("click", function () { examplesShown += EXAMPLES_PAGE; renderExamples(); });
   $("render").addEventListener("click", render);
   $("compare-default").addEventListener("click", compareWithDefault);
   $("judge").addEventListener("click", judge);

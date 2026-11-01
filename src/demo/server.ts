@@ -14,6 +14,8 @@ import { createDiskCache } from "./disk-cache.ts";
 import type { Evidence } from "./evidence.ts";
 import { DEMO_PAGE } from "./page.ts";
 
+export type Example = { brief: string; expected: string; note?: string };
+
 export type DemoConfig = {
   router: Router;
   /** Model category -> description, as the router sees it. */
@@ -25,7 +27,8 @@ export type DemoConfig = {
   /** Judges a rendered routed-vs-default pair from the images. */
   judge: DecisionClient;
   evidence: Evidence[];
-  examples: string[];
+  /** Labelled briefs the page offers to try. Only tuned-against briefs: routing held-out ones here would leak their misses. */
+  examples: Example[];
   /** USD per million input tokens, to show what a route costs. */
   inputPricePerMillion: number;
   imagesDir: string;
