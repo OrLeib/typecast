@@ -10,6 +10,10 @@ export type ShowcaseInput = {
   shootout: ShootoutEvidence;
   pickThreshold: number;
   repoUrl: string;
+  /** Links to the site's live demo pages, beside the brand. */
+  links: string;
+  /** Where the live routing demo lives, for the call to action. */
+  tryUrl: string;
 };
 
 const STYLE = `
@@ -41,6 +45,13 @@ const STYLE = `
   body { font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   header { padding: 56px 0 8px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .pages { display: inline-flex; padding: 3px; background: var(--frame); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
+  .pages a { padding: 5px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); text-decoration: none; border-radius: 7px; }
+  .pages a:hover { color: var(--text); }
+  .pages a[aria-current="page"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .try { display: inline-block; margin-top: 22px; padding: 10px 18px; border-radius: 10px; background: var(--text); color: var(--bg); font-weight: 600; text-decoration: none; }
+  .try:hover { opacity: .88; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 16px; }
   .brand i { width: 22px; height: 22px; border-radius: 6px; background: var(--text); color: var(--bg); display: grid; place-items: center; font: 700 13px/1 inherit; font-style: normal; }
   h1 { margin: 28px 0 14px; font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 680; max-width: 20ch; text-wrap: balance; }
@@ -275,7 +286,7 @@ function imagesSection(shootout: ShootoutEvidence, pickThreshold: number) {
 </section>`;
 }
 
-export function showcasePage({ heldOut, shootout, pickThreshold, repoUrl }: ShowcaseInput): string {
+export function showcasePage({ heldOut, shootout, pickThreshold, repoUrl, links, tryUrl }: ShowcaseInput): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -288,9 +299,10 @@ export function showcasePage({ heldOut, shootout, pickThreshold, repoUrl }: Show
 <body>
 <div class="wrap">
 <header>
-  <div class="brand"><i>T</i>Typecast</div>
+  <nav class="topbar" aria-label="Pages"><div class="brand"><i>T</i>Typecast</div><div class="pages">${links}</div></nav>
   <h1>The right image model for every brief, in a fifth of a second</h1>
   <p class="lede">AI media tools offer dozens of models, and users guess which fits their brief. A wrong pick wastes credits and time. Typecast reads the brief and picks the model, with a calibrated confidence, so the product knows when to just pick and when to show two.</p>
+  <a class="try" href="${escapeHtml(tryUrl)}">Try it live</a>
 </header>
 ${routingSection(heldOut, pickThreshold)}
 ${imagesSection(shootout, pickThreshold)}

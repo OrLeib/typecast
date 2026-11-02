@@ -22,7 +22,7 @@ const heldOut = (data: string, picked: number, compared: number) =>
   ({ data, n: 10, repeats: 3, latencyP50: 200, costPer1000Usd: 0.026, outcomes: { picked, pickedRight: picked, compared, comparedInShortlist: compared - 1 } }) as Evidence;
 
 const page = (briefs: ShootoutBrief[]) =>
-  showcasePage({ heldOut: [heldOut("data/test.jsonl", 25, 5), heldOut("data/hard.jsonl", 20, 10)], shootout: shootout(briefs), pickThreshold: 0.85, repoUrl: "https://example.com/r" });
+  showcasePage({ heldOut: [heldOut("data/test.jsonl", 25, 5), heldOut("data/hard.jsonl", 20, 10)], shootout: shootout(briefs), pickThreshold: 0.85, repoUrl: "https://example.com/r", links: '<a href="/demo">Route a brief</a>', tryUrl: "/demo" });
 
 describe("showcasePage", () => {
   it("sums the held-out outcomes into the headline numbers", () => {

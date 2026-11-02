@@ -1,0 +1,14 @@
+# An allowlist: the CLI uploads this folder as it is, and .env, runs/ (with images that aren't ours) and the rest must stay home.
+/*
+!/api
+!/src
+!/build
+!/data
+/data/*
+!/data/locating
+!/site
+/site/.vercel
+!/package.json
+!/package-lock.json
+!/tsconfig.json
+!/vercel.json

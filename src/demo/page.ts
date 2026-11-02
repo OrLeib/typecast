@@ -1,62 +1,20 @@
 // The demo page. Self-contained: no build step, no external assets, works offline.
 // Page script avoids template literals so this file can stay one template string.
-export const DEMO_PAGE = `<!doctype html>
+import { BASE_STYLE, pageNav, type SitePaths } from "./page-style.ts";
+
+/** Hosted, there is no Mac to render on, so the page routes but hides rendering, comparing and judging. */
+export const demoPage = ({ paths, hosted }: { paths: SitePaths; hosted: boolean }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Typecast</title>
 <style>
-  :root {
-    color-scheme: light;
-    --bg: #f4f4f1; --surface: #fcfcfb; --surface-2: #f0efec; --line: #e2e1dc;
-    --text: #0b0b0b; --text-2: #52514e; --muted: #6b6a65;
-    --accent: #2a78d6; --accent-2: #7aaae8; --accent-soft: #cde2fb; --accent-text: #1b5cb0; --track: #ebeae6; --bar-rest: #c9c8c2;
-    --good: #0ca30c; --good-text: #006300; --good-bg: #e3f4e3;
-    --warn: #fab219; --warn-text: #7a4f00; --warn-bg: #fdf1d6;
-    --danger: #d03b3b;
-    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #2f2f2c;
-      --text: #f0efec; --text-2: #c3c2b7; --muted: #8e8d86;
-      --accent: #3987e5; --accent-2: #3a6eac; --accent-soft: #1c3557; --accent-text: #a9cdf7; --track: #2a2a27; --bar-rest: #4a4a45;
-      --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
-      --shadow: none;
-    }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #2f2f2c;
-    --text: #f0efec; --text-2: #c3c2b7; --muted: #8e8d86;
-    --accent: #3987e5; --accent-2: #3a6eac; --accent-soft: #1c3557; --accent-text: #a9cdf7; --track: #2a2a27; --bar-rest: #4a4a45;
-    --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
-    --shadow: none;
-  }
-  * { box-sizing: border-box; }
-  html { background: var(--bg); }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
-  header.top { padding: 40px 0 28px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; }
-  .brand-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
-  h1 { margin: 20px 0 8px; font-size: 34px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 650; max-width: 22ch; text-wrap: balance; }
-  .lede { margin: 0; color: var(--text-2); font-size: 16px; max-width: 62ch; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+${BASE_STYLE}
   .composer { padding: 16px; }
   textarea { width: 100%; min-height: 84px; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 17px; line-height: 1.5; padding: 4px 4px 8px; }
   textarea::placeholder { color: var(--muted); }
   .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .hint { color: var(--muted); font-size: 13px; }
-  kbd { font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }
-  button { font: inherit; font-weight: 550; border-radius: 9px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); transition: background .12s, border-color .12s, opacity .12s; }
-  button:hover:not(:disabled) { border-color: var(--muted); }
-  button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  button:disabled { opacity: .45; cursor: default; }
-  button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-  button.primary:hover:not(:disabled) { opacity: .88; border-color: var(--text); }
   .examples-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 12px; }
   .examples-head .section-title { margin: 0; }
   .filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
@@ -81,8 +39,6 @@ export const DEMO_PAGE = `<!doctype html>
   .label-check.match svg { color: var(--good); }
   .label-check.miss svg { color: var(--danger); }
   .label-check b { color: var(--text); font-weight: 600; }
-  section { margin-top: 28px; }
-  .section-title { font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
   #result { display: none; }
   .result-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
   .verdict { padding: 24px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; }
@@ -190,11 +146,7 @@ export const DEMO_PAGE = `<!doctype html>
   .shot-tags .pick-tag { margin-left: 0; }
   .routed-tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--text-2); border: 1px solid var(--line); }
   #error { color: var(--danger); font-size: 14px; margin: 12px 0 0; min-height: 0; }
-  footer { color: var(--muted); font-size: 13px; padding: 40px 0 48px; }
   @media (max-width: 760px) {
-    .wrap { padding: 0 16px; }
-    header.top { padding: 28px 0 20px; }
-    h1 { font-size: 27px; }
     .result-grid { grid-template-columns: 1fr; }
     .verdict { border-right: 0; border-bottom: 1px solid var(--line); }
     .evidence-headline { padding: 18px 16px 0; font-size: 17px; }
@@ -219,7 +171,7 @@ export const DEMO_PAGE = `<!doctype html>
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><span class="brand-mark">T</span>Typecast</div>
+    ${pageNav("route", paths)}
     <h1>Which image model should make this?</h1>
     <p class="lede">Describe what you want. A <span data-term="jev">decision model</span> picks the model category in about 200ms, and its confidence says whether to just pick or to show the top two side by side.</p>
   </header>
@@ -261,7 +213,7 @@ export const DEMO_PAGE = `<!doctype html>
           <div id="bars"></div>
         </div>
       </div>
-      <div class="render">
+      <div class="render"${hosted ? " hidden" : ""}>
         <div class="render-head"><p id="render-text"></p><div class="render-actions"><button id="render">Render</button><button id="compare-default">Compare with default</button><button id="judge">Judge with Jev</button></div></div>
         <div class="shots" id="shots"></div>
         <div class="verdict-line" id="jev-verdict" aria-live="polite"></div>
@@ -284,13 +236,14 @@ export const DEMO_PAGE = `<!doctype html>
     <div class="card" id="shootout-card"></div>
   </section>
 
-  <footer>Runs locally. Routing calls the <span data-term="jev">Jev</span> decision API; images render on this Mac with mflux.</footer>
+  <footer>${hosted ? 'Routing calls the <span data-term="jev">Jev</span> decision API live. Rendering runs only in the local demo, on a Mac with mflux.' : 'Runs locally. Routing calls the <span data-term="jev">Jev</span> decision API; images render on this Mac with mflux.'}</footer>
 </div>
 <div class="tooltip" id="tooltip" role="tooltip"></div>
 
 <script>
   var $ = function (id) { return document.getElementById(id); };
   var config = null, lastRoute = null, lastBrief = "", busy = false;
+  var CAN_RENDER = ${!hosted};
   var ICONS = {
     pick: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
     match: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
@@ -497,7 +450,7 @@ export const DEMO_PAGE = `<!doctype html>
       growBar(fill, entry[1]);
     });
     showLabelCheck(rec);
-    showRenderPlan(rec);
+    if (CAN_RENDER) showRenderPlan(rec);
   }
 
   /** The model a category routes to, named first, since the question is which model; categories without a local model name only the category. */

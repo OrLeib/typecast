@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --omit=dev",
+  "buildCommand": "",
+  "outputDirectory": "site",
+  "functions": {
+    "api/*.ts": {
+      "includeFiles": "{api/_hosted.ts,src/**,data/locating/**,build/locate-answers/**}",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [{ "source": "/api/config", "destination": "/demo-config.json" }]
+}

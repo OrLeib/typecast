@@ -2,6 +2,8 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { loadEvidence } from "../demo/evidence.ts";
+import { locatorIdOf } from "../demo/locate-api.ts";
+import { routerIdOf } from "../demo/route-api.ts";
 import { loadShootoutEvidence } from "../demo/shootout-evidence.ts";
 import { createDemoServer } from "../demo/server.ts";
 import { loadBriefs } from "../evaluation/briefs.ts";
@@ -10,6 +12,7 @@ import { createJevClient, JEV_INPUT_PRICE_PER_MILLION } from "../jev/client.ts";
 import { withRetries } from "../jev/retry.ts";
 import { createJevJudge } from "../judging/jev-judge.ts";
 import { createJevPicker } from "../judging/jev-picker.ts";
+import { createJevLocator, JEV_LOCATE_RETRIES } from "../locating/locator.ts";
 import { createDecisionRouter } from "../routing/router.ts";
 import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { jevConfigFromEnv } from "./config.ts";
@@ -42,7 +45,12 @@ const server = createDemoServer({
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
   imagesDir,
   cacheDir: join(DEMO_DIR, "cache"),
-  routerId: JSON.stringify({ variant, model: jevConfig.model, baseUrl: jevConfig.baseUrl }),
+  routerId: routerIdOf(variant, jevConfig),
   seed: Number(args.seed),
+  locator: createJevLocator(withRetries(jev, JEV_LOCATE_RETRIES)),
+  locatorId: locatorIdOf(jevConfig),
+  // The second folder is gitignored, for samples that aren't ours to publish.
+  samplesDirs: [join("data", "locating"), join("runs", "locating-samples")],
+  bakedAnswerDirs: [],
 });
 server.listen(Number(args.port), "127.0.0.1", () => console.log(`Typecast demo at http://localhost:${args.port}  (Ctrl+C to stop)`));

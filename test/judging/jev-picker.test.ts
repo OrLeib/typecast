@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DecisionClient } from "../../src/jev/client.ts";
-import type { ChoiceQuestion, ImageAsset } from "../../src/jev/parse.ts";
+import type { ImageAsset, Question } from "../../src/jev/parse.ts";
 import { createJevPicker, JEV_PICKER } from "../../src/judging/jev-picker.ts";
 import type { JudgedImage } from "../../src/judging/pair-judge.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
@@ -13,7 +13,7 @@ const decoded = (asset: ImageAsset) => Buffer.from(asset.data_base64, "base64").
 type Sent = { state: { brief: string; images: Record<string, string> }; assets: Record<string, ImageAsset> };
 
 /** The images a question shows, in position order, resolved through the state's paths the way the model would. */
-const shown = (q: ChoiceQuestion, { state, assets }: Sent) =>
+const shown = (q: Question, { state, assets }: Sent) =>
   [...q.instructions.matchAll(/Image \d+ is `images\.(\w+)`\./g)].map((m) => decoded(assets[state.images[m[1]]]));
 
 /** Records every request's state and assets alongside the fake's calls. */

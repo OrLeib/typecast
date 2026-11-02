@@ -1,12 +1,12 @@
 // HTTP client for the SystemOne (Jev) API. Raw fetch on purpose: keep the wire format visible.
-import { parseDecisionResponse, type ChoiceQuestion, type DecisionResponse, type ImageAsset } from "./parse.ts";
+import { parseDecisionResponse, type DecisionResponse, type ImageAsset, type Question } from "./parse.ts";
 
 export type DecisionResult = DecisionResponse & { latencyMs: number };
 
 /** Anything that answers SystemOne decision questions: hosted Jev, a local Jev-compatible model, or a test fake. */
 export interface DecisionClient {
   /** `assets` are images referenced from the state or instructions by their keys. */
-  decide(state: string | object, questions: Record<string, ChoiceQuestion>, assets?: Record<string, ImageAsset>): Promise<DecisionResult>;
+  decide(state: string | object, questions: Record<string, Question>, assets?: Record<string, ImageAsset>): Promise<DecisionResult>;
 }
 
 /** A non-2xx answer from the API, keeping the status so callers can tell a retryable outage from a bad request. */
@@ -18,7 +18,7 @@ export class JevHttpError extends Error {
   }
 }
 
-/** Images are opt-in per request: the API rejects an image unless this header is set. */
+/** Images are opt-in per request: the API rejects an image, or a box question, unless this header is set. */
 const IMAGES_HEADER = "TypeSafe-Danger-Zone-Images";
 
 export const JEV_DEFAULT_BASE_URL = "https://api.typesafe.ai";

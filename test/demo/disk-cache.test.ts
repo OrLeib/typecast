@@ -24,4 +24,15 @@ describe("createDiskCache", () => {
     await writeFile(join(dir, file), "{not json");
     expect(await cache.get("k")).toBeUndefined();
   });
+
+  it("falls back to read-only seed folders on a miss, without ever writing to them", async () => {
+    dir = await mkdtemp(join(tmpdir(), "typecast-cache-"));
+    const seed = join(dir, "seed");
+    await createDiskCache(seed).set("baked", { from: "seed" });
+    const cache = createDiskCache(join(dir, "live"), [seed]);
+    expect(await cache.get("baked")).toEqual({ from: "seed" });
+    await cache.set("baked", { from: "live" });
+    expect(await cache.get("baked")).toEqual({ from: "live" });
+    expect(await createDiskCache(seed).get("baked")).toEqual({ from: "seed" });
+  });
 });

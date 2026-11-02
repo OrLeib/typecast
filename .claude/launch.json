@@ -62,6 +62,18 @@
         "site"
       ],
       "port": 4184
+    },
+    {
+      "name": "demo-4185",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "demo",
+        "--",
+        "--port",
+        "4185"
+      ],
+      "port": 4185
     }
   ]
 }

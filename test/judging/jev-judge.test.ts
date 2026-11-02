@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DecisionClient } from "../../src/jev/client.ts";
-import type { ChoiceQuestion, ImageAsset } from "../../src/jev/parse.ts";
+import type { ImageAsset, Question } from "../../src/jev/parse.ts";
 import { createJevJudge, JEV_JUDGE } from "../../src/judging/jev-judge.ts";
 import type { JudgedImage } from "../../src/judging/pair-judge.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
@@ -10,7 +10,7 @@ const judgeWithJev = (client: DecisionClient, judged: typeof pair) => createJevJ
 const pair = { brief: "a red apple", routed: image("ROUTED"), default: image("DEFAULT") };
 
 /** Which asset a question calls Image 1, read from its instructions the way the model would. */
-const image1 = (q: ChoiceQuestion, assets: Record<string, ImageAsset>) => {
+const image1 = (q: Question, assets: Record<string, ImageAsset>) => {
   const ref = /Image 1 is (\S+)\./.exec(q.instructions)![1];
   return decoded(assets[ref]);
 };

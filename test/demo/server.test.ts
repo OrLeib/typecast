@@ -1,9 +1,11 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { createDemoServer } from "../../src/demo/server.ts";
 import { createJevJudge } from "../../src/judging/jev-judge.ts";
+import { MAX_IMAGES, type Locator } from "../../src/locating/locator.ts";
 import type { Router } from "../../src/routing/router.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
 import { createFakeGenerator } from "../support/fake-generator.ts";
@@ -21,7 +23,25 @@ const router: Router = {
 const photo = createFakeGenerator("mflux:photo@q8", 4200, 2);
 const fallback = createFakeGenerator("mflux:default@q8", 3000);
 const judge = createFakeDecisionClient(() => ({ choice: "tie", confidence: 0.7 }));
-const server = createDemoServer({
+let locateCalls = 0;
+/** Finds the target in every image but the last of two or more, which it says is empty. */
+const locator: Locator = {
+  async locate(images) {
+    locateCalls++;
+    const found = images.map((_, i) => ({
+      box: { top: 0.2, bottom: 0.4, left: 0.4, right: 0.6 },
+      confidence: 0.9,
+      presence: images.length > 1 && i === images.length - 1 ? 0.03 : 0.95,
+    }));
+    return { found, model: "jev-test", inputTokens: 3000 * images.length, latencyMs: 900 };
+  },
+};
+const samplesDir = join(dir, "samples");
+const localSamplesDir = join(dir, "local-samples");
+/** 1000 x 800, so the fake box is 200 x 160 px centred at (500, 240). */
+const samplePng = (background = "#808080") => sharp({ create: { width: 1000, height: 800, channels: 3, background } }).png().toBuffer();
+const LOCATE = { locator, locatorId: "test-locator", samplesDirs: [samplesDir, localSamplesDir], bakedAnswerDirs: [] };
+const CONFIG = {
   router,
   roster: { photo: "Photos", video: "Clips" },
   generators: { photo },
@@ -34,8 +54,20 @@ const server = createDemoServer({
   cacheDir: join(dir, "cache"),
   routerId: "test-router",
   seed: 1,
+  ...LOCATE,
+};
+const server = createDemoServer(CONFIG);
+const { get, post } = listenForTests(server, {
+  setup: async () => {
+    await mkdir(samplesDir, { recursive: true });
+    await mkdir(localSamplesDir, { recursive: true });
+    await writeFile(join(samplesDir, "person.png"), await samplePng());
+    await writeFile(join(samplesDir, "notes.txt"), "not an image");
+    await writeFile(join(localSamplesDir, "local.png"), await samplePng("#406080"));
+    await writeFile(join(localSamplesDir, "person.png"), "shadowed by the committed sample");
+  },
+  cleanup: () => rm(dir, { recursive: true, force: true }),
 });
-const { get, post } = listenForTests(server, { cleanup: () => rm(dir, { recursive: true, force: true }) });
 const events = async (res: Response) => (await res.text()).trim().split("\n").map((line) => JSON.parse(line));
 
 describe("demo server", () => {
@@ -165,6 +197,101 @@ describe("demo server", () => {
   });
 });
 
+describe("demo server: find and crop", () => {
+  const locateSamples = (samples: string[], padding: number) => post("/api/locate", { samples, target: "the person's face", padding });
+
+  it("lists sample images from every samples folder, the first folder winning a shared name", async () => {
+    expect(await (await get("/api/locate-samples")).json()).toEqual({
+      samples: [
+        { name: "person.png", url: "/locate-samples/person.png" },
+        { name: "local.png", url: "/locate-samples/local.png" },
+      ],
+    });
+  });
+
+  it("serves a sample with its type, and nothing outside the samples folders", async () => {
+    const res = await get("/locate-samples/person.png");
+    expect(res.headers.get("content-type")).toBe("image/png");
+    expect((await sharp(Buffer.from(await res.arrayBuffer())).metadata()).width).toBe(1000);
+    expect((await get("/locate-samples/local.png")).status).toBe(200);
+    expect((await get("/locate-samples/notes.txt")).status).toBe(404);
+    expect((await get("/locate-samples/..%2Fcache")).status).toBe(404);
+  });
+
+  it("locates the target in one image and cuts a padded square around it, with what the request cost", async () => {
+    const body = await (await locateSamples(["person.png"], 0.5)).json();
+    expect(body).toMatchObject({ model: "jev-test", inputTokens: 3000, cached: false });
+    expect(body.costUsd).toBeCloseTo(3000 * 0.04 / 1e6);
+    const [image] = body.images;
+    expect(image).toMatchObject({ name: "person.png", box: { top: 0.2, bottom: 0.4, left: 0.4, right: 0.6 }, confidence: 0.9, presence: 0.95 });
+    expect(image.size).toEqual({ width: 1000, height: 800 });
+    expect(image.crop).toEqual({ left: 300, top: 40, size: 400 });
+    const preview = await sharp(Buffer.from(image.cropUrl.replace("data:image/webp;base64,", ""), "base64")).metadata();
+    expect([preview.format, preview.width, preview.height]).toEqual(["webp", 400, 400]);
+  });
+
+  it("re-crops with new padding from the cached boxes, without locating again", async () => {
+    const before = locateCalls;
+    const body = await (await locateSamples(["person.png"], 0)).json();
+    expect(locateCalls).toBe(before);
+    expect(body.cached).toBe(true);
+    expect(body.images[0].crop).toEqual({ left: 400, top: 140, size: 200 });
+  });
+
+  it("asks only about images it hasn't answered for that target, reusing the rest", async () => {
+    let asked: number[] = [];
+    const counting: Locator = { locate: async (images, target) => ((asked = [...asked, images.length]), locator.locate(images, target)) };
+    const local = createDemoServer({ ...CONFIG, locator: counting, cacheDir: join(dir, "per-image-cache") });
+    const { port } = await new Promise<{ port: number }>((resolve) => local.listen(0, "127.0.0.1", () => resolve(local.address() as { port: number })));
+    const ask = async (samples: string[]) => (await fetch(`http://127.0.0.1:${port}/api/locate`, { method: "POST", body: JSON.stringify({ samples, target: "a face", padding: 0.5 }) })).json();
+    try {
+      const first = await ask(["person.png"]);
+      const both = await ask(["person.png", "local.png"]);
+      const again = await ask(["local.png", "person.png"]);
+      expect(asked).toEqual([1, 1]);
+      expect([first.cached, both.cached, again.cached]).toEqual([false, false, true]);
+      expect(both.inputTokens).toBe(3000);
+      expect(again.inputTokens).toBe(0);
+      expect(again.images.map((i: { name: string }) => i.name)).toEqual(["local.png", "person.png"]);
+    } finally {
+      local.close();
+    }
+  });
+
+  it("locates the target in samples and uploads together with one locator call, answering in the order sent", async () => {
+    const before = locateCalls;
+    const upload = "data:image/png;base64," + (await samplePng()).toString("base64");
+    const res = await post("/api/locate", { samples: ["person.png", "local.png"], images: [upload], target: "a face", padding: 0.5 });
+    const body = await res.json();
+    expect(locateCalls).toBe(before + 1);
+    expect(body.images.map((i: { name: string }) => i.name)).toEqual(["person.png", "local.png", "upload 1"]);
+    expect(body.images.map((i: { presence: number }) => i.presence)).toEqual([0.95, 0.95, 0.03]);
+    expect(body.inputTokens).toBe(9000);
+  });
+
+  it.each([
+    ["an empty target", { samples: ["person.png"], target: " ", padding: 0.5 }, 400, /target must be a non-empty string/],
+    ["padding out of range", { samples: ["person.png"], target: "a face", padding: 3 }, 400, /padding must be a number from 0 to 2/],
+    ["an unknown sample", { samples: ["../.env"], target: "a face", padding: 0.5 }, 404, /no sample named \.env/],
+    ["an image that isn't a data URL", { images: ["https://example.com/a.png"], target: "a face", padding: 0.5 }, 400, /images\[0\] must be a PNG or JPEG data URL/],
+    ["no images", { target: "a face", padding: 0.5 }, 400, new RegExp(`send 1 to ${MAX_IMAGES} images, got 0`)],
+    ["too many images", { samples: Array(MAX_IMAGES + 1).fill("person.png"), target: "a face", padding: 0.5 }, 400, new RegExp(`got ${MAX_IMAGES + 1}`)],
+    ["samples that aren't a list", { samples: "person.png", target: "a face", padding: 0.5 }, 400, /samples must be a list of strings/],
+  ])("rejects %s", async (_name, body, status, message) => {
+    const res = await post("/api/locate", body);
+    expect(res.status).toBe(status);
+    expect((await res.json()).error).toMatch(message);
+  });
+
+  it("serves the find-and-crop page with a script that parses", async () => {
+    const page = await (await get("/locate")).text();
+    expect(page).toContain('aria-current="page">Find and crop');
+    const script = /<script>([\s\S]*)<\/script>/.exec(page)?.[1] ?? "";
+    expect(script).not.toBe("");
+    expect(() => new Function(script)).not.toThrow();
+  });
+});
+
 describe("demo server with a shootout", () => {
   const image = join(dir, "shot.png");
   const shootout = {
@@ -173,7 +300,7 @@ describe("demo server with a shootout", () => {
   };
   const withShootout = createDemoServer({
     router, roster: {}, generators: {}, defaultGenerator: fallback, judge: createJevJudge(judge), evidence: [], examples: [], shootout,
-    inputPricePerMillion: 0.04, imagesDir: dir, cacheDir: join(dir, "cache"), routerId: "test-router", seed: 1,
+    inputPricePerMillion: 0.04, imagesDir: dir, cacheDir: join(dir, "cache"), routerId: "test-router", seed: 1, ...LOCATE,
   });
   const local = listenForTests(withShootout, { setup: () => writeFile(image, "shot-png") });
 

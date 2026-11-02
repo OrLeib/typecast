@@ -5,10 +5,19 @@ import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
 import { decisionClientContract } from "./decision-client.contract.ts";
 
 const fixture = JSON.parse(readFileSync(new URL("../fixtures/jev-choice-response.json", import.meta.url), "utf8"));
+const boxFixture = JSON.parse(readFileSync(new URL("../fixtures/jev-box-response.json", import.meta.url), "utf8"));
 const config: JevConfig = { apiKey: "test-key", baseUrl: "http://jev.test/", model: "jev-latest" };
 const respondWith = (body: unknown, status = 200) => vi.fn(async () => new Response(JSON.stringify(body), { status }));
 
-decisionClientContract("Jev HTTP client (recorded response)", () => createJevClient(config, { fetch: respondWith(fixture) }));
+/** Answers each question asked with the recorded live answer of its type, as the API would. */
+const RECORDED_BY_TYPE: Record<string, unknown> = { choice: fixture.answers.model, box: boxFixture.answers.face, noul: boxFixture.answers.present };
+const respondRecorded = vi.fn(async (_url: string, init: RequestInit) => {
+  const { questions } = JSON.parse(init.body as string) as { questions: Record<string, { type: string }> };
+  const answers = Object.fromEntries(Object.entries(questions).map(([id, q]) => [id, RECORDED_BY_TYPE[q.type]]));
+  return new Response(JSON.stringify({ ...boxFixture, answers }));
+});
+
+decisionClientContract("Jev HTTP client (recorded responses)", () => createJevClient(config, { fetch: respondRecorded as unknown as typeof fetch }));
 decisionClientContract("fake decision client", () => createFakeDecisionClient(() => ({ choice: "product", confidence: 0.9 })));
 
 describe("createJevClient", () => {

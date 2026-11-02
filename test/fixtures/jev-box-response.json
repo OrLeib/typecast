@@ -1,0 +1,8 @@
+{
+  "model": "jev-1.14.0",
+  "answers": {
+    "face": { "type": "box", "box": { "top": 0.22, "bottom": 0.33, "left": 0.51, "right": 0.63 }, "confidence": 0.87 },
+    "present": { "type": "noul", "noul": 0.97 }
+  },
+  "usage": { "input_tokens": 3706, "output_tokens": 36 }
+}

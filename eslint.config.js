@@ -6,12 +6,14 @@ import tseslint from "typescript-eslint";
 const ALLOWED_IMPORTS = {
   shared: [],
   jev: ["shared"],
+  locating: ["jev", "shared"],
   routing: ["jev", "shared"],
   evaluation: ["routing", "shared"],
   comparison: ["evaluation", "shared"],
   generation: ["evaluation", "routing", "shared"],
   judging: ["generation", "jev", "shared"],
-  demo: ["judging", "generation", "evaluation", "routing", "shared"],
+  hosting: ["demo", "locating", "routing", "jev", "shared"],
+  demo: ["judging", "generation", "evaluation", "routing", "locating", "shared"],
 };
 const MODULES = [...Object.keys(ALLOWED_IMPORTS), "cli"];
 
@@ -43,10 +45,10 @@ export default tseslint.config(
       "no-restricted-properties": ["error", { object: "process", property: "env", message: "Read the environment in src/cli only." }],
     },
   },
-  { files: ["src/cli/**/*.ts", "test/**/*.ts", "eslint.config.js"], rules: { "no-restricted-properties": "off" } },
+  { files: ["src/cli/**/*.ts", "api/**/*.ts", "test/**/*.ts", "eslint.config.js"], rules: { "no-restricted-properties": "off" } },
   // A describe block holds many tests; the size limit is for production functions.
   { files: ["test/**/*.ts"], rules: { "max-lines-per-function": "off" } },
   // Page templates are markup in a string, not logic.
-  { files: ["src/*/page.ts"], rules: { "max-lines-per-function": "off" } },
+  { files: ["src/*/page.ts", "src/*/*-page.ts"], rules: { "max-lines-per-function": "off" } },
   ...layering,
 );

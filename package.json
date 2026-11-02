@@ -14,7 +14,7 @@
     "dead-code": "knip",
     "duplication": "jscpd src test",
     "check": "npm run typecheck && npm run lint && npm run dead-code && npm run duplication && npm test",
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "if git rev-parse --git-dir >/dev/null 2>&1; then git config core.hooksPath .githooks; fi",
     "test": "vitest run",
     "compare": "node --experimental-strip-types src/cli/compare.ts",
     "generate": "node --env-file=.env --experimental-strip-types src/cli/generate.ts",
@@ -23,7 +23,7 @@
     "pick-jev": "node --env-file=.env --experimental-strip-types src/cli/pick-jev.ts",
     "judge-report": "node --experimental-strip-types src/cli/judge-report.ts",
     "demo": "node --env-file=.env --experimental-strip-types src/cli/demo.ts",
-    "showcase": "node --env-file=.env --experimental-strip-types src/cli/showcase.ts"
+    "site": "node --env-file=.env --experimental-strip-types src/cli/site.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -34,5 +34,8 @@
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.72.1",
     "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
   }
 }

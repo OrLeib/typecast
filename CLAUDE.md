@@ -40,7 +40,9 @@ top two side by side.
 Dependencies point inward, and `npm run lint` enforces it (`ALLOWED_IMPORTS` in `eslint.config.js`):
 `cli/` -> `demo/` -> `judging/` -> `generation/` -> `evaluation/` -> `routing/` -> `jev/` -> `shared/`.
 `comparison/` sits beside `generation/` (it reads `evaluation/` runs), and `judging/` also talks to `jev/` directly for the Jev judge.
-Nothing below `cli/` reads `process.env`.
+`locating/` sits beside `routing/` (it talks to `jev/`), and `demo/` uses it through the `Locator` interface.
+`hosting/` sits beside `demo/` and reuses its handlers for the hosted site; `api/` (Vercel functions) is a composition root like `cli/`.
+Nothing below `cli/` and `api/` reads `process.env`.
 
 | Module | Responsibility |
 |---|---|
@@ -49,19 +51,22 @@ Nothing below `cli/` reads `process.env`.
 | `jev/answers.ts` | Checks an answer against the question asked: present, a valid choice, one probability per option |
 | `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |
 | `routing/` | `Router` interface, the decision-model router, the pick-or-compare recommendation, the keyword difficulty probe, roster and variants |
+| `locating/` | `Locator` interface and the Jev locator (a box and a presence check per image, every image at once), fitting images to Jev's size limits, the padded square crop |
 | `evaluation/` | Briefs, pure metrics, metric registry, runner, summary, report formatting, run store |
 | `comparison/` | Run comparison and report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, shootout runner (every lineup model on every brief), manifest store |
 | `judging/` | `PairJudge` interface and the Jev judge, `PickJudge` (best of N) and the Jev picker, picks store, pick summary and contact sheet, judgments store (append-only, with undo rows), blind side and order, win-rate statistics, report formatting, the local judging server and page |
-| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence, latest judged shootout. Images, routes and judgments are cached on disk under `runs/demo/`. Also the static showcase page |
+| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence, latest judged shootout. A second page finds a described target in several images and crops around it in each. Images, routes, judgments and boxes are cached on disk under `runs/demo/`. Also the results showcase page, and page paths for local and hosted |
+| `hosting/` | The hosted site's API: the demo's route and locate handlers as serverless request handlers |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
+| `api/` | Vercel functions: read env and serve `hosting/`'s handlers |
 
 SOLID, and where it lives:
 - **S** - one reason to change per module: parsing vs answer checking vs transport (`jev/`), running vs summarising vs formatting vs storing (`evaluation/`), computing vs printing (`comparison/`, `judging/`).
 - **O** - extend by adding entries, not editing code: a metric is one entry in `RUN_METRICS` (summary and compare pick it up), a routing change is one entry in `VARIANTS`, a new auto-judge is a new `PairJudge` or `PickJudge`.
-- **L** - any implementation can stand in for another of its interface. Contracts: `test/jev/decision-client.contract.ts` (HTTP client and test fake) `test/routing/router.contract.ts` (decision and keyword routers) and `test/judging/pick-judge.contract.ts` (Jev picker). A new implementation must pass its contract too.
-- **I** - small interfaces: `Router` has only `route`, `DecisionClient` only `decide`, `PairJudge` only `judge`, `PickJudge` only `pick`; metrics take the narrowest prediction type they need.
-- **D** - high-level code depends on abstractions: `runEval` takes a `Router`, the router takes a `DecisionClient`, the demo and `autoJudgeRun` take a `PairJudge`, the client takes config and `fetch`. Only `cli/` picks implementations.
+- **L** - any implementation can stand in for another of its interface. Contracts: `test/jev/decision-client.contract.ts` (HTTP client and test fake) `test/routing/router.contract.ts` (decision and keyword routers) `test/judging/pick-judge.contract.ts` (Jev picker) and `test/locating/locator.contract.ts` (Jev locator). A new implementation must pass its contract too.
+- **I** - small interfaces: `Router` has only `route`, `DecisionClient` only `decide`, `PairJudge` only `judge`, `PickJudge` only `pick`, `Locator` only `locate`; metrics take the narrowest prediction type they need.
+- **D** - high-level code depends on abstractions: `runEval` takes a `Router`, the router takes a `DecisionClient`, the demo and `autoJudgeRun` take a `PairJudge`, the demo takes a `Locator`, the client takes config and `fetch`. Only `cli/` picks implementations.
 
 Clean Code conventions: intention-revealing names, small single-purpose functions, named constants instead of magic numbers, errors that name the offending field, and comments only for the "why".
 
@@ -82,12 +87,16 @@ Rules the checks can't enforce:
 - `POST {base}/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY`.
 - Body: `{ model: "jev-latest", state: string|object, questions: { [id]: { type, instructions, criteria } } }`.
 - Types: `choice` (criteria = { optionId: description }, 1–255 options),
-  `score` (2–10 ordered levels), `noul` (yes/no).
+  `score` (2–10 ordered levels), `noul` (yes/no), `box` (where something is in an image; no criteria).
+  The client parses `choice`, `box` and `noul` answers; `score` isn't used yet.
 - Response envelope (confirmed live against `jev-1.14.0`, 2026-10-31):
   `{ model: "jev-1.14.0", answers: { [questionId]: { type: "choice", choice, confidence, probabilities } }, usage: { input_tokens, output_tokens } }`.
   - `model` is the resolved version, not the requested alias (`jev-latest`).
   - `probabilities` has one entry per criteria option (zeros included); `confidence` is reported separately and is close to, but not always equal to, the chosen option's probability (0.95 vs 0.96 seen).
   - `usage` reports both input and output tokens (474 in / 69 out for a one-line brief + 6-option roster); only input is billed.
+- Box and noul answers (confirmed live against `jev-1.14.0`, 2026-11-01): `{ type: "box", box: { top, bottom, left, right }, confidence }` with edges as fractions of the image from its top-left corner,
+  and `{ type: "noul", noul }`, the probability of yes. A box question needs an image and the images header.
+  A box always comes back, even when the target is missing, so ask a noul question alongside it.
 - `parseDecisionResponse` in `src/jev/parse.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
   A recorded live response lives in `test/fixtures/jev-choice-response.json`; tests never call the API.
 
@@ -141,9 +150,30 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   It prints how often the best image came from the routed model, the expected category's model and the default, against chance (1 / models), and writes `<dir>/picks.html`, a contact sheet for checking the picks by eye.
   The demo shows the newest shootout run the picker has picked, brief by brief.
   Nothing has measured the picker against people yet, so treat its picks as Jev's opinion, not ground truth.
-- `npm run showcase` writes `site/`, a static one-page showcase to send people who won't run the demo: the held-out routing numbers and every brief of the newest picked shootout, routed beside default, images as JPEG.
-  It is live at https://typecast-six.vercel.app; redeploy with `vercel deploy site --prod`.
+- `npm run site` builds the hosted site into `site/`: the results showcase at `/` (held-out routing numbers and every brief of the newest picked shootout, images as JPEG), live routing at `/demo` and find and crop at `/locate`, plus the routing page's config as a static file.
+  Hosted, there is no Mac to render on, so `/demo` routes but hides render, compare and judge.
+  It also bakes the committed samples' answers for the default target into `build/locate-answers/` (kept between builds, so only new samples cost a Jev call), so trying the samples costs nothing.
+
+## Hosting (Vercel)
+- The project is `typecast` (typecast-six.vercel.app), linked at the repo root. `vercel deploy` makes a preview behind Vercel login; `vercel deploy --prod` publishes. Build the site first: Vercel runs no build.
+- `.vercelignore` is an allowlist: the CLI uploads the working folder, and `.env`, `.env.local` and `runs/` (with images that aren't ours) must never go up.
+- Functions in `api/` run the `src/` TypeScript directly on Node 26; `vercel.json` ships `src/`, the samples and the baked answers beside them. A file in `api/` whose name starts with `_` isn't served.
+- `TYPESAFE_API_KEY` is set in the project for Production and Preview. Live calls are not capped.
+- A function takes at most 4.5 MB a request, so the find-and-crop page shrinks uploads to 1568px JPEG before sending; boxes and crops come from that copy.
 - Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
+
+## Finding and cropping
+- The demo's `/locate` page finds one target in up to `MAX_IMAGES` images at once (`src/locating/locator.ts`): one request per image, all in parallel, each with a box question for where the target is and a noul question for whether it is there.
+  Don't batch images into one request: eight in one request cost the same tokens but loosened the boxes (a cyclist's face came back as a body-height strip at 0.23 confidence, against a tight box at 0.82 alone).
+  `squareCrop` pads the box on every side by a share of its longer edge and keeps the square centred on the box, even past the image's edge (that part of the crop is transparent); sliding it back inside pushed faces off-centre.
+  The crop is cut from the original, not the copy sent to Jev.
+- Images are scaled to fit Jev's 280-1568px sides and sent as JPEG; the box's fractions apply to the original because the aspect ratio is kept.
+  Send JPEG, not PNG: uploading a 3.7 MB PNG took about 1s of a 1.3s request, while the same image as a 0.23 MB JPEG took 0.35s with the same box and tokens.
+- About one in nine image requests fired together gets a 503 ("Image processing is unavailable") while the rest answer, so the locator retries after 250ms, not judging's 1.5s; the time it reports includes retries.
+- The page gets each crop as a WebP preview of at most 520px (`previewOf`): full-size PNG crops made one response 13 MB and took the browser seconds to decode.
+- Samples live in `data/locating/` (rendered locally with mflux, so they are ours to commit). A 1024x1280 photo costs about 3,700 input tokens.
+  Images that aren't ours to publish (such as a third-party example photo) go in `runs/locating-samples/`, which is gitignored; the demo lists both folders.
+- Nothing has measured box accuracy yet. Box is marked "Dreamer-ready" in Jev's docs, so its format and quality can change between releases.
 
 ## Conventions
 - Never commit `.env`. The repo is public.

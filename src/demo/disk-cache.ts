@@ -5,22 +5,33 @@ import { shortHash } from "../shared/hash.ts";
 
 export type DiskCache<T> = { get(key: string): Promise<T | undefined>; set(key: string, value: T): Promise<void> };
 
-/** One JSON file per key in `dir`. A missing or unreadable file is a miss, so a bad entry just gets recomputed. */
-export function createDiskCache<T>(dir: string): DiskCache<T> {
-  const fileFor = (key: string) => join(dir, `${shortHash(key)}.json`);
+/**
+ * One JSON file per key in `dir`. A missing or unreadable file is a miss, so a bad entry just gets recomputed.
+ * `seedDirs` are read-only folders in the same format, read after `dir`: answers baked in when the hosted site is built.
+ */
+export function createDiskCache<T>(dir: string, seedDirs: string[] = []): DiskCache<T> {
+  const fileIn = (folder: string, key: string) => join(folder, `${shortHash(key)}.json`);
   return {
     async get(key) {
-      try {
-        return JSON.parse(await readFile(fileFor(key), "utf8")) as T;
-      } catch {
-        return undefined;
+      for (const folder of [dir, ...seedDirs]) {
+        const hit = await readEntry<T>(fileIn(folder, key));
+        if (hit !== undefined) return hit;
       }
+      return undefined;
     },
     async set(key, value) {
       await mkdir(dir, { recursive: true });
-      await writeFile(fileFor(key), JSON.stringify(value));
+      await writeFile(fileIn(dir, key), JSON.stringify(value));
     },
   };
+}
+
+async function readEntry<T>(file: string): Promise<T | undefined> {
+  try {
+    return JSON.parse(await readFile(file, "utf8")) as T;
+  } catch {
+    return undefined;
+  }
 }
 
 /** The cached value for `key`, or `compute`'s, stored for next time. `cached` says which, so the page can show it. */
