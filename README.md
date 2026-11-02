@@ -16,7 +16,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/readme/routing-dark.gif">
-    <img src="docs/readme/routing-light.gif" width="820" alt="A poster brief with legible text routes to the typography model at 99%; an album cover brief lands at 72% and shows the top two models">
+    <img src="docs/readme/routing-light.gif" width="820" alt="A poster brief with legible text routes to the typography model at 99%; an album cover brief lands below the 85% pick line and shows the top two models">
   </picture>
 </p>
 
