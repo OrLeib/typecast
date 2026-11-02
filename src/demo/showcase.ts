@@ -22,7 +22,9 @@ const HELD_OUT = new Set(["data/test.jsonl", "data/hard.jsonl"]);
 
 const STYLE = `
   body { font-size: 16px; }
-  .try { display: inline-block; margin-top: 22px; padding: 10px 18px; border-radius: 10px; background: var(--text); color: var(--bg); font-weight: 600; text-decoration: none; }
+  .tries { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .try { display: inline-block; padding: 10px 18px; border-radius: 10px; background: var(--text); color: var(--bg); font-weight: 600; text-decoration: none; border: 1px solid var(--text); }
+  .try.secondary { background: transparent; color: var(--text); border-color: var(--line); }
   .try:hover { opacity: .88; }
   h1 { margin: 28px 0 14px; font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 680; max-width: 20ch; }
   .lede { font-size: 18px; max-width: 60ch; text-wrap: pretty; }
@@ -272,9 +274,9 @@ ${FAVICON_LINK}
 <div class="wrap">
 <header class="top">
   ${pageNav("results", paths)}
-  <h1>The right image model for every brief, in a fifth of a second</h1>
-  <p class="lede">AI media tools offer dozens of models, and users guess which fits their brief. A wrong pick wastes credits and time. Typecast reads the brief and picks the model, with a calibrated confidence, so the product knows when to just pick and when to show two.</p>
-  <a class="try" href="${paths.route}">Try it live</a>
+  <h1>Which model, which image, where in the frame</h1>
+  <p class="lede">AI image tools leave users guessing three times: which of dozens of models fits the brief, which of several outputs is best, and where the subject sits for a crop. Typecast answers each with a decision model and a calibrated confidence, so the product knows when to act on its own and when to ask.</p>
+  <div class="tries"><a class="try" href="${paths.route}">Route a brief</a><a class="try secondary" href="${paths.locate}">Find and crop</a></div>
 </header>
 ${routingSection(evidence)}
 ${imagesSection(shootout)}
