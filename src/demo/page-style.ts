@@ -1,4 +1,5 @@
 // What every demo page shares: colour tokens for light and dark, type, buttons, cards, and the top bar that links the pages.
+import { logoMark } from "../shared/brand.ts";
 
 /** Where each page lives. Run locally, the routing demo is the home page; hosted, the results showcase is. */
 export type SitePaths = { results: string; route: string; locate: string };
@@ -13,7 +14,7 @@ export const pageNav = (current: keyof SitePaths, paths: SitePaths) => {
   const links = (Object.keys(LABELS) as (keyof SitePaths)[])
     .map((page) => `<a href="${paths[page]}"${page === current ? ' aria-current="page"' : ""}>${LABELS[page]}</a>`)
     .join("");
-  return `<nav class="topbar" aria-label="Pages"><div class="brand"><span class="brand-mark">T</span>Typecast</div><div class="pages">${links}</div></nav>`;
+  return `<nav class="topbar" aria-label="Pages"><div class="brand">${logoMark(22)}Typecast</div><div class="pages">${links}</div></nav>`;
 };
 
 export const BASE_STYLE = `
@@ -43,8 +44,7 @@ export const BASE_STYLE = `
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   header.top { padding: 40px 0 28px; }
   .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; }
-  .brand-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; }
   .pages { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
   .pages a { padding: 5px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); text-decoration: none; border-radius: 7px; }
   .pages a:hover { color: var(--text); }

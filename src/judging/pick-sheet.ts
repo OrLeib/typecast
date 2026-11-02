@@ -3,6 +3,7 @@
 import type { ShootoutManifest } from "../generation/manifest.ts";
 import type { ShootoutItem } from "../generation/shootout.ts";
 import type { Shot } from "../generation/runner.ts";
+import { FAVICON_LINK } from "../shared/brand.ts";
 import { escapeHtml, percent } from "../shared/format.ts";
 import type { PickRecord } from "./picks.ts";
 
@@ -52,6 +53,7 @@ export function renderPickSheet(manifest: ShootoutManifest, picks: Map<string, P
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shootout Picks</title>
+${FAVICON_LINK}
 <style>${STYLE}</style>
 </head>
 <body>

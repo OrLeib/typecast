@@ -1,5 +1,6 @@
 // The blind-judging page. Self-contained: no build step, no external assets.
 // It never learns which side is routed; the server maps left/right back to routed/default.
+import { FAVICON_LINK } from "../shared/brand.ts";
 import { escapeHtml } from "../shared/format.ts";
 
 /** `dir` is the run being judged, named in the closing hint so the report command can be copied as is. */
@@ -10,6 +11,7 @@ export function judgePage(dir: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Typecast Judge</title>
+${FAVICON_LINK}
 <style>
   :root {
     --bg: #f4f4f2; --surface: #ffffff; --text: #1c1c1a; --muted: #6b6b66; --line: #dcdcd7;

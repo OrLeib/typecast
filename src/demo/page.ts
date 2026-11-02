@@ -1,5 +1,6 @@
 // The demo page. Self-contained: no build step, no external assets, works offline.
 // Page script avoids template literals so this file can stay one template string.
+import { FAVICON_LINK } from "../shared/brand.ts";
 import { BASE_STYLE, pageNav, type SitePaths } from "./page-style.ts";
 
 /** Hosted, there is no Mac to render on, so the page routes but hides rendering, comparing and judging. */
@@ -9,6 +10,7 @@ export const demoPage = ({ paths, hosted }: { paths: SitePaths; hosted: boolean 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Typecast</title>
+${FAVICON_LINK}
 <style>
 ${BASE_STYLE}
   .composer { padding: 16px; }

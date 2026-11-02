@@ -46,7 +46,7 @@ Nothing below `cli/` and `api/` reads `process.env`.
 
 | Module | Responsibility |
 |---|---|
-| `shared/` | Product-free helpers: seeded PRNG and paired statistics, JSON field validation, HTTP plumbing for the local servers, short hashes, cost and percent formatting |
+| `shared/` | Product-free helpers: seeded PRNG and paired statistics, JSON field validation, HTTP plumbing for the local servers, short hashes, cost and percent formatting, the Typecast mark and favicon for every page |
 | `jev/parse.ts` | Wire types and strict response validation |
 | `jev/answers.ts` | Checks an answer against the question asked: present, a valid choice, one probability per option |
 | `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |

@@ -1,6 +1,7 @@
 // The "Find and crop" demo page: pick an image, name a target, and Jev boxes it; the page shows the box and a square
 // crop centred on it.
 // Page script avoids template literals so this file can stay one template string.
+import { FAVICON_LINK } from "../shared/brand.ts";
 import { DEFAULT_TARGET } from "./locate-api.ts";
 import { BASE_STYLE, pageNav, type SitePaths } from "./page-style.ts";
 
@@ -10,6 +11,7 @@ export const locatePage = ({ paths, hosted }: { paths: SitePaths; hosted: boolea
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Typecast: find and crop</title>
+${FAVICON_LINK}
 <style>
 ${BASE_STYLE}
   .locate-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); }

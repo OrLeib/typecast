@@ -1,6 +1,7 @@
 // A one-page static showcase to send someone who won't run the demo: the routing claim, the held-out numbers behind
 // it, and every brief of the latest judged shootout with the routed and default images side by side.
 import { PICK_THRESHOLD } from "../routing/recommendation.ts";
+import { FAVICON_LINK } from "../shared/brand.ts";
 import { escapeHtml } from "../shared/format.ts";
 import type { Evidence } from "./evidence.ts";
 import { BASE_STYLE, pageNav, type SitePaths } from "./page-style.ts";
@@ -263,6 +264,7 @@ export function showcasePage({ evidence, shootout, paths }: ShowcaseInput): stri
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Typecast</title>
+${FAVICON_LINK}
 <meta name="description" content="A model router for AI image generation: pick the right model for a brief in about 200ms, with a confidence you can act on.">
 <style>${BASE_STYLE}${STYLE}</style>
 </head>
