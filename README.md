@@ -34,11 +34,10 @@ npm run judge-report -- runs/level2/<timestamp> --judge jev  # Jev's win rate, a
 Set `HF_XET_HIGH_PERFORMANCE=1` for the first `generate`: it downloads about 100GB of weights, and the default downloader is several times slower on high-latency links.
 
 ### Find and crop
-The demo's second page (`/locate`) asks Jev where a described target is in up to 12 images at once, one request per image with a box question and a yes/no presence check, then cuts a square around it in each, centred on the box and padded (transparent where it runs past the photo): the crop a face or detail pass starts from.
-A switch picks one image at a time instead.
+The demo's second page (`/locate`) asks Jev where a described target is in an image, with a box question and a yes/no presence check in one request, then cuts a square around it, centred on the box and padded (transparent where it runs past the photo): the crop a face or detail pass starts from.
 Eight samples live in `data/locating/`; images that aren't ours to publish can go in the gitignored `runs/locating-samples/`, or upload your own.
-Each image costs about 3,700 input tokens (~$0.00016); nine take about 1-2s together. Answers are cached, so changing the padding re-crops for free.
-Nothing has measured its boxes yet. On the nine samples it boxed every visible face (box confidence 0.47-0.85) and put the three images without a visible face at 2-35% present.
+An image costs about 3,700 input tokens (~$0.00016) and about 0.35s. Answers are cached, so changing the padding re-crops for free.
+Nothing has measured its boxes yet. On nine samples it boxed every visible face (box confidence 0.47-0.85) and put the three images without a visible face at 2-35% present.
 
 ### Hosted site
 https://typecast-six.vercel.app: the results summary, live routing (`/demo`) and find and crop (`/locate`). Rendering stays local.

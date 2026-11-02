@@ -51,7 +51,7 @@ Nothing below `cli/` and `api/` reads `process.env`.
 | `jev/answers.ts` | Checks an answer against the question asked: present, a valid choice, one probability per option |
 | `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |
 | `routing/` | `Router` interface, the decision-model router, the pick-or-compare recommendation, the keyword difficulty probe, roster and variants |
-| `locating/` | `Locator` interface and the Jev locator (a box and a presence check per image, every image at once), fitting images to Jev's size limits, the padded square crop |
+| `locating/` | `Locator` interface and the Jev locator (a box and a presence check in one request), fitting images to Jev's size limits, the padded square crop |
 | `evaluation/` | Briefs, pure metrics, metric registry, runner, summary, report formatting, run store |
 | `comparison/` | Run comparison and report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, shootout runner (every lineup model on every brief), manifest store |
@@ -163,14 +163,14 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
 
 ## Finding and cropping
-- The demo's `/locate` page finds one target in up to `MAX_IMAGES` images at once (`src/locating/locator.ts`): one request per image, all in parallel, each with a box question for where the target is and a noul question for whether it is there.
-  Don't batch images into one request: eight in one request cost the same tokens but loosened the boxes (a cyclist's face came back as a body-height strip at 0.23 confidence, against a tight box at 0.82 alone).
+- The demo's `/locate` page finds a target in one image (`src/locating/locator.ts`): one request with a box question for where the target is and a noul question for whether it is there.
+  If several images are ever needed, send one request per image in parallel, not one request with all of them: eight in one request cost the same tokens but loosened the boxes (a cyclist's face came back as a body-height strip at 0.23 confidence, against a tight box at 0.82 alone).
   `squareCrop` pads the box on every side by a share of its longer edge and keeps the square centred on the box, even past the image's edge (that part of the crop is transparent); sliding it back inside pushed faces off-centre.
   The crop is cut from the original, not the copy sent to Jev.
 - Images are scaled to fit Jev's 280-1568px sides and sent as JPEG; the box's fractions apply to the original because the aspect ratio is kept.
   Send JPEG, not PNG: uploading a 3.7 MB PNG took about 1s of a 1.3s request, while the same image as a 0.23 MB JPEG took 0.35s with the same box and tokens.
-- About one in nine image requests fired together gets a 503 ("Image processing is unavailable") while the rest answer, so the locator retries after 250ms, not judging's 1.5s; the time it reports includes retries.
-- The page gets each crop as a WebP preview of at most 520px (`previewOf`): full-size PNG crops made one response 13 MB and took the browser seconds to decode.
+- About one in nine image requests gets a 503 ("Image processing is unavailable") while others at the same moment answer, so the locator retries after 250ms, not judging's 1.5s; the time it reports includes retries.
+- The page gets the crop as a WebP preview of at most 520px (`previewOf`): a full-size PNG crop can be several MB and take the browser seconds to decode.
 - Samples live in `data/locating/` (rendered locally with mflux, so they are ours to commit). A 1024x1280 photo costs about 3,700 input tokens.
   Images that aren't ours to publish (such as a third-party example photo) go in `runs/locating-samples/`, which is gitignored; the demo lists both folders.
 - Nothing has measured box accuracy yet. Box is marked "Dreamer-ready" in Jev's docs, so its format and quality can change between releases.

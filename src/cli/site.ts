@@ -92,10 +92,11 @@ const bake = createLocateApi({
   cacheDir: BAKED_ANSWERS_DIR,
   bakedAnswerDirs: [],
 });
-const baked = await bake.locate({ samples, target: DEFAULT_TARGET, padding: BAKE_PADDING });
+const baked = await Promise.all(samples.map((sample) => bake.locate({ sample, target: DEFAULT_TARGET, padding: BAKE_PADDING })));
+const bakeCost = baked.reduce((sum, answer) => sum + answer.costUsd, 0);
 
 console.log(`Site written to ${args.out}/ (${urls.size} shootout images, ${samples.length} samples).`);
-console.log(`Sample answers in ${BAKED_ANSWERS_DIR}/ (${baked.cached ? "all already baked" : `asked Jev, $${baked.costUsd.toFixed(5)}`}).`);
+console.log(`Sample answers in ${BAKED_ANSWERS_DIR}/ (${bakeCost ? `asked Jev, $${bakeCost.toFixed(5)}` : "all already baked"}).`);
 console.log("Preview with: vercel deploy    Production: vercel deploy --prod");
 
 /** A page at `path` is `path/index.html`, so its URL needs no extension. */

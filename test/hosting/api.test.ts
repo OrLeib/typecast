@@ -45,7 +45,8 @@ beforeAll(async () => {
   const baked = await png("#808080");
   await writeFile(join(samplesDir, "baked.png"), baked);
   await writeFile(join(samplesDir, "fresh.png"), await png("#406080"));
-  await createDiskCache(bakedAnswersDir).set(locateCacheKey(locatorIdOf(JEV), baked, TARGET), { ...box.answers.face, presence: 0.97, model: "jev-1.14.0" });
+  const location = { box: box.answers.face.box, confidence: box.answers.face.confidence, presence: 0.97, model: "jev-1.14.0", inputTokens: 3706, latencyMs: 700 };
+  await createDiskCache(bakedAnswersDir).set(locateCacheKey(locatorIdOf(JEV), baked, TARGET), location);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
 });
@@ -76,17 +77,17 @@ describe("hosted API", () => {
 
   it("answers a baked-in sample without calling Jev", async () => {
     reset();
-    const res = await post("/locate", { samples: ["baked.png"], target: TARGET, padding: 0.5 });
+    const res = await post("/locate", { sample: "baked.png", target: TARGET, padding: 0.5 });
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ cached: true, inputTokens: 0, images: [{ name: "baked.png", presence: 0.97 }] });
+    expect(await res.json()).toMatchObject({ name: "baked.png", presence: 0.97, cached: true, costUsd: 0 });
     expect(jevCalls).toBe(0);
   });
 
   it("locates an image it has no answer for live", async () => {
     reset();
-    const res = await post("/locate", { samples: ["baked.png", "fresh.png"], target: TARGET, padding: 0.5 });
+    const res = await post("/locate", { sample: "fresh.png", target: TARGET, padding: 0.5 });
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ cached: false, images: [{ name: "baked.png" }, { name: "fresh.png" }] });
+    expect(await res.json()).toMatchObject({ name: "fresh.png", cached: false });
     expect(jevCalls).toBe(1);
   });
 
