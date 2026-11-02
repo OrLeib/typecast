@@ -34,7 +34,7 @@ const samplesDir = join(dir, "samples");
 const localSamplesDir = join(dir, "local-samples");
 /** 1000 x 800, so the fake box is 200 x 160 px centred at (500, 240). */
 const samplePng = (background = "#808080") => sharp({ create: { width: 1000, height: 800, channels: 3, background } }).png().toBuffer();
-const LOCATE = { locator, locatorId: "test-locator", samplesDirs: [samplesDir, localSamplesDir], bakedAnswerDirs: [] };
+const LOCATE = { locator, locatorId: "test-locator", samplesDirs: [samplesDir, localSamplesDir] };
 const server = createDemoServer({
   router,
   roster: { photo: "Photos", video: "Clips" },
@@ -71,7 +71,6 @@ describe("demo server", () => {
       defaultGenerator: "mflux:default@q8",
       examples: [{ brief: "a brief", expected: "photo" }],
       pickThreshold: 0.85,
-      shootout: null,
     });
   });
 
@@ -89,7 +88,7 @@ describe("demo server", () => {
     const calls = routeCalls;
     const again = await (await post("/api/route", { brief: "  a cached harbor  " })).json();
     expect(routeCalls).toBe(calls);
-    expect(again).toEqual({ ...first, cached: true });
+    expect(again).toEqual({ ...first, cached: true, costUsd: 0 });
   });
 
   it("rejects an empty brief", async () => {
@@ -141,7 +140,7 @@ describe("demo server", () => {
     const calls = judge.calls.length;
     const again = await (await post("/api/judge", { brief, routed, default: dflt })).json();
     expect(judge.calls).toHaveLength(calls);
-    expect(again).toEqual({ ...verdict, cached: true });
+    expect(again).toEqual({ ...verdict, cached: true, costUsd: 0 });
   });
 
   it("refuses to judge images it didn't render", async () => {
@@ -209,6 +208,7 @@ describe("demo server: find and crop", () => {
     expect((await get("/locate-samples/local.png")).status).toBe(200);
     expect((await get("/locate-samples/notes.txt")).status).toBe(404);
     expect((await get("/locate-samples/..%2Fcache")).status).toBe(404);
+    expect((await get("/locate-samples/%E0.png")).status).toBe(404);
   });
 
   it("locates the target and cuts a square centred on it, with what the request cost", async () => {
@@ -268,8 +268,11 @@ describe("demo server with a shootout", () => {
   });
   const local = listenForTests(withShootout, { setup: () => writeFile(image, "shot-png") });
 
-  it("sends the shootout evidence with the config", async () => {
-    expect((await (await local.get("/api/config")).json()).shootout).toEqual(shootout.evidence);
+  it("shows the shootout on the results page, linked from the other pages", async () => {
+    const results = await (await local.get("/results")).text();
+    expect(results).toContain('aria-current="page">Results');
+    expect(results).toContain("Does routing make better images?");
+    expect(await (await local.get("/")).text()).toContain('<a href="/results">Results</a>');
   });
 
   it("serves the shootout's images and nothing else under its prefix", async () => {

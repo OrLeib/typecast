@@ -1,10 +1,9 @@
 // Runs an auto-judge over every pair in a Level 2 run that still needs it, appending to the run's judgments.
-import { readFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { join } from "node:path";
 import type { Manifest } from "../generation/manifest.ts";
 import type { PairItem } from "../generation/runner.ts";
 import { appendJudgment, JUDGMENTS_FILE, latestByPair, loadJudgments } from "./judgments.ts";
-import type { JudgedImage, PairJudge, PairVerdict } from "./pair-judge.ts";
+import { loadImage, type PairJudge, type PairVerdict } from "./pair-judge.ts";
 import { needsJudging } from "./pairs.ts";
 
 export type AutoJudgeOptions = { now?: () => Date; onJudged?: (item: PairItem, verdict: PairVerdict) => void };
@@ -28,12 +27,4 @@ export async function autoJudgeRun(judge: PairJudge, dir: string, manifest: Mani
     options.onJudged?.(item, verdict);
   }
   return inputTokens;
-}
-
-const FORMATS: Record<string, JudgedImage["format"]> = { ".png": "png", ".jpg": "jpeg", ".jpeg": "jpeg" };
-
-export async function loadImage(dir: string, relative: string): Promise<JudgedImage> {
-  const format = FORMATS[extname(relative).toLowerCase()];
-  if (!format) throw new Error(`${relative}: judges take PNG or JPEG images only`);
-  return { format, data: await readFile(join(dir, relative)) };
 }

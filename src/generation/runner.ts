@@ -28,28 +28,33 @@ export const isPair = (item: GenerationItem): item is PairItem => !("skipped" in
 
 export type Lineup = { byCategory: Record<string, Generator>; fallback: Generator };
 
-export type GenerationOptions = {
+export type RunOptions<T> = {
   dir: string;
   seed: number;
   /** Items from an earlier, interrupted run of the same directory. Their route and images are kept. */
-  previous?: Map<string, GenerationItem>;
-  onItem?: (item: GenerationItem) => Promise<void> | void;
+  previous?: Map<string, T>;
+  onItem?: (item: T) => Promise<void> | void;
 };
 
 export const IMAGES_DIR = "images";
 
 /** Routes each brief, then renders it with the routed generator and the default one. */
-export async function runGeneration(router: Router, lineup: Lineup, briefs: Brief[], options: GenerationOptions): Promise<GenerationItem[]> {
-  const items: GenerationItem[] = [];
+export function runGeneration(router: Router, lineup: Lineup, briefs: Brief[], options: RunOptions<GenerationItem>): Promise<GenerationItem[]> {
+  return runEachBrief(briefs, options, (brief) => generatePair(router, lineup, brief, options));
+}
+
+/** Makes one item per brief in order, reusing items an interrupted run already made, and reports each as it lands. */
+export async function runEachBrief<T>(briefs: Brief[], options: RunOptions<T>, make: (brief: Brief) => Promise<T>): Promise<T[]> {
+  const items: T[] = [];
   for (const brief of briefs) {
-    const item = options.previous?.get(brief.id) ?? (await generatePair(router, lineup, brief, options));
+    const item = options.previous?.get(brief.id) ?? (await make(brief));
     items.push(item);
     await options.onItem?.(item);
   }
   return items;
 }
 
-async function generatePair(router: Router, lineup: Lineup, brief: Brief, { dir, seed }: GenerationOptions): Promise<GenerationItem> {
+async function generatePair(router: Router, lineup: Lineup, brief: Brief, { dir, seed }: RunOptions<GenerationItem>): Promise<GenerationItem> {
   const { choice, confidence, model } = await router.route(brief.brief);
   const base = { id: brief.id, brief: brief.brief, expected: brief.expected, route: { choice, confidence, model } };
   const routedGenerator = lineup.byCategory[choice];
@@ -61,7 +66,7 @@ async function generatePair(router: Router, lineup: Lineup, brief: Brief, { dir,
 }
 
 /** Renders `brief` with `generator` into the run's images dir, named so every generator's image of a brief sits side by side. */
-export async function shoot(generator: Generator, brief: Brief, { dir, seed }: Pick<GenerationOptions, "dir" | "seed">): Promise<Shot> {
+export async function shoot(generator: Generator, brief: Brief, { dir, seed }: Pick<RunOptions<unknown>, "dir" | "seed">): Promise<Shot> {
   const image = join(IMAGES_DIR, `${brief.id}-${fileSafe(generator.name)}.png`);
   const { latencyMs } = await generator.generate({ prompt: brief.brief, seed, outputPath: join(dir, image) });
   return { generator: generator.name, image, latencyMs };

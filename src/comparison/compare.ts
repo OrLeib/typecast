@@ -1,5 +1,5 @@
 import type { Result } from "../evaluation/result.ts";
-import { RUN_METRICS, type MetricContext, type RunMetric } from "../evaluation/run-metrics.ts";
+import { RUN_METRICS, type MetricContext } from "../evaluation/run-metrics.ts";
 import { bootstrapCI, mcnemarExact } from "../shared/stats.ts";
 
 export type MetricDelta = { metric: string; a: number; b: number; delta: number; ci: [number, number]; lowerIsBetter: boolean };
@@ -15,22 +15,20 @@ export type Comparison = {
   flips: Flip[];
 };
 
-export type CompareOptions = { iterations?: number; seed?: number; metrics?: readonly RunMetric[] };
-
 /**
  * Paired comparison of two runs over the same briefs. Bootstrap resamples briefs (not individual
  * repeats), so repeated calls on one brief stay together and the CI reflects brief-level variance.
  */
-export function compareRuns(a: Result[], b: Result[], context: MetricContext, options: CompareOptions = {}): Comparison {
+export function compareRuns(a: Result[], b: Result[], context: MetricContext): Comparison {
   const aById = groupById(a);
   const bById = groupById(b);
   const ids = sharedIds(aById, bById);
   const gather = (byId: Map<string, Result[]>, sample: string[]) => sample.flatMap((id) => byId.get(id)!);
 
-  const metrics = (options.metrics ?? RUN_METRICS).map((m): MetricDelta => {
+  const metrics = RUN_METRICS.map((m): MetricDelta => {
     const av = m.compute(a, context);
     const bv = m.compute(b, context);
-    const ci = bootstrapCI(ids, (sample) => m.compute(gather(bById, sample), context) - m.compute(gather(aById, sample), context), options);
+    const ci = bootstrapCI(ids, (sample) => m.compute(gather(bById, sample), context) - m.compute(gather(aById, sample), context));
     return { metric: m.label, a: av, b: bv, delta: bv - av, ci, lowerIsBetter: m.lowerIsBetter };
   });
 

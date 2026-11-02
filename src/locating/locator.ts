@@ -36,7 +36,7 @@ const PRESENT = "present";
 export function createJevLocator(client: DecisionClient, { now = () => performance.now() }: { now?: () => number } = {}): Locator {
   return {
     async locate(image, target) {
-      const { asset } = await prepareForJev(image);
+      const asset = await prepareForJev(image);
       const started = now();
       const result = await client.decide(
         { image: IMAGE_REF },

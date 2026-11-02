@@ -17,9 +17,9 @@ describe("mcnemarExact", () => {
 describe("bootstrapCI", () => {
   const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
-  it("is reproducible for a given seed", () => {
+  it("gives the same interval every time", () => {
     const xs = Array.from({ length: 50 }, (_, i) => i % 7);
-    expect(bootstrapCI(xs, mean, { seed: 3 })).toEqual(bootstrapCI(xs, mean, { seed: 3 }));
+    expect(bootstrapCI(xs, mean)).toEqual(bootstrapCI(xs, mean));
   });
 
   it("brackets the sample mean and collapses for constant data", () => {

@@ -3,7 +3,7 @@ import { parseArgs } from "node:util";
 import { loadBriefs } from "../evaluation/briefs.ts";
 import { createLocalLineup, LOCAL_LINEUP } from "../generation/local-lineup.ts";
 import { loadManifestIfAny, loadShootoutIfAny, MANIFEST_FILE, saveManifest, SHOOTOUT_FILE, type GenerationMeta } from "../generation/manifest.ts";
-import { isPair, runGeneration, type GenerationItem } from "../generation/runner.ts";
+import { isPair, runGeneration, type GenerationItem, type RunOptions } from "../generation/runner.ts";
 import { selectSample } from "../generation/sample.ts";
 import { runShootout, type ShootoutItem } from "../generation/shootout.ts";
 import { createJevClient } from "../jev/client.ts";
@@ -41,7 +41,7 @@ const dir = args.out ?? join("runs", args.shootout ? "shootout" : "level2", meta
 const briefs = selectSample(await loadBriefs(args.data), { perCategory, categories: Object.keys(LOCAL_LINEUP), seed });
 const router = createDecisionRouter(createJevClient(jevConfigFromEnv()), getVariant(args.variant));
 if (args.shootout) {
-  const generators = [...new Map(Object.values(lineup.byCategory).map((g) => [g.name, g])).values()];
+  const generators = Object.values(lineup.byCategory);
   await resumable(await loadShootoutIfAny(dir), {
     file: SHOOTOUT_FILE, setup: `models=${generators.length}`, run: (options) => runShootout(router, generators, briefs, options), describeItem: describeShootout,
   });
@@ -53,10 +53,8 @@ if (args.shootout) {
   console.log(`Judge with: npm run judge -- ${dir}`);
 }
 
-type Resume<T> = { previous: Map<string, T>; onItem: (item: T) => Promise<void>; dir: string; seed: number };
-
 /** One kind of run: the file it saves to, its setup for the log, how to run it, and how to log an item. */
-type RunKind<T> = { file: string; setup: string; run: (options: Resume<T>) => Promise<unknown>; describeItem: (item: T) => string };
+type RunKind<T> = { file: string; setup: string; run: (options: RunOptions<T>) => Promise<unknown>; describeItem: (item: T) => string };
 
 /** Runs `run` over the sample, keeping what an earlier run of `dir` saved in `file` and saving after every item. */
 async function resumable<T extends { id: string }>(

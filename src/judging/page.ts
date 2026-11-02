@@ -98,14 +98,19 @@ export function judgePage(dir: string): string {
     $("error").textContent = "";
     try {
       const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || res.statusText);
-      await render(data);
+      if (!res.ok) throw await failure(res);
+      await render(await res.json());
     } catch (e) {
       $("error").textContent = e.message;
     } finally {
       busy = false;
     }
+  }
+
+  // The server answers errors as JSON, but anything between may not, so a status line stands in.
+  async function failure(res) {
+    const data = await res.json().catch(() => ({}));
+    return new Error(data.error || (res.statusText || "Request failed") + " (" + res.status + ")");
   }
 
   const pick = (p) => current && call("/api/judge", { id: current.id, pick: p });

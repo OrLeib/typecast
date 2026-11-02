@@ -42,7 +42,7 @@ const STYLE = `
   .best .bar span { background: var(--accent); }
   .tags { display: flex; gap: 6px; flex-wrap: wrap; min-height: 20px; }
   .tag { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
-  .best .tag.pick { border-color: var(--accent); color: var(--accent); }
+  .tag.pick { border-color: var(--accent); color: var(--accent); }
 `;
 
 export function renderPickSheet(manifest: ShootoutManifest, picks: Map<string, PickRecord>, judge: string): string {

@@ -1,23 +1,20 @@
 // What every demo page shares: colour tokens for light and dark, type, buttons, cards, and the top bar that links the pages.
 
 /** Where each page lives. Run locally, the routing demo is the home page; hosted, the results showcase is. */
-export type SitePaths = { results?: string; route: string; locate: string };
+export type SitePaths = { results: string; route: string; locate: string };
 
-export const LOCAL_PATHS: SitePaths = { route: "/", locate: "/locate" };
+export const LOCAL_PATHS: SitePaths = { results: "/results", route: "/", locate: "/locate" };
 export const HOSTED_PATHS: SitePaths = { results: "/", route: "/demo", locate: "/locate" };
 
 const LABELS: Record<keyof SitePaths, string> = { results: "Results", route: "Route a brief", locate: "Find and crop" };
 
-/** The links between pages, in order, with the current one marked for screen readers too. */
-export const pageLinks = (current: keyof SitePaths | undefined, paths: SitePaths) =>
-  (Object.keys(LABELS) as (keyof SitePaths)[])
-    .filter((page) => paths[page] !== undefined)
+/** The brand and the links between pages, in order, with the current one marked for screen readers too. */
+export const pageNav = (current: keyof SitePaths, paths: SitePaths) => {
+  const links = (Object.keys(LABELS) as (keyof SitePaths)[])
     .map((page) => `<a href="${paths[page]}"${page === current ? ' aria-current="page"' : ""}>${LABELS[page]}</a>`)
     .join("");
-
-/** The brand and the links between pages. */
-export const pageNav = (current: keyof SitePaths, paths: SitePaths) =>
-  `<nav class="topbar" aria-label="Demo pages"><div class="brand"><span class="brand-mark">T</span>Typecast</div><div class="pages">${pageLinks(current, paths)}</div></nav>`;
+  return `<nav class="topbar" aria-label="Pages"><div class="brand"><span class="brand-mark">T</span>Typecast</div><div class="pages">${links}</div></nav>`;
+};
 
 export const BASE_STYLE = `
   :root {
@@ -26,12 +23,12 @@ export const BASE_STYLE = `
     --text: #0b0b0b; --text-2: #52514e; --muted: #6b6a65;
     --accent: #2a78d6; --accent-2: #7aaae8; --accent-soft: #cde2fb; --accent-text: #1b5cb0; --track: #ebeae6; --bar-rest: #c9c8c2;
     --good: #0ca30c; --good-text: #006300; --good-bg: #e3f4e3;
-    --warn: #fab219; --warn-text: #7a4f00; --warn-bg: #fdf1d6;
+    --warn-text: #7a4f00; --warn-bg: #fdf1d6;
     --danger: #d03b3b;
     --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root {
       color-scheme: dark;
       --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #2f2f2c;
       --text: #f0efec; --text-2: #c3c2b7; --muted: #8e8d86;
@@ -39,14 +36,6 @@ export const BASE_STYLE = `
       --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
       --shadow: none;
     }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #2f2f2c;
-    --text: #f0efec; --text-2: #c3c2b7; --muted: #8e8d86;
-    --accent: #3987e5; --accent-2: #3a6eac; --accent-soft: #1c3557; --accent-text: #a9cdf7; --track: #2a2a27; --bar-rest: #4a4a45;
-    --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
-    --shadow: none;
   }
   * { box-sizing: border-box; }
   html { background: var(--bg); }

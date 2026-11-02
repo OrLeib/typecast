@@ -65,6 +65,7 @@ describe("judge server", () => {
   it("serves run images but nothing outside the images dir", async () => {
     expect(await (await get("/images/a-photo.png")).text()).toBe("png-bytes");
     expect((await get("/images/..%2Fmanifest.json")).status).toBe(404);
+    expect((await get("/images/%E0.png")).status).toBe(404);
     expect((await get("/judgments.jsonl")).status).toBe(404);
   });
 });

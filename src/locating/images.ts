@@ -13,13 +13,11 @@ const MIN_SIDE = 280;
  */
 const JPEG_QUALITY = 85;
 
-export type PreparedImage = { asset: ImageAsset; size: Size };
-
 /**
  * Scales the image down until both sides fit Jev's limits and re-encodes it as JPEG. The aspect ratio is kept, so the
- * box's fractions apply to the original image too. `size` is the original's, upright.
+ * box's fractions apply to the original image too.
  */
-export async function prepareForJev(original: Buffer): Promise<PreparedImage> {
+export async function prepareForJev(original: Buffer): Promise<ImageAsset> {
   const size = await uprightSize(original);
   const scale = Math.min(1, MAX_SIDE / Math.max(size.width, size.height));
   const width = Math.round(size.width * scale);
@@ -28,7 +26,7 @@ export async function prepareForJev(original: Buffer): Promise<PreparedImage> {
     throw new Error(`image is ${size.width}x${size.height}; its shorter side must stay at least ${MIN_SIDE}px once it fits in ${MAX_SIDE}px`);
   }
   const jpeg = await sharp(original).rotate().resize(width, height).jpeg({ quality: JPEG_QUALITY }).toBuffer();
-  return { asset: { type: "image", format: "jpeg", data_base64: jpeg.toString("base64") }, size };
+  return { type: "image", format: "jpeg", data_base64: jpeg.toString("base64") };
 }
 
 /** Honours EXIF orientation, so sizes match what a browser shows. */

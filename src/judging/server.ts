@@ -1,10 +1,9 @@
 // Local blind-judging server: shows each pair with the routed image on a hidden, fixed side and records the pick.
-import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { join, normalize, sep } from "node:path";
 import type { Manifest } from "../generation/manifest.ts";
 import { IMAGES_DIR } from "../generation/runner.ts";
-import { HttpError, jsonErrors, readJsonObject, requestUrl, send, sendHtml, sendJson } from "../shared/http.ts";
+import { decodePath, HttpError, jsonErrors, readJsonObject, requestUrl, sendFile, sendHtml, sendJson } from "../shared/http.ts";
 import { blindOrder, routedSide, type Side } from "./blind.ts";
 import { appendJudgment, HUMAN_JUDGE, JUDGMENTS_FILE, latestByPair, loadJudgments, undoLastJudgment, type Winner } from "./judgments.ts";
 import { judgePage } from "./page.ts";
@@ -49,7 +48,7 @@ export function createJudgeServer(dir: string, manifest: Manifest, now: () => Da
       await undoLastJudgment(file, HUMAN_JUDGE, now());
       return sendJson(res, await next());
     }
-    if (req.method === "GET" && url.pathname.startsWith(`/${IMAGES_DIR}/`)) return sendImage(res, dir, decodeURIComponent(url.pathname.slice(1)));
+    if (req.method === "GET" && url.pathname.startsWith(`/${IMAGES_DIR}/`)) return sendImage(res, dir, decodePath(url.pathname.slice(1)));
     throw new HttpError(404, "not found");
   }
 
@@ -60,8 +59,5 @@ export function createJudgeServer(dir: string, manifest: Manifest, now: () => Da
 async function sendImage(res: ServerResponse, dir: string, relative: string) {
   const path = normalize(relative);
   if (!path.startsWith(IMAGES_DIR + sep) || path.includes("..")) throw new HttpError(404, "not found");
-  const bytes = await readFile(join(dir, path)).catch(() => {
-    throw new HttpError(404, `no image ${path}`);
-  });
-  send(res, 200, "image/png", bytes);
+  return sendFile(res, join(dir, path), "image/png");
 }

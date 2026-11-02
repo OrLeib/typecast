@@ -5,7 +5,7 @@ import type { ShootoutManifest } from "../generation/manifest.ts";
 import type { ShootoutItem } from "../generation/shootout.ts";
 import { readTextIfAny } from "../shared/files.ts";
 import { expectProbabilities, expectProbability, expectString, parseJsonLine } from "../shared/validate.ts";
-import { loadImage } from "./auto-judge.ts";
+import { loadImage } from "./pair-judge.ts";
 import type { PickJudge, PickVerdict } from "./pick-judge.ts";
 
 /** One judge's pick for one brief, keyed by generator name so it reads without the manifest. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Evidence } from "../../src/demo/evidence.ts";
+import { HOSTED_PATHS } from "../../src/demo/page-style.ts";
 import type { ShootoutBrief, ShootoutEvidence } from "../../src/demo/shootout-evidence.ts";
 import { modelName, showcasePage } from "../../src/demo/showcase.ts";
 
@@ -21,8 +22,9 @@ const shootout = (briefs: ShootoutBrief[]): ShootoutEvidence => ({
 const heldOut = (data: string, picked: number, compared: number) =>
   ({ data, n: 10, repeats: 3, latencyP50: 200, costPer1000Usd: 0.026, outcomes: { picked, pickedRight: picked, compared, comparedInShortlist: compared - 1 } }) as Evidence;
 
-const page = (briefs: ShootoutBrief[]) =>
-  showcasePage({ heldOut: [heldOut("data/test.jsonl", 25, 5), heldOut("data/hard.jsonl", 20, 10)], shootout: shootout(briefs), pickThreshold: 0.85, repoUrl: "https://example.com/r", links: '<a href="/demo">Route a brief</a>', tryUrl: "/demo" });
+const evidence = [heldOut("data/test.jsonl", 25, 5), heldOut("data/hard.jsonl", 20, 10), heldOut("data/dev.jsonl", 30, 0)];
+
+const page = (briefs: ShootoutBrief[]) => showcasePage({ evidence, shootout: shootout(briefs), paths: HOSTED_PATHS });
 
 describe("showcasePage", () => {
   it("sums the held-out outcomes into the headline numbers", () => {
@@ -30,6 +32,18 @@ describe("showcasePage", () => {
     expect(html).toContain("<b>45/45</b>");
     expect(html).toContain("<b>13/15</b>");
     expect(html).toContain("20 held-out briefs");
+  });
+
+  it("links the pages, marking this one, and sends the call to action to live routing", () => {
+    const html = page([]);
+    expect(html).toContain('<a href="/" aria-current="page">Results</a>');
+    expect(html).toContain('<a class="try" href="/demo">');
+  });
+
+  it("leaves out the images when no shootout is picked yet", () => {
+    const html = showcasePage({ evidence, paths: HOSTED_PATHS });
+    expect(html).toContain("<b>45/45</b>");
+    expect(html).not.toContain("Does routing make better images?");
   });
 
   it("escapes briefs and shows the routed image beside the default one", () => {

@@ -1,4 +1,5 @@
 // Plumbing shared by the local servers (judging page, demo). Nothing here knows what the servers serve.
+import { readFile } from "node:fs/promises";
 import type { IncomingMessage, RequestListener, ServerResponse } from "node:http";
 
 /** An error that becomes an HTTP answer with this status; anything else is a 500. */
@@ -20,6 +21,14 @@ export const sendHtml = (res: ServerResponse, html: string) => send(res, 200, "t
 
 export const sendJson = (res: ServerResponse, body: unknown, status = 200) => send(res, status, "application/json", JSON.stringify(body));
 
+/** Sends a file the URL names; one that can't be read is a 404, like any other URL the server doesn't know. */
+export async function sendFile(res: ServerResponse, path: string, type: string): Promise<void> {
+  const bytes = await readFile(path).catch(() => {
+    throw new HttpError(404, "not found");
+  });
+  send(res, 200, type, bytes);
+}
+
 /** Runs an async handler, answering a thrown error as `{ error }` JSON with its status. */
 export function jsonErrors(handle: (req: IncomingMessage, res: ServerResponse) => Promise<unknown>): RequestListener {
   return (req, res) => {
@@ -29,6 +38,15 @@ export function jsonErrors(handle: (req: IncomingMessage, res: ServerResponse) =
 
 /** The request's path and query; the host is irrelevant to a local server. */
 export const requestUrl = (req: IncomingMessage) => new URL(req.url ?? "/", "http://localhost");
+
+/** A URL path decoded. A malformed escape such as `%E0` can't name a file, so it is a 404, not a 500. */
+export function decodePath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    throw new HttpError(404, "not found");
+  }
+}
 
 /** Reads the request body as a JSON object. An empty body is `{}`; anything but an object is a 400. */
 export async function readJsonObject(req: IncomingMessage): Promise<Record<string, unknown>> {

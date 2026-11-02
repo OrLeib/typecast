@@ -5,10 +5,10 @@ import type { Result } from "./result.ts";
 import { RUN_METRICS, type RunMetric } from "./run-metrics.ts";
 import type { Summary } from "./summary.ts";
 
-export function formatSummary(s: Summary, metrics: readonly RunMetric[] = RUN_METRICS): string[] {
+export function formatSummary(s: Summary): string[] {
   return [
     `${s.data}  variant=${s.variant}  n=${s.n} x${s.repeats}  model=${s.model}  commit=${s.commit}`,
-    ...metrics.map((m) => `  ${m.label} ${formatValue(m, s.metrics[m.id])}`),
+    ...RUN_METRICS.map((m) => `  ${m.label} ${formatValue(m, s.metrics[m.id])}`),
     `  per-repeat accuracy ${s.perRepeatAccuracy.map((x) => percent(x)).join(" / ")}`,
     `latency p50 ${Math.round(s.latencyP50)}ms  p95 ${Math.round(s.latencyP95)}ms   cost per 1,000 routes ~$${s.costPer1000Usd.toFixed(4)}`,
     "reliability (non-empty confidence bins):",

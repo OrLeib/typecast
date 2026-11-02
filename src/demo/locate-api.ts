@@ -19,7 +19,7 @@ export type LocateApiConfig = {
   samplesDirs: string[];
   cacheDir: string;
   /** Read-only answers baked in when the hosted site is built, so trying the samples costs nothing. */
-  bakedAnswerDirs: string[];
+  bakedAnswersDir?: string;
 };
 
 export const SAMPLE_IMAGE_PREFIX = "/locate-samples/";
@@ -35,8 +35,8 @@ const MAX_PADDING = 2;
 /** The crop shows in a card about 260px wide; twice that stays sharp on a retina screen. */
 const PREVIEW_SIDE = 520;
 
-export function createLocateApi({ locator, locatorId, inputPricePerMillion, samplesDirs, cacheDir, bakedAnswerDirs }: LocateApiConfig) {
-  const cache = createDiskCache<Location>(cacheDir, bakedAnswerDirs);
+export function createLocateApi({ locator, locatorId, inputPricePerMillion, samplesDirs, cacheDir, bakedAnswersDir }: LocateApiConfig) {
+  const cache = createDiskCache<Location>(cacheDir, bakedAnswersDir);
   return {
     samples: async () => ({ samples: [...(await findSamples(samplesDirs)).keys()].map((name) => ({ name, url: SAMPLE_IMAGE_PREFIX + name })) }),
     locate: async (body: Record<string, unknown>) => {

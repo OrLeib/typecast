@@ -10,15 +10,15 @@ export function accuracy(preds: Prediction[]): number {
 export type Bin = { lo: number; hi: number; count: number; avgConfidence: number; accuracy: number };
 
 /** Ten equal-width bins: fine enough to show over-confidence, coarse enough to fill on ~100 briefs. */
-const DEFAULT_BIN_COUNT = 10;
+const BIN_COUNT = 10;
 
 /** Reliability bins over [0,1]; the last bin includes 1.0. */
-export function reliabilityBins(preds: Prediction[], nBins = DEFAULT_BIN_COUNT): Bin[] {
+export function reliabilityBins(preds: Prediction[]): Bin[] {
   const bins: Bin[] = [];
-  for (let i = 0; i < nBins; i++) {
-    const lo = i / nBins;
-    const hi = (i + 1) / nBins;
-    const inBin = preds.filter((p) => p.confidence >= lo && (i === nBins - 1 ? p.confidence <= hi : p.confidence < hi));
+  for (let i = 0; i < BIN_COUNT; i++) {
+    const lo = i / BIN_COUNT;
+    const hi = (i + 1) / BIN_COUNT;
+    const inBin = preds.filter((p) => p.confidence >= lo && (i === BIN_COUNT - 1 ? p.confidence <= hi : p.confidence < hi));
     const count = inBin.length;
     bins.push({
       lo,
@@ -32,9 +32,9 @@ export function reliabilityBins(preds: Prediction[], nBins = DEFAULT_BIN_COUNT):
 }
 
 /** ECE (Expected Calibration Error): weighted mean |accuracy - confidence| across bins. */
-export function ece(preds: Prediction[], nBins = DEFAULT_BIN_COUNT): number {
+export function ece(preds: Prediction[]): number {
   if (preds.length === 0) return 0;
-  return reliabilityBins(preds, nBins).reduce(
+  return reliabilityBins(preds).reduce(
     (sum, b) => sum + (b.count / preds.length) * Math.abs(b.accuracy - b.avgConfidence),
     0,
   );
@@ -75,7 +75,7 @@ export function brier(preds: ProbPrediction[]): number {
 /** Confidence at or above which a UI just picks (see `recommend`), so a miss there goes unnoticed. */
 export const CONFIDENT_MISS_THRESHOLD = PICK_THRESHOLD;
 
-/** Wrong answers given with at least `threshold` confidence: the misses a UI would not catch. */
-export function confidentMisses(preds: Prediction[], threshold = CONFIDENT_MISS_THRESHOLD): number {
-  return preds.filter((p) => p.choice !== p.expected && p.confidence >= threshold).length;
+/** Wrong answers given with at least `CONFIDENT_MISS_THRESHOLD` confidence: the misses a UI would not catch. */
+export function confidentMisses(preds: Prediction[]): number {
+  return preds.filter((p) => p.choice !== p.expected && p.confidence >= CONFIDENT_MISS_THRESHOLD).length;
 }

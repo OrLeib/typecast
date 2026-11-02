@@ -14,14 +14,14 @@ export const locatePage = ({ paths, hosted }: { paths: SitePaths; hosted: boolea
 ${BASE_STYLE}
   .locate-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); }
   .controls { padding: 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; }
-  .field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-  .field-label { display: block; font-size: 13px; font-weight: 550; color: var(--text-2); margin-bottom: 6px; }
-  .field-head .field-label { margin: 0; }
+  .field { display: grid; gap: 6px; }
+  .field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .field-label { font-size: 13px; font-weight: 550; color: var(--text-2); }
   .samples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .sample { padding: 0; border-radius: 9px; overflow: hidden; aspect-ratio: 1; border: 2px solid transparent; background: var(--surface-2); }
   .sample img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .sample[aria-pressed="true"] { border-color: var(--accent); }
-  .upload { display: block; margin-top: 8px; padding: 9px 12px; border: 1px dashed var(--line); border-radius: 9px; text-align: center; font-size: 13px; color: var(--text-2); cursor: pointer; }
+  .upload { margin-top: 2px; padding: 9px 12px; border: 1px dashed var(--line); border-radius: 9px; text-align: center; font-size: 13px; color: var(--text-2); cursor: pointer; }
   .upload:hover { border-color: var(--muted); }
   .upload:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
   .upload input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -71,22 +71,22 @@ ${BASE_STYLE}
   <header class="top">
     ${pageNav("locate", paths)}
     <h1>Where is it in the image?</h1>
-    <p class="lede">Name a target. One <span>Jev</span> request returns its box and whether it is there at all, and the page cuts a square around it, centred and padded: the crop a face or detail pass starts from.</p>
+    <p class="lede">Name a target. One Jev request returns its box and whether it is there at all, and the page cuts a square around it, centred and padded: the crop a face or detail pass starts from.</p>
   </header>
 
   <div class="card">
     <div class="locate-grid">
       <div class="controls">
-        <div>
+        <div class="field">
           <span class="field-label" id="samples-label">Image</span>
           <div class="samples" id="samples" role="group" aria-labelledby="samples-label"></div>
           <label class="upload">Upload a PNG or JPEG<input type="file" id="file" accept="image/png,image/jpeg"></label>
         </div>
-        <div>
+        <div class="field">
           <label class="field-label" for="target">Find</label>
           <input type="text" id="target" value="${DEFAULT_TARGET}" autocomplete="off">
         </div>
-        <div>
+        <div class="field">
           <div class="field-head"><label class="field-label" for="padding">Padding</label><output id="padding-value" for="padding"></output></div>
           <input type="range" id="padding" min="0" max="1.5" step="0.05" value="0.5">
         </div>
@@ -133,8 +133,16 @@ ${BASE_STYLE}
 
   function pct(n) { return (n * 100).toFixed(0) + "%"; }
 
+  // The server answers errors as JSON, but a proxy in front of the hosted site (a 413 or 502) may not, so a status line stands in.
+  function json(r) {
+    if (r.ok) return r.json();
+    return r.json().catch(function () { return {}; }).then(function (b) {
+      throw new Error(b.error || (r.statusText || "Request failed") + " (" + r.status + ")");
+    });
+  }
+
   function loadSamples() {
-    fetch("/api/locate-samples").then(function (r) { return r.json(); }).then(function (body) {
+    fetch("/api/locate-samples").then(json).then(function (body) {
       body.samples.forEach(function (s, i) {
         var b = document.createElement("button");
         b.className = "sample";
@@ -145,7 +153,7 @@ ${BASE_STYLE}
         $("samples").appendChild(b);
         if (i === 0) b.click();
       });
-    });
+    }).catch(function (e) { $("error").textContent = e.message; });
   }
 
   function choose(source, src, button) {
@@ -193,11 +201,13 @@ ${BASE_STYLE}
     $("go").disabled = true;
     $("go").textContent = "Asking Jev...";
     $("error").textContent = "";
-    var body = Object.assign({ target: $("target").value, padding: Number($("padding").value) }, image);
+    var sent = image;
+    var body = Object.assign({ target: $("target").value, padding: Number($("padding").value) }, sent);
+    // Choosing another image meanwhile makes this answer about a picture no longer on screen.
     fetch("/api/locate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json().then(function (b) { if (!r.ok) throw new Error(b.error); return b; }); })
-      .then(show)
-      .catch(function (e) { $("error").textContent = e.message; })
+      .then(json)
+      .then(function (r) { if (image === sent) show(r); })
+      .catch(function (e) { if (image === sent) $("error").textContent = e.message; })
       .then(function () { busy = false; $("go").disabled = false; $("go").textContent = "Find and crop"; });
   }
 

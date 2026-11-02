@@ -1,7 +1,18 @@
+import { readFile } from "node:fs/promises";
+import { extname, join } from "node:path";
 import type { Winner } from "./judgments.ts";
 
 /** A rendered image, as raw bytes. */
 export type JudgedImage = { format: "png" | "jpeg"; data: Buffer };
+
+const FORMATS: Record<string, JudgedImage["format"]> = { ".png": "png", ".jpg": "jpeg", ".jpeg": "jpeg" };
+
+/** Reads a run's image, `relative` to its directory, for a judge. */
+export async function loadImage(dir: string, relative: string): Promise<JudgedImage> {
+  const format = FORMATS[extname(relative).toLowerCase()];
+  if (!format) throw new Error(`${relative}: judges take PNG or JPEG images only`);
+  return { format, data: await readFile(join(dir, relative)) };
+}
 
 /** A brief and the two images made for it: by the routed model and by the default model. */
 export type JudgedPair = { brief: string; routed: JudgedImage; default: JudgedImage };

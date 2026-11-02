@@ -1,10 +1,9 @@
 // Local demo: route a brief live, show the pick-or-compare recommendation, render with the routed model(s),
-// and show the eval evidence behind the confidence and the latest best-of-N shootout.
-import { readFile } from "node:fs/promises";
+// and show the eval evidence behind the confidence. The results page shows the latest best-of-N shootout.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { basename, extname, join } from "node:path";
 import { PICK_THRESHOLD } from "../routing/recommendation.ts";
-import { HttpError, jsonErrors, readJsonObject, requestUrl, send, sendHtml, sendJson } from "../shared/http.ts";
+import { decodePath, HttpError, jsonErrors, readJsonObject, requestUrl, sendFile, sendHtml, sendJson } from "../shared/http.ts";
 import type { Evidence } from "./evidence.ts";
 import { createJudgeApi, type JudgeApiConfig } from "./judge-api.ts";
 import { createLocateApi, findSamples, SAMPLE_IMAGE_PREFIX, SAMPLE_TYPES, type LocateApiConfig } from "./locate-api.ts";
@@ -14,6 +13,7 @@ import { demoPage } from "./page.ts";
 import { createRenderApi, type RenderApiConfig } from "./render-api.ts";
 import { createRouteApi, type RouteApiConfig } from "./route-api.ts";
 import { SHOOTOUT_IMAGE_PREFIX, type LoadedShootout } from "./shootout-evidence.ts";
+import { showcasePage } from "./showcase.ts";
 
 type Example = { brief: string; expected: string; note?: string };
 
@@ -32,16 +32,20 @@ type DemoConfig = Omit<RouteApiConfig & JudgeApiConfig & RenderApiConfig & Locat
 type JsonHandler = (body: Record<string, unknown>) => Promise<unknown>;
 
 /** What the routing page reads at start: the roster, evidence and examples. The hosted site bakes it into a static file. */
-export const demoConfigOf = (config: Pick<DemoConfig, "roster" | "generators" | "defaultGenerator" | "evidence" | "shootout" | "examples">) => ({
+export const demoConfigOf = (config: Pick<DemoConfig, "roster" | "generators" | "defaultGenerator" | "evidence" | "examples">) => ({
   roster: Object.entries(config.roster).map(([id, description]) => ({ id, description, generator: config.generators[id]?.name ?? null })),
   defaultGenerator: config.defaultGenerator.name,
   evidence: config.evidence,
-  shootout: config.shootout?.evidence ?? null,
   examples: config.examples,
   pickThreshold: PICK_THRESHOLD,
 });
 
 export function createDemoServer(config: DemoConfig): Server {
+  const pages: Record<string, string> = {
+    [LOCAL_PATHS.results]: showcasePage({ evidence: config.evidence, shootout: config.shootout?.evidence, paths: LOCAL_PATHS }),
+    [LOCAL_PATHS.route]: demoPage({ paths: LOCAL_PATHS, hosted: false }),
+    [LOCAL_PATHS.locate]: locatePage({ paths: LOCAL_PATHS, hosted: false }),
+  };
   const render = createRenderApi(config);
   const locate = createLocateApi({ ...config, cacheDir: join(config.cacheDir, "locations") });
   const handlers: Record<string, JsonHandler> = {
@@ -60,7 +64,7 @@ export function createDemoServer(config: DemoConfig): Server {
     {
       prefix: SAMPLE_IMAGE_PREFIX,
       resolve: async (pathname) => {
-        const name = basename(decodeURIComponent(pathname));
+        const name = basename(decodePath(pathname));
         return { path: (await findSamples(config.samplesDirs)).get(name), type: SAMPLE_TYPES[extname(name).toLowerCase()] };
       },
     },
@@ -68,9 +72,13 @@ export function createDemoServer(config: DemoConfig): Server {
 
   async function handle(req: IncomingMessage, res: ServerResponse) {
     const url = requestUrl(req);
-    if (req.method === "GET" && url.pathname in PAGES) return sendHtml(res, PAGES[url.pathname]);
+    if (req.method === "GET" && url.pathname in pages) return sendHtml(res, pages[url.pathname]);
     const images = req.method === "GET" ? imageSources.find(({ prefix }) => url.pathname.startsWith(prefix)) : undefined;
-    if (images) return sendImage(res, await images.resolve(url.pathname));
+    if (images) {
+      const { path, type } = await images.resolve(url.pathname);
+      if (!path || !type) throw new HttpError(404, "not found");
+      return sendFile(res, path, type);
+    }
     if (req.method === "POST" && url.pathname === "/api/generate") return render.generate(await readJsonObject(req), res);
     const handler = handlers[`${req.method} ${url.pathname}`];
     if (!handler) throw new HttpError(404, "not found");
@@ -81,18 +89,5 @@ export function createDemoServer(config: DemoConfig): Server {
   return createServer(jsonErrors(handle));
 }
 
-const PAGES: Record<string, string> = {
-  [LOCAL_PATHS.route]: demoPage({ paths: LOCAL_PATHS, hosted: false }),
-  [LOCAL_PATHS.locate]: locatePage({ paths: LOCAL_PATHS, hosted: false }),
-};
-
 /** An image a URL names: unset when the URL names none the demo serves. */
 type ImageFile = { path?: string; type?: string };
-
-async function sendImage(res: ServerResponse, { path, type }: ImageFile) {
-  if (!path || !type) throw new HttpError(404, "not found");
-  const bytes = await readFile(path).catch(() => {
-    throw new HttpError(404, "not found");
-  });
-  send(res, 200, type, bytes);
-}

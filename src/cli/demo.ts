@@ -51,6 +51,5 @@ const server = createDemoServer({
   locatorId: locatorIdOf(jevConfig),
   // The second folder is gitignored, for samples that aren't ours to publish.
   samplesDirs: [join("data", "locating"), join("runs", "locating-samples")],
-  bakedAnswerDirs: [],
 });
 server.listen(Number(args.port), "127.0.0.1", () => console.log(`Typecast demo at http://localhost:${args.port}  (Ctrl+C to stop)`));

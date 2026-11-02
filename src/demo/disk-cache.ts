@@ -7,13 +7,13 @@ export type DiskCache<T> = { get(key: string): Promise<T | undefined>; set(key: 
 
 /**
  * One JSON file per key in `dir`. A missing or unreadable file is a miss, so a bad entry just gets recomputed.
- * `seedDirs` are read-only folders in the same format, read after `dir`: answers baked in when the hosted site is built.
+ * `bakedDir` is a read-only folder in the same format, read after `dir`: answers baked in when the hosted site is built.
  */
-export function createDiskCache<T>(dir: string, seedDirs: string[] = []): DiskCache<T> {
+export function createDiskCache<T>(dir: string, bakedDir?: string): DiskCache<T> {
   const fileIn = (folder: string, key: string) => join(folder, `${shortHash(key)}.json`);
   return {
     async get(key) {
-      for (const folder of [dir, ...seedDirs]) {
+      for (const folder of bakedDir ? [dir, bakedDir] : [dir]) {
         const hit = await readEntry<T>(fileIn(folder, key));
         if (hit !== undefined) return hit;
       }

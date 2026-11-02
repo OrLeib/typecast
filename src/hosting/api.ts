@@ -35,7 +35,7 @@ export function createHostedApi(config: HostedConfig, deps: JevClientDeps = {}):
     inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
     samplesDirs: [config.samplesDir],
     cacheDir: join(config.cacheDir, "locations"),
-    bakedAnswerDirs: [config.bakedAnswersDir],
+    bakedAnswersDir: config.bakedAnswersDir,
   });
   return { route: post(route), locate: post(locate.locate), samples: jsonErrors(async (_req, res) => sendJson(res, await locate.samples())) };
 }

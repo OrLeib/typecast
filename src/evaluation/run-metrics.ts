@@ -31,7 +31,7 @@ export const RUN_METRICS: readonly RunMetric[] = [
   { id: "accuracyBorderline", label: "accuracy (borderline)", lowerIsBetter: false, compute: accuracyWhere((id, c) => c.borderline.has(id)), format: (x) => percent(x) },
   { id: "logLoss", label: "log-loss", lowerIsBetter: true, compute: logLoss, format: score },
   { id: "brier", label: "Brier", lowerIsBetter: true, compute: brier, format: score },
-  { id: "ece", label: "ECE", lowerIsBetter: true, compute: (results) => ece(results), format: score },
+  { id: "ece", label: "ECE", lowerIsBetter: true, compute: ece, format: score },
   {
     id: "confidentMissesPerRepeat",
     label: `confident misses (>=${CONFIDENT_MISS_THRESHOLD}) / repeat`,

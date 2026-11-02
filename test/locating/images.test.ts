@@ -9,17 +9,16 @@ const sizeOf = async (png: Buffer) => {
 };
 
 describe("prepareForJev", () => {
-  it("scales a large image down to Jev's longest side as a JPEG, keeping its shape, and reports the original size", async () => {
-    const prepared = await prepareForJev(await solid(3136, 2000));
-    expect(prepared.size).toEqual({ width: 3136, height: 2000 });
-    expect(prepared.asset.format).toBe("jpeg");
-    expect((await sharp(Buffer.from(prepared.asset.data_base64, "base64")).metadata()).format).toBe("jpeg");
-    expect(await sizeOf(Buffer.from(prepared.asset.data_base64, "base64"))).toEqual({ width: 1568, height: 1000 });
+  it("scales a large image down to Jev's longest side as a JPEG, keeping its shape", async () => {
+    const asset = await prepareForJev(await solid(3136, 2000));
+    expect(asset.format).toBe("jpeg");
+    expect((await sharp(Buffer.from(asset.data_base64, "base64")).metadata()).format).toBe("jpeg");
+    expect(await sizeOf(Buffer.from(asset.data_base64, "base64"))).toEqual({ width: 1568, height: 1000 });
   });
 
   it("leaves an image that already fits at its size", async () => {
-    const prepared = await prepareForJev(await solid(1024, 1280));
-    expect(await sizeOf(Buffer.from(prepared.asset.data_base64, "base64"))).toEqual({ width: 1024, height: 1280 });
+    const asset = await prepareForJev(await solid(1024, 1280));
+    expect(await sizeOf(Buffer.from(asset.data_base64, "base64"))).toEqual({ width: 1024, height: 1280 });
   });
 
   it("rejects an image too thin to stay above Jev's shortest side", async () => {

@@ -56,7 +56,7 @@ Nothing below `cli/` and `api/` reads `process.env`.
 | `comparison/` | Run comparison and report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, shootout runner (every lineup model on every brief), manifest store |
 | `judging/` | `PairJudge` interface and the Jev judge, `PickJudge` (best of N) and the Jev picker, picks store, pick summary and contact sheet, judgments store (append-only, with undo rows), blind side and order, win-rate statistics, report formatting, the local judging server and page |
-| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence, latest judged shootout. A second page finds a described target in several images and crops around it in each. Images, routes, judgments and boxes are cached on disk under `runs/demo/`. Also the results showcase page, and page paths for local and hosted |
+| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence. A second page finds a described target in an image and crops around it. A third, the results showcase (held-out numbers and the latest judged shootout), is served at `/results` locally and `/` hosted. Images, routes, judgments and boxes are cached on disk under `runs/demo/`. Also page paths for local and hosted |
 | `hosting/` | The hosted site's API: the demo's route and locate handlers as serverless request handlers |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
 | `api/` | Vercel functions: read env and serve `hosting/`'s handlers |
@@ -148,7 +148,7 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   The images sit in the state once and questions refer to them by path: Jev sends an image again for every question whose text contains its asset reference, even inside a longer string, and five 1024px images that way overflowed the 32k per-question context.
   From the state, five cost about 15k input tokens.
   It prints how often the best image came from the routed model, the expected category's model and the default, against chance (1 / models), and writes `<dir>/picks.html`, a contact sheet for checking the picks by eye.
-  The demo shows the newest shootout run the picker has picked, brief by brief.
+  The results page (`/results` in the demo) shows the newest shootout run the picker has picked, brief by brief.
   Nothing has measured the picker against people yet, so treat its picks as Jev's opinion, not ground truth.
 - `npm run site` builds the hosted site into `site/`: the results showcase at `/` (held-out routing numbers and every brief of the newest picked shootout, images as JPEG), live routing at `/demo` and find and crop at `/locate`, plus the routing page's config as a static file.
   Hosted, there is no Mac to render on, so `/demo` routes but hides render, compare and judge.

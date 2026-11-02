@@ -25,7 +25,6 @@ ${BASE_STYLE}
   .filters button[aria-pressed="true"] span { color: inherit; opacity: .7; }
   .examples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .example { display: flex; flex-direction: column; gap: 8px; text-align: left; font-weight: 400; padding: 12px 14px; border-radius: 12px; background: var(--surface); min-height: 112px; }
-  .example:hover:not(:disabled) { border-color: var(--muted); }
   .example.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .example-tags { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
   .example-tags b { color: var(--text-2); font-weight: 600; }
@@ -76,9 +75,8 @@ ${BASE_STYLE}
   .render-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .render-head p { margin: 0; color: var(--text-2); font-size: 14px; }
   .render-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .shots { display: grid; gap: 16px; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
   /* Capped so a route and its images fit on one laptop screen. */
-  #shots { grid-template-columns: repeat(var(--cols, 1), minmax(0, min(340px, 34vh))); }
+  .shots { display: grid; gap: 16px; grid-template-columns: repeat(var(--cols, 1), minmax(0, min(340px, 34vh))); }
   .shot { display: flex; flex-direction: column; gap: 8px; }
   .frame { aspect-ratio: 1; border-radius: 10px; background: var(--surface-2); overflow: hidden; display: grid; place-items: center; position: relative; }
   .frame img { width: 100%; height: 100%; object-fit: cover; display: block; animation: fade .4s ease; }
@@ -89,7 +87,7 @@ ${BASE_STYLE}
   .progress { width: 140px; height: 3px; margin: 10px auto 0; border-radius: 2px; background: var(--track); overflow: hidden; visibility: hidden; }
   .progress.known { visibility: visible; }
   .progress-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
-  .shot-caption { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-2); }
+  .shot-caption { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-2); }
   .shot-caption code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); white-space: nowrap; }
   .shot.winner .frame { outline: 2px solid var(--accent); outline-offset: 3px; }
   .pick-tag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--accent-text); background: var(--accent-soft); }
@@ -134,18 +132,7 @@ ${BASE_STYLE}
   th:first-child, td:first-child { text-align: left; }
   th { font-weight: 550; color: var(--muted); }
   .empty { padding: 24px; color: var(--muted); font-size: 14px; }
-  .shootout-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; }
-  .shootout-brief { padding: 20px 24px 24px; border-top: 1px solid var(--line); }
-  .shootout-text { margin: 0; font-size: 15px; line-height: 1.45; max-width: 75ch; text-wrap: pretty; }
-  .shootout-meta { margin: 4px 0 14px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .shootout-meta b { color: var(--text-2); font-weight: 550; }
-  #shootout .shots { gap: 12px; }
-  #shootout .shot-caption { align-items: baseline; }
-  #shootout .shot-caption span { font-variant-numeric: tabular-nums; }
-  .shot-tags { display: flex; gap: 6px; min-height: 20px; }
-  .shot-tags .pick-tag { margin-left: 0; }
-  .routed-tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--text-2); border: 1px solid var(--line); }
-  #error { color: var(--danger); font-size: 14px; margin: 12px 0 0; min-height: 0; }
+  #error { color: var(--danger); font-size: 14px; margin: 12px 0 0; }
   @media (max-width: 760px) {
     .result-grid { grid-template-columns: 1fr; }
     .verdict { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -154,10 +141,9 @@ ${BASE_STYLE}
     .stats { grid-template-columns: 1fr 1fr; }
     .evidence-foot { padding: 0 16px 16px; }
     details { padding: 14px 16px; }
-    .shots, #shots { grid-template-columns: 1fr; }
-    #shootout .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .shootout-tiles { grid-template-columns: 1fr; }
-    .shootout-brief { padding: 16px; }
+    .shots { grid-template-columns: 1fr; }
+    /* The placeholder wraps to three lines on a phone; this keeps it from scrolling. */
+    textarea { min-height: 96px; }
     .hint { display: none; }
     .bar-row { grid-template-columns: 96px minmax(0, 1fr); }
     .examples { grid-template-columns: 1fr; }
@@ -185,7 +171,7 @@ ${BASE_STYLE}
   </div>
   <p id="error" role="alert"></p>
 
-  <section id="examples-section" aria-labelledby="examples-title">
+  <section aria-labelledby="examples-title">
     <div class="examples-head">
       <h2 class="section-title" id="examples-title">Try a labelled brief</h2>
       <div class="filters" id="filters" role="group" aria-label="Filter examples by label"></div>
@@ -230,12 +216,6 @@ ${BASE_STYLE}
     <div class="card" id="evidence-card"></div>
   </section>
 
-  <section id="shootout" hidden>
-    <h2 class="section-title">Which model made the best image</h2>
-    <p class="set-about" id="shootout-about"></p>
-    <div class="card" id="shootout-card"></div>
-  </section>
-
   <footer>${hosted ? 'Routing calls the <span data-term="jev">Jev</span> decision API live. Rendering runs only in the local demo, on a Mac with mflux.' : 'Runs locally. Routing calls the <span data-term="jev">Jev</span> decision API; images render on this Mac with mflux.'}</footer>
 </div>
 <div class="tooltip" id="tooltip" role="tooltip"></div>
@@ -246,7 +226,6 @@ ${BASE_STYLE}
   var CAN_RENDER = ${!hosted};
   var ICONS = {
     pick: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
-    match: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
     miss: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
     compare: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="5" height="10" rx="1.2"/><rect x="9" y="3" width="5" height="10" rx="1.2"/></svg>'
   };
@@ -256,7 +235,6 @@ ${BASE_STYLE}
     { data: "data/hard.jsonl", name: "Hard", about: "Tricky briefs whose deciding cue is implied, buried or contradicted. Never tuned against." }
   ];
 
-  /** Plain-words definitions behind the dotted-underlined terms. */
   function termText(key) {
     return {
       jev: "Jev is a decision model from TypeSafe. Instead of writing text like a chatbot, it answers a multiple-choice question and gives a probability for each option. Typecast asks it which model category fits the brief.",
@@ -298,15 +276,19 @@ ${BASE_STYLE}
 
   async function api(path, body) {
     var res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.error || res.statusText);
-    return data;
+    if (!res.ok) throw await failure(res);
+    return res.json();
   }
 
-  /** POSTs and calls onEvent for each line of the NDJSON reply as it arrives. */
+  // The server answers errors as JSON, but a proxy in front of the hosted site (a 413 or 502) may not, so a status line stands in.
+  async function failure(res) {
+    var data = await res.json().catch(function () { return {}; });
+    return new Error(data.error || (res.statusText || "Request failed") + " (" + res.status + ")");
+  }
+
   async function stream(path, body, onEvent) {
     var res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (!res.ok) { var data = await res.json().catch(function () { return {}; }); throw new Error(data.error || res.statusText); }
+    if (!res.ok) throw await failure(res);
     var reader = res.body.getReader(), decoder = new TextDecoder(), buffered = "";
     for (;;) {
       var chunk = await reader.read();
@@ -326,7 +308,6 @@ ${BASE_STYLE}
     $("threshold-label").textContent = "Pick line at " + pct(config.pickThreshold) + ". Below it, compare the top two.";
     $("pick-mark").style.left = pct(config.pickThreshold, 1);
     renderEvidence();
-    renderShootout();
   }
 
   /** Examples shown per page, and more on each "Show more": two rows of three. */
@@ -334,12 +315,13 @@ ${BASE_STYLE}
   var BORDERLINE = "borderline";
   var exampleFilter = "all", examplesShown = EXAMPLES_PAGE;
 
-  /** Interleaves labels so the first page of "All" shows every category, not one cluster of the file. */
+  /** Interleaves labels so the first page of "All" shows every category, not one cluster of the file: each label's first brief, then each one's second, and so on. */
   function interleaved(examples) {
-    var byLabel = config.roster.map(function (c) { return examples.filter(function (e) { return e.expected === c.id; }); });
-    var out = [];
-    for (var i = 0; out.length < examples.length; i++) byLabel.forEach(function (list) { if (list[i]) out.push(list[i]); });
-    return out;
+    var seen = {};
+    return examples
+      .map(function (e) { seen[e.expected] = (seen[e.expected] || 0) + 1; return { example: e, round: seen[e.expected] }; })
+      .sort(function (a, b) { return a.round - b.round; })
+      .map(function (r) { return r.example; });
   }
   function filteredExamples() {
     if (exampleFilter === "all") return interleaved(config.examples);
@@ -365,7 +347,7 @@ ${BASE_STYLE}
     var all = filteredExamples(), shown = all.slice(0, examplesShown);
     var grid = $("examples"); grid.textContent = "";
     shown.forEach(function (ex) {
-      var card = el("button", "example" + (ex.brief === $("brief").value.trim() ? " active" : ""));
+      var card = el("button", "example");
       var tags = el("span", "example-tags");
       tags.appendChild(el("span", null, "Labelled"));
       tags.appendChild(el("b", null, ex.expected));
@@ -375,6 +357,7 @@ ${BASE_STYLE}
       card.addEventListener("click", function () { $("brief").value = ex.brief; markActiveExample(); route(); });
       grid.appendChild(card);
     });
+    markActiveExample();
     $("examples-count").textContent = "Showing " + shown.length + " of " + all.length + " dev briefs";
     $("more-examples").hidden = shown.length >= all.length;
   }
@@ -392,7 +375,7 @@ ${BASE_STYLE}
     if (!ex) return;
     var rank = rec.shortlist.indexOf(ex.expected);
     check.className = "label-check " + (rank === -1 ? "miss" : "match");
-    check.innerHTML = rank === -1 ? ICONS.miss : ICONS.match;
+    check.innerHTML = rank === -1 ? ICONS.miss : ICONS.pick;
     var text = el("span");
     text.appendChild(document.createTextNode("Labelled "));
     text.appendChild(el("b", null, ex.expected));
@@ -499,13 +482,7 @@ ${BASE_STYLE}
     if (brief !== lastBrief) return;
     shots.forEach(function (shot, i) { if (images[i] && pending(shot)) showImage(shot, images[i], "cached"); });
     // A comparison made before comes back with the brief.
-    if (defaultImage && !allShots().some(function (s) { return s.dataset.target === DEFAULT; })) {
-      var shot = makeShot(DEFAULT, "default, no routing");
-      $("shots").appendChild(shot);
-      $("compare-default").disabled = true;
-      layoutShots();
-      showImage(shot, defaultImage, "cached");
-    }
+    if (defaultImage && !hasDefaultShot()) showImage(addDefaultShot(), defaultImage, "cached");
     describeRender();
   }
 
@@ -562,37 +539,44 @@ ${BASE_STYLE}
   }
 
   async function judge() {
-    var pair = judgedPair();
+    var pair = judgedPair(), route = lastRoute;
     if (!pair) return;
     var button = $("judge"); button.dataset.busy = "1"; button.textContent = "Judging…"; updateJudgeButton();
     clearVerdict();
-    var line = $("jev-verdict");
+    var line = $("jev-verdict"), show;
     try {
       var v = await api("/api/judge", { brief: lastBrief, routed: pair.routed.dataset.image, default: pair.default.dataset.image });
-      var names = { routed: modelName(generatorFor(pair.routed.dataset.target)), default: modelName(config.defaultGenerator) };
-      var headline = el("div");
-      if (v.winner === "tie") {
-        headline.appendChild(el("strong", null, "Jev sees no clear winner"));
-        headline.appendChild(document.createTextNode(" between " + names.routed + " (routed) and " + names.default + " (default)."));
-      } else {
-        headline.appendChild(el("strong", null, "Jev prefers " + names[v.winner]));
-        headline.appendChild(document.createTextNode(v.winner === "routed" ? ", the routed pick." : ", the default model."));
-        var shot = pair[v.winner];
-        shot.classList.add("winner");
-        shot.querySelector(".shot-caption span").appendChild(el("span", "pick-tag", "Jev's pick"));
-      }
-      var odds = el("div", "odds");
-      [["routed", pct(v.probabilities.routed)], ["default", pct(v.probabilities.default)], ["tie", pct(v.probabilities.tie)],
-       [v.model + (v.cached ? ", cached" : ""), Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
-        var item = el("span"); item.appendChild(el("b", null, o[1])); item.appendChild(document.createTextNode(" " + o[0]));
-        odds.appendChild(item);
-      });
-      line.appendChild(headline); line.appendChild(odds);
+      show = function () { showVerdict(line, v, pair); };
     } catch (e) {
-      line.appendChild(el("div", null, "Judging failed: " + e.message));
+      show = function () { line.appendChild(el("div", null, "Judging failed: " + e.message)); };
     }
-    line.style.display = "block";
     delete button.dataset.busy; button.textContent = "Judge with Jev"; updateJudgeButton();
+    // Routing another brief meanwhile replaced the images this verdict is about.
+    if (lastRoute !== route) return;
+    show();
+    line.style.display = "block";
+  }
+
+  function showVerdict(line, v, pair) {
+    var names = { routed: modelName(generatorFor(pair.routed.dataset.target)), default: modelName(config.defaultGenerator) };
+    var headline = el("div");
+    if (v.winner === "tie") {
+      headline.appendChild(el("strong", null, "Jev sees no clear winner"));
+      headline.appendChild(document.createTextNode(" between " + names.routed + " (routed) and " + names.default + " (default)."));
+    } else {
+      headline.appendChild(el("strong", null, "Jev prefers " + names[v.winner]));
+      headline.appendChild(document.createTextNode(v.winner === "routed" ? ", the routed pick." : ", the default model."));
+      var shot = pair[v.winner];
+      shot.classList.add("winner");
+      shot.querySelector(".shot-caption span").appendChild(el("span", "pick-tag", "Jev's pick"));
+    }
+    var odds = el("div", "odds");
+    [["routed", pct(v.probabilities.routed)], ["default", pct(v.probabilities.default)], ["tie", pct(v.probabilities.tie)],
+     [v.model + (v.cached ? ", cached" : ""), Math.round(v.latencyMs) + " ms"], ["cost", "$" + v.costUsd.toFixed(4)]].forEach(function (o) {
+      var item = el("span"); item.appendChild(el("b", null, o[1])); item.appendChild(document.createTextNode(" " + o[0]));
+      odds.appendChild(item);
+    });
+    line.appendChild(headline); line.appendChild(odds);
   }
 
   function describeRender() {
@@ -610,25 +594,35 @@ ${BASE_STYLE}
         : "Rendered locally with " + models + ".") + (noLocal && " " + noLocal);
   }
 
-  function compareWithDefault() {
-    if (!lastRoute || allShots().some(function (s) { return s.dataset.target === DEFAULT; })) return;
-    $("shots").appendChild(makeShot(DEFAULT, "default, no routing"));
+  function hasDefaultShot() { return allShots().some(function (s) { return s.dataset.target === DEFAULT; }); }
+
+  function addDefaultShot() {
+    var shot = makeShot(DEFAULT, "default, no routing");
+    $("shots").appendChild(shot);
     $("compare-default").disabled = true;
     layoutShots();
+    return shot;
+  }
+
+  function compareWithDefault() {
+    if (!lastRoute || hasDefaultShot()) return;
+    addDefaultShot();
     describeRender();
     render();
   }
 
   async function render() {
     if (!lastRoute) return;
+    var route = lastRoute, brief = lastBrief;
     var button = $("render"); button.disabled = true;
     // Images already on screen stay: adding the default model renders only the new shot.
     var targets = allShots().filter(pending);
     targets.forEach(function (s) { s.dataset.busy = "1"; setState(s, "Queued"); });
-    for (var i = 0; i < targets.length; i++) {
+    // Routing another brief replaces the shots, so the rest of this queue belongs to a brief no longer on screen.
+    for (var i = 0; i < targets.length && lastRoute === route; i++) {
       var shot = targets[i];
       try {
-        var out = await renderShot(shot);
+        var out = await renderShot(shot, brief);
         showImage(shot, out.image, out.cached ? "cached" : (out.latencyMs / 1000).toFixed(0) + "s");
       } catch (e) {
         setState(shot, "Render failed: " + e.message);
@@ -640,7 +634,7 @@ ${BASE_STYLE}
 
   // The model loads before the first denoising step, and the image is decoded and saved after the last one,
   // so the percentage covers the middle and the phases either side are named.
-  async function renderShot(shot) {
+  async function renderShot(shot, brief) {
     var view = showRendering(shot), started = Date.now(), progress = null, out = null;
     function tick() {
       var elapsed = Math.round((Date.now() - started) / 1000) + "s";
@@ -652,7 +646,7 @@ ${BASE_STYLE}
     var timer = setInterval(tick, 500);
     try {
       var target = shot.dataset.target;
-      await stream("/api/generate", target === DEFAULT ? { brief: lastBrief, default: true } : { brief: lastBrief, category: target }, function (event) {
+      await stream("/api/generate", target === DEFAULT ? { brief: brief, default: true } : { brief: brief, category: target }, function (event) {
         if (event.type === "progress") { progress = event; tick(); }
         else if (event.type === "done") out = event;
         else if (event.type === "error") throw new Error(event.error);
@@ -832,60 +826,6 @@ ${BASE_STYLE}
       table.appendChild(tr);
     });
     return table;
-  }
-
-  function renderShootout() {
-    var s = config.shootout;
-    if (!s || !s.briefs.length) return;
-    $("shootout").hidden = false;
-    $("shootout-about").textContent = "Each brief was rendered by all " + s.models + " local models with the same prompt and seed. " +
-      "Jev picked the image that fulfils it best without knowing which model made which, asking once per ordering of the images. " +
-      "These are dev briefs, which routing was tuned on, and the picks are not yet checked against people.";
-    var card = $("shootout-card"); card.textContent = "";
-    var tiles = el("div", "shootout-tiles");
-    var count = function (rate) { return Math.round(rate * s.picked) + " of " + s.picked; };
-    var routedToDefault = s.briefs.filter(function (b) { return b.routedGenerator === s.defaultGenerator; }).length;
-    var splitWins = s.briefs.filter(function (b) { return b.split && pickedGenerator(b) === b.routedGenerator; }).length;
-    [
-      ["Best image from the routed model", count(s.bestWas.routed), "A random pick scores " + pct(1 / s.models) +
-        (splitWins ? ". " + splitWins + " of these " + (splitWins === 1 ? "was a split call" : "were split calls") + ", where fewer than half the orderings agreed" : "")],
-      ["Best image from the default model", count(s.bestWas.default), modelName(s.defaultGenerator) + ", the single model routing has to beat" +
-        (routedToDefault ? ". It was also the routed model on " + routedToDefault + " of " + s.briefs.length + " briefs" : "")],
-      ["Agreement across orderings", pct(s.meanAgreement), "how often reordering the images kept Jev's pick"]
-    ].forEach(function (t) { tiles.appendChild(tile(t[0], t[1], t[2])); });
-    card.appendChild(tiles);
-    s.briefs.forEach(function (b) { card.appendChild(shootoutBrief(b, s.defaultGenerator)); });
-  }
-
-  function pickedGenerator(b) { var shot = b.shots.find(function (s) { return s.picked; }); return shot && shot.generator; }
-
-  function shootoutBrief(b, defaultGenerator) {
-    var row = el("div", "shootout-brief");
-    row.appendChild(el("p", "shootout-text", b.brief));
-    var meta = el("p", "shootout-meta");
-    meta.appendChild(document.createTextNode("Labelled " + b.expected + " · routed to "));
-    meta.appendChild(el("b", null, b.routed));
-    meta.appendChild(document.createTextNode(" · " + pct(b.agreement) + " of orderings agree"));
-    row.appendChild(meta);
-    var shots = el("div", "shots"); shots.style.setProperty("--cols", b.shots.length);
-    b.shots.forEach(function (shot) {
-      var fig = el("div", "shot" + (shot.picked ? " winner" : ""));
-      var frame = el("div", "frame"), img = el("img");
-      img.src = shot.url; img.alt = modelName(shot.generator) + " image"; img.loading = "lazy";
-      frame.appendChild(img); fig.appendChild(frame);
-      var caption = el("div", "shot-caption");
-      caption.appendChild(el("code", null, modelName(shot.generator)));
-      caption.appendChild(el("span", null, pct(shot.probability)));
-      fig.appendChild(caption);
-      var tags = el("div", "shot-tags");
-      if (shot.picked) tags.appendChild(el("span", "pick-tag", b.split ? "Jev's pick, split" : "Jev's pick"));
-      var routed = shot.generator === b.routedGenerator, isDefault = shot.generator === defaultGenerator;
-      if (routed || isDefault) tags.appendChild(el("span", "routed-tag", routed && isDefault ? "routed = default" : routed ? "routed" : "default"));
-      fig.appendChild(tags);
-      shots.appendChild(fig);
-    });
-    row.appendChild(shots);
-    return row;
   }
 
   $("route").addEventListener("click", route);

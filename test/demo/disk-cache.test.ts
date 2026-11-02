@@ -29,7 +29,7 @@ describe("createDiskCache", () => {
     dir = await mkdtemp(join(tmpdir(), "typecast-cache-"));
     const seed = join(dir, "seed");
     await createDiskCache(seed).set("baked", { from: "seed" });
-    const cache = createDiskCache(join(dir, "live"), [seed]);
+    const cache = createDiskCache(join(dir, "live"), seed);
     expect(await cache.get("baked")).toEqual({ from: "seed" });
     await cache.set("baked", { from: "live" });
     expect(await cache.get("baked")).toEqual({ from: "live" });

@@ -7,7 +7,7 @@ import { parseArgs, promisify } from "node:util";
 import { loadEvidence } from "../demo/evidence.ts";
 import { createLocateApi, DEFAULT_TARGET, findSamples, locatorIdOf } from "../demo/locate-api.ts";
 import { locatePage } from "../demo/locate-page.ts";
-import { HOSTED_PATHS, pageLinks } from "../demo/page-style.ts";
+import { HOSTED_PATHS } from "../demo/page-style.ts";
 import { demoPage } from "../demo/page.ts";
 import { demoConfigOf } from "../demo/server.ts";
 import { loadShootoutEvidence } from "../demo/shootout-evidence.ts";
@@ -18,13 +18,9 @@ import { createJevClient, JEV_INPUT_PRICE_PER_MILLION } from "../jev/client.ts";
 import { withRetries } from "../jev/retry.ts";
 import { createJevPicker } from "../judging/jev-picker.ts";
 import { createJevLocator, JEV_LOCATE_RETRIES } from "../locating/locator.ts";
-import { PICK_THRESHOLD } from "../routing/recommendation.ts";
 import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { jevConfigFromEnv } from "./config.ts";
 
-const REPO_URL = "https://github.com/OrLeib/typecast";
-/** Sets never tuned against (see "Measuring a change without overfitting" in CLAUDE.md). */
-const HELD_OUT = new Set(["data/test.jsonl", "data/hard.jsonl"]);
 /** 1024px PNGs are about 1.2MB each; the page shows them at most about 500px wide, so 2x that as JPEG is plenty. */
 const IMAGE_PX = "1000";
 const JPEG_QUALITY = "80";
@@ -61,11 +57,8 @@ for (const [url, file] of shootout.files) {
   urls.set(url, `/${image}`);
 }
 const briefs = shootout.evidence.briefs.map((brief) => ({ ...brief, shots: brief.shots.map((shot) => ({ ...shot, url: urls.get(shot.url) ?? shot.url })) }));
-const shootoutEvidence = { ...shootout.evidence, briefs };
 
-const heldOut = evidence.filter((e) => HELD_OUT.has(e.data));
-const links = pageLinks("results", HOSTED_PATHS);
-await writeFile(join(args.out, "index.html"), showcasePage({ heldOut, shootout: shootoutEvidence, pickThreshold: PICK_THRESHOLD, repoUrl: REPO_URL, links, tryUrl: HOSTED_PATHS.route }));
+await writePage(HOSTED_PATHS.results, showcasePage({ evidence, shootout: { ...shootout.evidence, briefs }, paths: HOSTED_PATHS }));
 await writePage(HOSTED_PATHS.route, demoPage({ paths: HOSTED_PATHS, hosted: true }));
 await writePage(HOSTED_PATHS.locate, locatePage({ paths: HOSTED_PATHS, hosted: true }));
 
@@ -77,7 +70,6 @@ const config = demoConfigOf({
   generators: lineup.byCategory,
   defaultGenerator: lineup.fallback,
   evidence,
-  shootout: { evidence: shootoutEvidence, files: new Map() },
   examples: dev.map(({ brief, expected, note }) => ({ brief, expected, note })),
 });
 await writeFile(join(args.out, "demo-config.json"), JSON.stringify(config));
@@ -90,7 +82,6 @@ const bake = createLocateApi({
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
   samplesDirs: [SAMPLES_DIR],
   cacheDir: BAKED_ANSWERS_DIR,
-  bakedAnswerDirs: [],
 });
 const baked = await Promise.all(samples.map((sample) => bake.locate({ sample, target: DEFAULT_TARGET, padding: BAKE_PADDING })));
 const bakeCost = baked.reduce((sum, answer) => sum + answer.costUsd, 0);
