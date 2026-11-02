@@ -76,4 +76,12 @@ describe("createJevClient", () => {
     await expect(client.decide("x", {})).rejects.toThrow(/Jev 400: .*bad request/);
     await expect(client.decide("x", {})).rejects.toMatchObject({ status: 400 });
   });
+
+  it("names Jev and the network cause when the request never gets an answer", async () => {
+    const unreachable = vi.fn(async () => {
+      throw new TypeError("fetch failed", { cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }) });
+    });
+    const client = createJevClient(config, { fetch: unreachable });
+    await expect(client.decide("x", {})).rejects.toThrow("Could not reach Jev at http://jev.test/v1/systemone: read ECONNRESET");
+  });
 });

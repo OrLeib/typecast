@@ -53,6 +53,8 @@ export function createJevClient(config: JevConfig, deps: JevClientDeps = {}): De
           ...(withImages ? { [IMAGES_HEADER]: "true" } : {}),
         },
         body: JSON.stringify({ model: config.model, state, questions, ...(withImages ? { assets } : {}) }),
+      }).catch((e: unknown) => {
+        throw new Error(`Could not reach Jev at ${endpoint}: ${networkCause(e)}`, { cause: e });
       });
       const raw: unknown = await res.json().catch(() => undefined);
       // Stop after the body: fetch resolves on headers, and the caller waits for the whole answer.
@@ -62,4 +64,10 @@ export function createJevClient(config: JevConfig, deps: JevClientDeps = {}): De
       return { ...parseDecisionResponse(raw), latencyMs };
     },
   };
+}
+
+/** Node's fetch rejects with a bare "fetch failed"; the reason (reset, DNS, TLS, timeout) is only in its cause. */
+function networkCause(e: unknown): string {
+  const cause = e instanceof Error && e.cause instanceof Error ? e.cause : e;
+  return cause instanceof Error ? cause.message : String(cause);
 }
