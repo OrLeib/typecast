@@ -1,57 +1,74 @@
 <p align="center">
-  <img src="docs/brand/logo.svg" width="88" alt="Typecast logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/wordmark-dark.png">
+    <img src="docs/readme/wordmark-light.png" width="300" alt="Typecast">
+  </picture>
 </p>
 
-<h1 align="center">Typecast</h1>
+<p align="center">
+  <b>Pick the right image model for a creative brief in about 200ms,<br>with a confidence you can trust.</b>
+</p>
 
 <p align="center">
-  <b>Pick the right image model for a creative brief in about 200ms, with a confidence you can trust.</b><br>
   <a href="https://typecast-ai.vercel.app">Results</a> · <a href="https://typecast-ai.vercel.app/demo">Route a brief</a> · <a href="https://typecast-ai.vercel.app/locate">Find and crop</a>
 </p>
 
 <p align="center">
-  <img src="docs/readme/routing.gif" width="820" alt="Routing two briefs: a poster with legible text is routed to the typography model at 99%, an album cover lands at 69% and shows the top two">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/routing-dark.gif">
+    <img src="docs/readme/routing-light.gif" width="820" alt="A poster brief with legible text routes to the typography model at 99%; an album cover brief lands at 72% and shows the top two models">
+  </picture>
 </p>
 
-Media tools put dozens of models on one canvas, and users guess which one fits their brief.
-A wrong pick wastes credits and time.
-Typecast reads the brief and picks the model with a decision model (TypeSafe's Jev, or any Jev-compatible open model) that returns a typed, calibrated choice instead of text.
+Media tools offer dozens of models, and users guess which one fits their brief.
+Typecast asks a decision model (TypeSafe's Jev, or a Jev-compatible open model) for a typed, calibrated choice.
 At 85% confidence or more the product just uses the pick; below that it shows the top two side by side.
 
 ## Results
 
-On 240 held-out briefs that were never tuned against, 3 runs each (`jev-1.14.0`, 2026-10-31):
+On 240 held-out briefs, never tuned against, 3 runs each (`jev-1.14.0`):
 
-- **604 of 604** confident picks were the right model.
-- **113 of 116** unsure routes had the right model in the top two.
-- **207ms** median latency, **$0.026** per 1,000 routes.
+| 604 / 604 | 113 / 116 | 207ms | $0.026 |
+|:---:|:---:|:---:|:---:|
+| confident picks were the right model | unsure routes had the right model in the top two | median time to route a brief | per 1,000 routes |
+
+<details>
+<summary>Per set</summary>
 
 | Held out | Accuracy | ECE | Log-loss | Confident misses | p50 | p95 |
 |---|---|---|---|---|---|---|
 | `test` | 100% | 0.031 | 0.029 | 0 | 199ms | 307ms |
 | `hard` | 91.7% | 0.050 | 0.210 | 0 | 214ms | 324ms |
 
-`test` was written blind to the briefs we iterate on; `hard` hides its deciding cue, so a keyword baseline that scores 85-88% elsewhere gets 9% on it.
+`test` was written blind to the briefs we iterate on.
+`hard` hides its deciding cue, so a keyword baseline that scores 85-88% elsewhere gets 9% on it.
 Against the original prompt, the current one lifts `hard` from 83.1% to 91.7% and confident misses from 5.7 to 0 per run (McNemar p = 0.003).
+</details>
 
 ### Does routing make better images?
 
-Each of 10 dev briefs was rendered by all 5 local models with the same prompt and seed, and Jev picked the best image without knowing which model made which.
-The routed model's image won 7 of 10, against 2 for the single default model and 2 by chance.
-That's a small sample of briefs routing was tuned on, judged by Jev rather than people, so read it as a signal, not proof.
+Ten briefs, each rendered by all five local models with the same prompt and seed.
+Jev, blind to which model made which, picked the routed model's image 7 times, the default's twice (chance is 2).
+A small sample of briefs routing was tuned on, judged by Jev rather than people: a signal, not proof.
 
 <p align="center">
-  <img src="docs/readme/shootout.jpg" width="820" alt="A sneaker-ad brief rendered by five models; the routed model's image is the judge's pick">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/shootout-dark.jpg">
+    <img src="docs/readme/shootout-light.jpg" width="820" alt="A sneaker-ad brief rendered by five models; the routed model's image is the judge's pick">
+  </picture>
 </p>
 
 ## Find and crop
 
 Name a target and one Jev request returns its box and whether it is there at all.
-The page cuts a padded square around it, the crop a face or detail pass starts from, at about 0.35s and $0.00016 an image.
-Nothing has measured box accuracy yet; on nine samples it boxed every visible face and rated the three images without one 2-35% present.
+The page cuts a padded square around it, ready for a face or detail pass, in about 0.35s for $0.00016.
+Box accuracy isn't measured yet; on nine samples it boxed every visible face.
 
 <p align="center">
-  <img src="docs/readme/find-and-crop.gif" width="820" alt="Finding a cyclist's face, changing the padding to re-crop, then finding a market seller's face">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/find-and-crop-dark.gif">
+    <img src="docs/readme/find-and-crop-light.gif" width="820" alt="Finding a cyclist's face, widening and narrowing the padded crop, then finding a market seller's face">
+  </picture>
 </p>
 
 ## Run it
