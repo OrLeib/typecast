@@ -265,7 +265,7 @@ export function showcasePage({ evidence, shootout, paths }: ShowcaseInput): stri
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Typecast</title>
 ${FAVICON_LINK}
-<meta name="description" content="A model router for AI image generation: pick the right model for a brief in about 200ms, with a confidence you can act on.">
+<meta name="description" content="Decision models for AI image tools: pick the right model for a brief in a snap, pick the best output, and find the subject in the frame.">
 <style>${BASE_STYLE}${STYLE}</style>
 </head>
 <body>
