@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Pick the right image model for a creative brief in about 200ms, with a confidence you can trust.</b><br>
-  <a href="https://typecast-six.vercel.app">Results</a> · <a href="https://typecast-six.vercel.app/demo">Route a brief</a> · <a href="https://typecast-six.vercel.app/locate">Find and crop</a>
+  <a href="https://typecast-ai.vercel.app">Results</a> · <a href="https://typecast-ai.vercel.app/demo">Route a brief</a> · <a href="https://typecast-ai.vercel.app/locate">Find and crop</a>
 </p>
 
 <p align="center">
