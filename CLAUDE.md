@@ -155,7 +155,7 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   It also bakes the committed samples' answers for the default target into `build/locate-answers/` (kept between builds, so only new samples cost a Jev call), so trying the samples costs nothing.
 
 ## Hosting (Vercel)
-- The project is `typecast` (typecast-six.vercel.app), linked at the repo root. `vercel deploy` makes a preview behind Vercel login; `vercel deploy --prod` publishes. Build the site first: Vercel runs no build.
+- The project is `typecast` (typecast-ai.vercel.app), linked at the repo root. `vercel deploy` makes a preview behind Vercel login; `vercel deploy --prod` publishes. Build the site first: Vercel runs no build.
 - `.vercelignore` is an allowlist: the CLI uploads the working folder, and `.env`, `.env.local` and `runs/` (with images that aren't ours) must never go up.
 - Functions in `api/` run the `src/` TypeScript directly on Node 26; `vercel.json` ships `src/`, the samples and the baked answers beside them. A file in `api/` whose name starts with `_` isn't served.
 - `TYPESAFE_API_KEY` is set in the project for Production and Preview. Live calls are not capped.

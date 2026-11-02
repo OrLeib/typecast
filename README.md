@@ -40,7 +40,7 @@ An image costs about 3,700 input tokens (~$0.00016) and about 0.35s. Answers are
 Nothing has measured its boxes yet. On nine samples it boxed every visible face (box confidence 0.47-0.85) and put the three images without a visible face at 2-35% present.
 
 ### Hosted site
-https://typecast-six.vercel.app: the results summary, live routing (`/demo`) and find and crop (`/locate`). Rendering stays local.
+https://typecast-ai.vercel.app: the results summary, live routing (`/demo`) and find and crop (`/locate`). Rendering stays local.
 ```bash
 npm run site                  # writes site/ and bakes the samples' answers into build/
 vercel deploy                 # a preview; add --prod to publish
