@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://typecast-ai.vercel.app">Results</a> · <a href="https://typecast-ai.vercel.app/demo">Route a brief</a> · <a href="https://typecast-ai.vercel.app/locate">Find and crop</a>
+  <a href="https://typecast-ai.vercel.app">Home</a> · <a href="https://typecast-ai.vercel.app/demo">Route a brief</a> · <a href="https://typecast-ai.vercel.app/locate">Find and crop</a> · <a href="https://typecast-ai.vercel.app/results">Results</a>
 </p>
 
 <p align="center">

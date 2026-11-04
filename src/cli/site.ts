@@ -1,13 +1,16 @@
-// Builds the hosted site into site/: the results showcase as the home page, the live routing and find-and-crop pages,
+// Builds the hosted site into site/: the home page, the results, the live routing and find-and-crop pages,
 // the routing page's config, and the samples. The samples' default answers go into build/, where the functions read them.
 import { execFile } from "node:child_process";
 import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { parseArgs, promisify } from "node:util";
+import sharp from "sharp";
 import { loadEvidence } from "../demo/evidence.ts";
+import { loadHomeStories } from "../demo/home-stories.ts";
+import { homePage, OG_IMAGE_PATH, OG_SIZE } from "../demo/home.ts";
 import { createLocateApi, DEFAULT_TARGET, findSamples, locatorIdOf } from "../demo/locate-api.ts";
 import { locatePage } from "../demo/locate-page.ts";
-import { HOSTED_PATHS } from "../demo/page-style.ts";
+import { PAGE_PATHS } from "../demo/page-style.ts";
 import { demoPage } from "../demo/page.ts";
 import { demoConfigOf } from "../demo/server.ts";
 import { loadShootoutEvidence } from "../demo/shootout-evidence.ts";
@@ -30,6 +33,7 @@ const SAMPLES_DIR = join("data", "locating");
 const BAKED_ANSWERS_DIR = join("build", "locate-answers");
 /** The baked answers hold boxes, not crops, so any padding works; this is just what the bake request needs. */
 const BAKE_PADDING = 0.5;
+const OG_SOURCE = join("docs", "readme", "shootout-dark.jpg");
 
 const { values: args } = parseArgs({ options: { out: { type: "string", default: "site" } } });
 const run = promisify(execFile);
@@ -57,10 +61,18 @@ for (const [url, file] of shootout.files) {
   urls.set(url, `/${image}`);
 }
 const briefs = shootout.evidence.briefs.map((brief) => ({ ...brief, shots: brief.shots.map((shot) => ({ ...shot, url: urls.get(shot.url) ?? shot.url })) }));
+const hostedShootout = { ...shootout.evidence, briefs };
+const stories = await loadHomeStories({ dir: shootout.dir, evidence: hostedShootout });
+if (!stories.length) {
+  console.error("No home stories yet. Run `npm run bake-home`.");
+  process.exit(1);
+}
+await sharp(OG_SOURCE).resize(OG_SIZE.width, OG_SIZE.height, { fit: "cover", position: "top" }).jpeg({ quality: 82 }).toFile(join(args.out, OG_IMAGE_PATH.slice(1)));
 
-await writePage(HOSTED_PATHS.results, showcasePage({ evidence, shootout: { ...shootout.evidence, briefs }, paths: HOSTED_PATHS }));
-await writePage(HOSTED_PATHS.route, demoPage({ paths: HOSTED_PATHS, hosted: true }));
-await writePage(HOSTED_PATHS.locate, locatePage({ paths: HOSTED_PATHS, hosted: true }));
+await writePage(PAGE_PATHS.home, homePage({ stories, defaultGenerator: hostedShootout.defaultGenerator }));
+await writePage(PAGE_PATHS.results, showcasePage({ evidence, shootout: hostedShootout }));
+await writePage(PAGE_PATHS.route, demoPage({ hosted: true }));
+await writePage(PAGE_PATHS.locate, locatePage({ hosted: true }));
 
 const lineup = createLocalLineup();
 const dev = await loadBriefs("data/dev.jsonl");

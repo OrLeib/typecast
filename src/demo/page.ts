@@ -1,10 +1,10 @@
 // The demo page. Self-contained: no build step, no external assets, works offline.
 // Page script avoids template literals so this file can stay one template string.
 import { FAVICON_LINK } from "../shared/brand.ts";
-import { BASE_STYLE, pageNav, type SitePaths } from "./page-style.ts";
+import { BASE_STYLE, pageNav } from "./page-style.ts";
 
 /** Hosted, there is no Mac to render on, so the page routes but hides rendering, comparing and judging. */
-export const demoPage = ({ paths, hosted }: { paths: SitePaths; hosted: boolean }) => `<!doctype html>
+export const demoPage = ({ hosted }: { hosted: boolean }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -159,7 +159,7 @@ ${BASE_STYLE}
 <body>
 <div class="wrap">
   <header class="top">
-    ${pageNav("route", paths)}
+    ${pageNav("route")}
     <h1>Which image model should make this?</h1>
     <p class="lede">Describe what you want. A <span data-term="jev">decision model</span> picks the model category in about 200ms, and its confidence says whether to just pick or to show the top two side by side.</p>
   </header>

@@ -19,11 +19,13 @@ export type ShootoutEvidence = Pick<PickSummary, "picked" | "models" | "bestWas"
   run: string;
   data: string;
   defaultGenerator: string;
+  /** Model category -> the generator that renders it. */
+  lineup: Record<string, string>;
   briefs: ShootoutBrief[];
 };
 
 /** The evidence, and the image files it may serve: only images of the run, by the URL the page asks for. */
-export type LoadedShootout = { evidence: ShootoutEvidence; files: Map<string, string> };
+export type LoadedShootout = { dir: string; evidence: ShootoutEvidence; files: Map<string, string> };
 
 export const SHOOTOUT_IMAGE_PREFIX = "/shootout-images/";
 
@@ -59,5 +61,5 @@ function toEvidence(run: string, runDir: string, manifest: ShootoutManifest, pic
     return [{ id: item.id, brief: item.brief, expected: item.expected, routed: item.route.choice, confidence: item.route.confidence, routedGenerator, agreement: pick.agreement, split: isSplitPick(pick), shots }];
   });
   const { picked, models, bestWas, meanAgreement } = summarizePicks(manifest, picks);
-  return { evidence: { run, data: manifest.meta.data, defaultGenerator: manifest.meta.defaultGenerator, picked, models, bestWas, meanAgreement, briefs }, files };
+  return { dir: runDir, evidence: { run, data: manifest.meta.data, defaultGenerator: manifest.meta.defaultGenerator, lineup: manifest.meta.lineup, picked, models, bestWas, meanAgreement, briefs }, files };
 }

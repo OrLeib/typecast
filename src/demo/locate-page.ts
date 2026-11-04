@@ -3,9 +3,9 @@
 // Page script avoids template literals so this file can stay one template string.
 import { FAVICON_LINK } from "../shared/brand.ts";
 import { DEFAULT_TARGET } from "./locate-api.ts";
-import { BASE_STYLE, pageNav, type SitePaths } from "./page-style.ts";
+import { BASE_STYLE, pageNav } from "./page-style.ts";
 
-export const locatePage = ({ paths, hosted }: { paths: SitePaths; hosted: boolean }) => `<!doctype html>
+export const locatePage = ({ hosted }: { hosted: boolean }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -71,7 +71,7 @@ ${BASE_STYLE}
 <body>
 <div class="wrap">
   <header class="top">
-    ${pageNav("locate", paths)}
+    ${pageNav("locate")}
     <h1>Where is it in the image?</h1>
     <p class="lede">Name a target. One Jev request returns its box and whether it is there at all, and the page cuts a square around it, centred and padded: the crop a face or detail pass starts from.</p>
   </header>
@@ -130,7 +130,7 @@ ${BASE_STYLE}
   var $ = function (id) { return document.getElementById(id); };
   var PRESENT_BELOW = 0.5;
   // Jev reads at most 1568px a side anyway, and a hosted function takes at most 4.5 MB a request, so uploads shrink here.
-  var UPLOAD_SIDE = 1568, UPLOAD_QUALITY = 0.9;
+  var UPLOAD_SIDE = 1568, UPLOAD_QUALITY = 0.9, FIRST_SAMPLE = "cyclist.jpg";
   var image = null, busy = false;
 
   function pct(n) { return (n * 100).toFixed(0) + "%"; }
@@ -153,7 +153,7 @@ ${BASE_STYLE}
         b.innerHTML = '<img alt="" src="' + s.url + '">';
         b.onclick = function () { choose({ sample: s.name }, s.url, b); };
         $("samples").appendChild(b);
-        if (i === 0) b.click();
+        if (s.name === FIRST_SAMPLE) b.click();
       });
     }).catch(function (e) { $("error").textContent = e.message; });
   }
@@ -203,12 +203,16 @@ ${BASE_STYLE}
     $("go").disabled = true;
     $("go").textContent = "Asking Jev...";
     $("error").textContent = "";
-    var sent = image;
+    var sent = image, firstAnswer = $("result-section").style.display === "none";
     var body = Object.assign({ target: $("target").value, padding: Number($("padding").value) }, sent);
     // Choosing another image meanwhile makes this answer about a picture no longer on screen.
     fetch("/api/locate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then(json)
-      .then(function (r) { if (image === sent) show(r); })
+      .then(function (r) {
+        if (image !== sent) return;
+        show(r);
+        if (firstAnswer) $("result-section").scrollIntoView({ behavior: "smooth", block: "start" });
+      })
       .catch(function (e) { if (image === sent) $("error").textContent = e.message; })
       .then(function () { busy = false; $("go").disabled = false; $("go").textContent = "Find and crop"; });
   }

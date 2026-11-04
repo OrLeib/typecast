@@ -42,6 +42,7 @@ const server = createDemoServer({
   defaultGenerator: fallback,
   judge: createJevJudge(judge),
   evidence: [],
+  stories: [],
   examples: [{ brief: "a brief", expected: "photo" }],
   inputPricePerMillion: 0.04,
   imagesDir: dir,
@@ -177,11 +178,17 @@ describe("demo server", () => {
   });
 
   it("serves the page", async () => {
-    expect(await (await get("/")).text()).toContain("Which image model should make this?");
+    expect(await (await get("/demo")).text()).toContain("Which image model should make this?");
+  });
+
+  it("serves the home page, even with no stories baked yet", async () => {
+    const page = await (await get("/")).text();
+    expect(page).toContain("Which model, which image, where in the frame");
+    expect(page).toContain('<a href="/demo">Route a brief</a>');
   });
 
   it("serves a page script that parses", async () => {
-    const page = await (await get("/")).text();
+    const page = await (await get("/demo")).text();
     const script = /<script>([\s\S]*)<\/script>/.exec(page)?.[1] ?? "";
     expect(script).not.toBe("");
     // Compiles without running; catches escaping slips in the template literal that holds the page.
@@ -259,11 +266,12 @@ describe("demo server: find and crop", () => {
 describe("demo server with a shootout", () => {
   const image = join(dir, "shot.png");
   const shootout = {
-    evidence: { run: "r", data: "d", defaultGenerator: "g", picked: 0, models: 1, bestWas: { routed: 0, expected: 0, default: 0 }, meanAgreement: 0, briefs: [] },
+    dir,
+    evidence: { run: "r", data: "d", defaultGenerator: "g", lineup: {}, picked: 0, models: 1, bestWas: { routed: 0, expected: 0, default: 0 }, meanAgreement: 0, briefs: [] },
     files: new Map([["/shootout-images/shot.png", image]]),
   };
   const withShootout = createDemoServer({
-    router, roster: {}, generators: {}, defaultGenerator: fallback, judge: createJevJudge(judge), evidence: [], examples: [], shootout,
+    router, roster: {}, generators: {}, defaultGenerator: fallback, judge: createJevJudge(judge), evidence: [], stories: [], examples: [], shootout,
     inputPricePerMillion: 0.04, imagesDir: dir, cacheDir: join(dir, "cache"), routerId: "test-router", seed: 1, ...LOCATE,
   });
   const local = listenForTests(withShootout, { setup: () => writeFile(image, "shot-png") });
@@ -272,7 +280,7 @@ describe("demo server with a shootout", () => {
     const results = await (await local.get("/results")).text();
     expect(results).toContain('aria-current="page">Results');
     expect(results).toContain("Does routing make better images?");
-    expect(await (await local.get("/")).text()).toContain('<a href="/results">Results</a>');
+    expect(await (await local.get("/demo")).text()).toContain('<a href="/results">Results</a>');
   });
 
   it("serves the shootout's images and nothing else under its prefix", async () => {

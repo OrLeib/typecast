@@ -1,20 +1,17 @@
 // What every demo page shares: colour tokens for light and dark, type, buttons, cards, and the top bar that links the pages.
 import { logoMark } from "../shared/brand.ts";
 
-/** Where each page lives. Run locally, the routing demo is the home page; hosted, the results showcase is. */
-export type SitePaths = { results: string; route: string; locate: string };
+/** Where each page lives, the same run locally and hosted. */
+export const PAGE_PATHS = { home: "/", route: "/demo", locate: "/locate", results: "/results" };
 
-export const LOCAL_PATHS: SitePaths = { results: "/results", route: "/", locate: "/locate" };
-export const HOSTED_PATHS: SitePaths = { results: "/", route: "/demo", locate: "/locate" };
+const LABELS = { route: "Route a brief", locate: "Find and crop", results: "Results" };
 
-const LABELS: Record<keyof SitePaths, string> = { results: "Results", route: "Route a brief", locate: "Find and crop" };
-
-/** The brand and the links between pages, in order, with the current one marked for screen readers too. */
-export const pageNav = (current: keyof SitePaths, paths: SitePaths) => {
-  const links = (Object.keys(LABELS) as (keyof SitePaths)[])
-    .map((page) => `<a href="${paths[page]}"${page === current ? ' aria-current="page"' : ""}>${LABELS[page]}</a>`)
+/** The brand, which links home, and the links between pages, with the current one marked for screen readers too. */
+export const pageNav = (current?: keyof typeof LABELS) => {
+  const links = (Object.keys(LABELS) as (keyof typeof LABELS)[])
+    .map((page) => `<a href="${PAGE_PATHS[page]}"${page === current ? ' aria-current="page"' : ""}>${LABELS[page]}</a>`)
     .join("");
-  return `<nav class="topbar" aria-label="Pages"><div class="brand">${logoMark(22)}Typecast</div><div class="pages">${links}</div></nav>`;
+  return `<nav class="topbar" aria-label="Pages"><a class="brand" href="${PAGE_PATHS.home}">${logoMark(22)}Typecast</a><div class="pages">${links}</div></nav>`;
 };
 
 export const BASE_STYLE = `
@@ -44,7 +41,7 @@ export const BASE_STYLE = `
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   header.top { padding: 40px 0 28px; }
   .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; color: inherit; text-decoration: none; }
   .pages { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
   .pages a { padding: 5px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); text-decoration: none; border-radius: 7px; }
   .pages a:hover { color: var(--text); }

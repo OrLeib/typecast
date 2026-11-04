@@ -56,7 +56,7 @@ Nothing below `cli/` and `api/` reads `process.env`.
 | `comparison/` | Run comparison and report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, shootout runner (every lineup model on every brief), manifest store |
 | `judging/` | `PairJudge` interface and the Jev judge, `PickJudge` (best of N) and the Jev picker, picks store, pick summary and contact sheet, judgments store (append-only, with undo rows), blind side and order, win-rate statistics, report formatting, the local judging server and page |
-| `demo/` | Local demo server and page: live route, pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence. A second page finds a described target in an image and crops around it. A third, the results showcase (held-out numbers and the latest judged shootout), is served at `/results` locally and `/` hosted. Images, routes, judgments and boxes are cached on disk under `runs/demo/`. Also page paths for local and hosted |
+| `demo/` | The pages, at the same paths locally and hosted. `/` is the home page: one baked brief at a time through which model, which image and where in the frame (`home-stories.ts` bakes and joins it). `/demo` is the live route: pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence. `/locate` finds a described target in an image and crops around it. `/results` has the held-out numbers and the latest judged shootout. Images, routes, judgments and boxes are cached on disk under `runs/demo/` |
 | `hosting/` | The hosted site's API: the demo's route and locate handlers as serverless request handlers |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
 | `api/` | Vercel functions: read env and serve `hosting/`'s handlers |
@@ -150,7 +150,10 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   It prints how often the best image came from the routed model, the expected category's model and the default, against chance (1 / models), and writes `<dir>/picks.html`, a contact sheet for checking the picks by eye.
   The results page (`/results` in the demo) shows the newest shootout run the picker has picked, brief by brief.
   Nothing has measured the picker against people yet, so treat its picks as Jev's opinion, not ground truth.
-- `npm run site` builds the hosted site into `site/`: the results showcase at `/` (held-out routing numbers and every brief of the newest picked shootout, images as JPEG), live routing at `/demo` and find and crop at `/locate`, plus the routing page's config as a static file.
+- The home page keeps numbers off the page on purpose: the only one it shows is the confidence, because that is the product. Everything else belongs on `/results`, with its caveats.
+  `data/home-briefs.json` chooses its briefs, each with a label and a subject to find. Keep the share of routing hits close to the shootout's, not just the wins.
+  `npm run bake-home` asks Jev for each subject's box in the brief's best image (and the runner-up of an unsure route), into `<run>/home-stories.json`, skipping what is unchanged. Check the boxes by eye: a box always comes back.
+- `npm run site` builds the hosted site into `site/`: the home page at `/`, the results at `/results` (held-out routing numbers and every brief of the newest picked shootout, images as JPEG), live routing at `/demo` and find and crop at `/locate`, plus the routing page's config as a static file.
   Hosted, there is no Mac to render on, so `/demo` routes but hides render, compare and judge.
   It also bakes the committed samples' answers for the default target into `build/locate-answers/` (kept between builds, so only new samples cost a Jev call), so trying the samples costs nothing.
 

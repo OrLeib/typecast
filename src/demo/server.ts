@@ -1,14 +1,16 @@
-// Local demo: route a brief live, show the pick-or-compare recommendation, render with the routed model(s),
-// and show the eval evidence behind the confidence. The results page shows the latest best-of-N shootout.
+// Local demo: the home page's three decisions, a page that routes a brief live, shows the pick-or-compare recommendation,
+// renders with the routed model(s) and shows the eval evidence, and a results page with the latest best-of-N shootout.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { basename, extname, join } from "node:path";
 import { PICK_THRESHOLD } from "../routing/recommendation.ts";
 import { decodePath, HttpError, jsonErrors, readJsonObject, requestUrl, sendFile, sendHtml, sendJson } from "../shared/http.ts";
 import type { Evidence } from "./evidence.ts";
+import type { HomeStory } from "./home-stories.ts";
+import { homePage } from "./home.ts";
 import { createJudgeApi, type JudgeApiConfig } from "./judge-api.ts";
 import { createLocateApi, findSamples, SAMPLE_IMAGE_PREFIX, SAMPLE_TYPES, type LocateApiConfig } from "./locate-api.ts";
 import { locatePage } from "./locate-page.ts";
-import { LOCAL_PATHS } from "./page-style.ts";
+import { PAGE_PATHS } from "./page-style.ts";
 import { demoPage } from "./page.ts";
 import { createRenderApi, type RenderApiConfig } from "./render-api.ts";
 import { createRouteApi, type RouteApiConfig } from "./route-api.ts";
@@ -23,6 +25,8 @@ type DemoConfig = Omit<RouteApiConfig & JudgeApiConfig & RenderApiConfig & Locat
   evidence: Evidence[];
   /** The latest judged shootout, if any: which model made the best image of each brief. */
   shootout?: LoadedShootout;
+  /** The briefs the home page walks through. */
+  stories: HomeStory[];
   /** Labelled briefs the page offers to try. Only tuned-against briefs: routing held-out ones here would leak their misses. */
   examples: Example[];
   /** Routes and judgments are kept here, so asking again costs no API call and gives the same answer. */
@@ -42,9 +46,10 @@ export const demoConfigOf = (config: Pick<DemoConfig, "roster" | "generators" | 
 
 export function createDemoServer(config: DemoConfig): Server {
   const pages: Record<string, string> = {
-    [LOCAL_PATHS.results]: showcasePage({ evidence: config.evidence, shootout: config.shootout?.evidence, paths: LOCAL_PATHS }),
-    [LOCAL_PATHS.route]: demoPage({ paths: LOCAL_PATHS, hosted: false }),
-    [LOCAL_PATHS.locate]: locatePage({ paths: LOCAL_PATHS, hosted: false }),
+    [PAGE_PATHS.home]: homePage({ stories: config.stories, defaultGenerator: config.defaultGenerator.name }),
+    [PAGE_PATHS.results]: showcasePage({ evidence: config.evidence, shootout: config.shootout?.evidence }),
+    [PAGE_PATHS.route]: demoPage({ hosted: false }),
+    [PAGE_PATHS.locate]: locatePage({ hosted: false }),
   };
   const render = createRenderApi(config);
   const locate = createLocateApi({ ...config, cacheDir: join(config.cacheDir, "locations") });

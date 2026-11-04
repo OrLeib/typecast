@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Evidence } from "../../src/demo/evidence.ts";
-import { HOSTED_PATHS } from "../../src/demo/page-style.ts";
+import { modelName } from "../../src/demo/lightbox.ts";
 import type { ShootoutBrief, ShootoutEvidence } from "../../src/demo/shootout-evidence.ts";
-import { modelName, showcasePage } from "../../src/demo/showcase.ts";
+import { showcasePage } from "../../src/demo/showcase.ts";
 
 const GENERATORS = ["mflux:photo@q8", "mflux:draw@q8", "mflux:dflt@q8"];
 const DEFAULT = "mflux:dflt@q8";
@@ -15,16 +15,16 @@ function brief(id: string, routedGenerator: string, best: string, split = false)
 }
 
 const shootout = (briefs: ShootoutBrief[]): ShootoutEvidence => ({
-  run: "r", data: "data/dev.jsonl", defaultGenerator: DEFAULT, picked: briefs.length, models: 3, meanAgreement: 0.8,
+  run: "r", data: "data/dev.jsonl", defaultGenerator: DEFAULT, lineup: {}, picked: briefs.length, models: 3, meanAgreement: 0.8,
   bestWas: { routed: 0.5, expected: 0.5, default: 0.25 }, briefs,
 });
 
 const heldOut = (data: string, picked: number, compared: number) =>
-  ({ data, n: 10, repeats: 3, latencyP50: 200, costPer1000Usd: 0.026, outcomes: { picked, pickedRight: picked, compared, comparedInShortlist: compared - 1 } }) as Evidence;
+  ({ data, n: 10, repeats: 3, metrics: { accuracy: 0.9 } as Evidence["metrics"], latencyP50: 200, costPer1000Usd: 0.026, outcomes: { picked, pickedRight: picked, compared, comparedInShortlist: compared - 1 } }) as unknown as Evidence;
 
 const evidence = [heldOut("data/test.jsonl", 25, 5), heldOut("data/hard.jsonl", 20, 10), heldOut("data/dev.jsonl", 30, 0)];
 
-const page = (briefs: ShootoutBrief[]) => showcasePage({ evidence, shootout: shootout(briefs), paths: HOSTED_PATHS });
+const page = (briefs: ShootoutBrief[]) => showcasePage({ evidence, shootout: shootout(briefs) });
 
 describe("showcasePage", () => {
   it("sums the held-out outcomes into the headline numbers", () => {
@@ -34,14 +34,21 @@ describe("showcasePage", () => {
     expect(html).toContain("20 held-out briefs");
   });
 
-  it("links the pages, marking this one, and sends the call to action to live routing", () => {
+  it("links the pages, marking this one", () => {
     const html = page([]);
-    expect(html).toContain('<a href="/" aria-current="page">Results</a>');
-    expect(html).toContain('<a class="try" href="/demo">');
+    expect(html).toContain('<a href="/results" aria-current="page">Results</a>');
+    expect(html).toContain('<a class="brand" href="/">');
+  });
+
+  it("says what the numbers count, and that the image sample was tuned on", () => {
+    const html = page([brief("a", "mflux:photo@q8", "mflux:photo@q8")]);
+    expect(html).toContain("matched the labelled category");
+    expect(html).toContain("First picks matched the label on 90%");
+    expect(html).toContain("briefs that routing was tuned on");
   });
 
   it("leaves out the images when no shootout is picked yet", () => {
-    const html = showcasePage({ evidence, paths: HOSTED_PATHS });
+    const html = showcasePage({ evidence });
     expect(html).toContain("<b>45/45</b>");
     expect(html).not.toContain("Does routing make better images?");
   });

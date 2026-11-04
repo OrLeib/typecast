@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { loadEvidence } from "../demo/evidence.ts";
+import { loadHomeStories } from "../demo/home-stories.ts";
 import { locatorIdOf } from "../demo/locate-api.ts";
 import { routerIdOf } from "../demo/route-api.ts";
 import { loadShootoutEvidence } from "../demo/shootout-evidence.ts";
@@ -32,6 +33,8 @@ const JUDGE_RETRIES = { attempts: 3, delayMs: 1500 };
 const jevConfig = jevConfigFromEnv();
 const jev = createJevClient(jevConfig);
 const lineup = createLocalLineup();
+// Only the picker's id and prompt version are used, to read back its picks; the demo never picks live.
+const shootout = await loadShootoutEvidence(join("runs", "shootout"), createJevPicker(jev));
 const server = createDemoServer({
   router: createDecisionRouter(jev, variant),
   roster: variant.roster,
@@ -39,8 +42,8 @@ const server = createDemoServer({
   defaultGenerator: lineup.fallback,
   judge: createJevJudge(withRetries(jev, JUDGE_RETRIES)),
   evidence: await loadEvidence("runs", DEFAULT_VARIANT),
-  // Only the picker's id and prompt version are used, to read back its picks; the demo never picks live.
-  shootout: await loadShootoutEvidence(join("runs", "shootout"), createJevPicker(jev)),
+  shootout,
+  stories: await loadHomeStories(shootout),
   examples: dev.map(({ brief, expected, note }) => ({ brief, expected, note })),
   inputPricePerMillion: JEV_INPUT_PRICE_PER_MILLION,
   imagesDir,

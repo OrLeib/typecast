@@ -1,6 +1,8 @@
 // The Typecast mark: a T whose stem forks into three routes, the chosen one highlighted.
 // The same drawing as docs/brand/logo.svg, drawn in currentColor so it follows each page's light and dark text colour.
 
+export const REPO_URL = "https://github.com/OrLeib/typecast";
+
 const ROUTES_GRADIENT_ID = "typecast-route";
 // The drawing's bounds plus a little air; docs/brand/logo.svg keeps the full 512 square for padding around it.
 const VIEW_BOX = "72 72 368 368";
