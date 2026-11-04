@@ -1,7 +1,7 @@
 // Checks an answer against the question it was asked. Parsing only proves the response is well formed;
 // a well-formed answer can still be of the wrong type or for the wrong options, and callers read every option's probability.
 import type { DecisionResult } from "./client.ts";
-import type { Answer, ChoiceAnswer, ChoiceQuestion } from "./parse.ts";
+import type { Answer, ChoiceAnswer, ChoiceQuestion, ScoreQuestion } from "./parse.ts";
 
 /** The answer to `questionId`, which must be of the type that was asked. */
 export function answerOfType<T extends Answer["type"]>(result: DecisionResult, questionId: string, type: T): Extract<Answer, { type: T }> {
@@ -18,6 +18,15 @@ export function answerFor(result: DecisionResult, questionId: string, question: 
   if (!options.includes(answer.choice)) throw new Error(`Decision model chose "${answer.choice}" for '${questionId}', which is not one of its options`);
   assertOnePerOption(answer.probabilities, options, questionId);
   return answer;
+}
+
+/** The answer to `questionId` as a share of the scale: 0 is the lowest level, 1 the highest, so scales of any length compare. */
+export function scoreShareFor(result: DecisionResult, questionId: string, question: ScoreQuestion): number {
+  const { score, probabilities } = answerOfType(result, questionId, "score");
+  const top = question.criteria.length - 1;
+  assertOnePerOption(probabilities, question.criteria.map((_, level) => String(level)), questionId);
+  if (score < 0 || score > top) throw new Error(`'${questionId}' score ${score} is outside its 0-${top} scale`);
+  return score / top;
 }
 
 /** A missing or extra option would skew any average or score built from the probabilities, silently. */

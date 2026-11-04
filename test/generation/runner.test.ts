@@ -7,7 +7,7 @@ import { createFakeGenerator } from "../support/fake-generator.ts";
 const routeTo = (choices: Record<string, string>): Router => ({
   async route(brief) {
     const choice = choices[brief] ?? "photo";
-    return { choice, confidence: 0.9, probabilities: { [choice]: 0.9 }, model: "fake-1", inputTokens: 1, latencyMs: 1 };
+    return { choice, confidence: 0.9, probabilities: { [choice]: 0.9 }, reasons: [], model: "fake-1", inputTokens: 1, latencyMs: 1 };
   },
 });
 

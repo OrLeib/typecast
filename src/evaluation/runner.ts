@@ -20,6 +20,7 @@ export async function runEval(
         choice: route.choice,
         confidence: route.confidence,
         probabilities: route.probabilities,
+        reasons: route.reasons,
         latencyMs: route.latencyMs,
         inputTokens: route.inputTokens,
         model: route.model,

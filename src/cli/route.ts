@@ -13,3 +13,4 @@ const router = createDecisionRouter(createJevClient(jevConfigFromEnv()), getVari
 const r = await router.route(brief);
 console.log(`→ ${r.choice}  (confidence ${r.confidence.toFixed(2)}, ${Math.round(r.latencyMs)}ms, ${r.model})`);
 for (const [option, p] of rankOptions(r.probabilities)) console.log(`  ${option.padEnd(14)} ${p.toFixed(3)}`);
+for (const reason of r.reasons) console.log(`  ${reason.label.padEnd(28)} ${reason.probability.toFixed(2)}`);

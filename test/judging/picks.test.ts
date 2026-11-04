@@ -1,4 +1,4 @@
-import { appendFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -6,7 +6,7 @@ import { createJevPicker } from "../../src/judging/jev-picker.ts";
 import type { PickJudge } from "../../src/judging/pick-judge.ts";
 import { currentPicks, loadPicks, pickRun, PICKS_FILE, type PickRecord } from "../../src/judging/picks.ts";
 import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
-import { shootoutOf } from "../support/level2-fixtures.ts";
+import { shootoutOf, writeShootoutImages } from "../support/level2-fixtures.ts";
 
 const manifest = shootoutOf([{ id: "a", choice: "photo" }, { id: "b", choice: "illustration" }]);
 const now = () => new Date("2026-11-01T12:00:00Z");
@@ -25,8 +25,7 @@ const favouring = (favourite: string, version = "v1"): PickJudge => ({
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), "typecast-picks-"));
-  await mkdir(join(dir, "images"));
-  for (const item of manifest.items) for (const shot of item.shots) await writeFile(join(dir, shot.image), `${item.id}-${shot.generator}`);
+  await writeShootoutImages(dir, manifest);
 });
 afterEach(() => rm(dir, { recursive: true, force: true }));
 

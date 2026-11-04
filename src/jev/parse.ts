@@ -13,7 +13,10 @@ export type BoxQuestion = { type: "box"; instructions: string };
 /** A yes/no question, answered with the probability of yes. */
 export type NoulQuestion = { type: "noul"; instructions: string };
 
-export type Question = ChoiceQuestion | BoxQuestion | NoulQuestion;
+/** A rating on ordered levels, from low to high. Each level is judged separately, so levels describe situations, not degrees. */
+export type ScoreQuestion = { type: "score"; instructions: string; criteria: string[] };
+
+export type Question = ChoiceQuestion | BoxQuestion | NoulQuestion | ScoreQuestion;
 
 /**
  * An image sent with a request, keyed in `assets` by a reference string. The reference is written into the state or a
@@ -35,11 +38,14 @@ export type BoxAnswer = { type: "box"; box: Box; confidence: number };
 
 export type NoulAnswer = { type: "noul"; noul: number };
 
-export type Answer = ChoiceAnswer | BoxAnswer | NoulAnswer;
+/** `score` is the probability-weighted mean level, from 0 to the top level's index; `probabilities` is keyed by level index. */
+export type ScoreAnswer = { type: "score"; score: number; confidence: number; probabilities: Record<string, number> };
+
+export type Answer = ChoiceAnswer | BoxAnswer | NoulAnswer | ScoreAnswer;
 
 export type Usage = { input_tokens: number; output_tokens: number };
 
-/** Response envelope, verified against jev-1.14.0 (choice on 2026-10-31, box and noul on 2026-11-01). */
+/** Response envelope, verified against jev-1.14.0 (choice on 2026-10-31, box and noul on 2026-11-01, score on 2026-11-04). */
 export type DecisionResponse = {
   model: string;
   answers: Record<string, Answer>;
@@ -70,7 +76,8 @@ function parseAnswer(raw: unknown, path: string): Answer {
   if (answer.type === "choice") return parseChoiceAnswer(answer, path);
   if (answer.type === "box") return { type: "box", box: parseBox(answer.box, `${path}.box`), confidence: expectProbability(answer.confidence, `${path}.confidence`) };
   if (answer.type === "noul") return { type: "noul", noul: expectProbability(answer.noul, `${path}.noul`) };
-  throw new Error(`${path}.type must be "choice", "box" or "noul", got ${JSON.stringify(answer.type)}`);
+  if (answer.type === "score") return parseScoreAnswer(answer, path);
+  throw new Error(`${path}.type must be "choice", "box", "noul" or "score", got ${JSON.stringify(answer.type)}`);
 }
 
 /** Edges are fractions, so the same range check as a probability applies. */
@@ -80,6 +87,15 @@ function parseBox(raw: unknown, path: string): Box {
   if (left >= right) throw new Error(`${path}: left (${left}) must be less than right (${right})`);
   if (top >= bottom) throw new Error(`${path}: top (${top}) must be less than bottom (${bottom})`);
   return { top, bottom, left, right };
+}
+
+function parseScoreAnswer(answer: Record<string, unknown>, path: string): ScoreAnswer {
+  return {
+    type: "score",
+    score: expectNumber(answer.score, `${path}.score`),
+    confidence: expectProbability(answer.confidence, `${path}.confidence`),
+    probabilities: expectProbabilities(answer.probabilities, `${path}.probabilities`),
+  };
 }
 
 function parseChoiceAnswer(answer: Record<string, unknown>, path: string): ChoiceAnswer {

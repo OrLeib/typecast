@@ -17,7 +17,7 @@ const router: Router = {
   async route(brief) {
     routeCalls++;
     const unsure = brief.includes("maybe");
-    return { choice: "photo", confidence: unsure ? 0.6 : 0.95, probabilities: unsure ? { photo: 0.6, video: 0.4 } : { photo: 0.95, video: 0.05 }, model: "jev-test", inputTokens: 500, latencyMs: 180 };
+    return { choice: "photo", confidence: unsure ? 0.6 : 0.95, probabilities: unsure ? { photo: 0.6, video: 0.4 } : { photo: 0.95, video: 0.05 }, reasons: [], model: "jev-test", inputTokens: 500, latencyMs: 180 };
   },
 };
 const photo = createFakeGenerator("mflux:photo@q8", 4200, 2);

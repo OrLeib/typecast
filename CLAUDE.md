@@ -50,12 +50,12 @@ Nothing below `cli/` and `api/` reads `process.env`.
 | `jev/parse.ts` | Wire types and strict response validation |
 | `jev/answers.ts` | Checks an answer against the question asked: present, a valid choice, one probability per option |
 | `jev/client.ts` | `DecisionClient` interface; HTTP implementation with injected config, `fetch` and clock |
-| `routing/` | `Router` interface, the decision-model router, the pick-or-compare recommendation, the keyword difficulty probe, roster and variants |
+| `routing/` | `Router` interface, the decision-model router, the pick-or-compare recommendation, the reason checks and what they explain, the keyword difficulty probe, roster and variants |
 | `locating/` | `Locator` interface and the Jev locator (a box and a presence check in one request), fitting images to Jev's size limits, the padded square crop |
 | `evaluation/` | Briefs, pure metrics, metric registry, runner, summary, report formatting, run store |
 | `comparison/` | Run comparison and report formatting |
 | `generation/` | `Generator` interface, the mflux adapter, the local lineup, fixed brief sample, pair runner, shootout runner (every lineup model on every brief), manifest store |
-| `judging/` | `PairJudge` interface and the Jev judge, `PickJudge` (best of N) and the Jev picker, picks store, pick summary and contact sheet, judgments store (append-only, with undo rows), blind side and order, win-rate statistics, report formatting, the local judging server and page |
+| `judging/` | `PairJudge` interface and the Jev judge, `PickJudge` (best of N) and the Jev picker, picks store, `ImageRater` (rubric marks) and the Jev rater, ratings store and summary, pick summary and contact sheet, judgments store (append-only, with undo rows), blind side and order, win-rate statistics, report formatting, the local judging server and page |
 | `demo/` | The pages, at the same paths locally and hosted. `/` is the home page: one baked brief at a time through which model, which image and where in the frame (`home-stories.ts` bakes and joins it). `/demo` is the live route: pick-or-compare recommendation, local render, compare with the default model and have the judge pick, latest eval evidence. `/locate` finds a described target in an image and crops around it. `/results` has the held-out numbers and the latest judged shootout. Images, routes, judgments and boxes are cached on disk under `runs/demo/` |
 | `hosting/` | The hosted site's API: the demo's route and locate handlers as serverless request handlers |
 | `cli/` | Composition roots: read env and args, wire implementations, print |
@@ -63,9 +63,9 @@ Nothing below `cli/` and `api/` reads `process.env`.
 
 SOLID, and where it lives:
 - **S** - one reason to change per module: parsing vs answer checking vs transport (`jev/`), running vs summarising vs formatting vs storing (`evaluation/`), computing vs printing (`comparison/`, `judging/`).
-- **O** - extend by adding entries, not editing code: a metric is one entry in `RUN_METRICS` (summary and compare pick it up), a routing change is one entry in `VARIANTS`, a new auto-judge is a new `PairJudge` or `PickJudge`.
-- **L** - any implementation can stand in for another of its interface. Contracts: `test/jev/decision-client.contract.ts` (HTTP client and test fake) `test/routing/router.contract.ts` (decision and keyword routers) `test/judging/pick-judge.contract.ts` (Jev picker) and `test/locating/locator.contract.ts` (Jev locator). A new implementation must pass its contract too.
-- **I** - small interfaces: `Router` has only `route`, `DecisionClient` only `decide`, `PairJudge` only `judge`, `PickJudge` only `pick`, `Locator` only `locate`; metrics take the narrowest prediction type they need.
+- **O** - extend by adding entries, not editing code: a metric is one entry in `RUN_METRICS` (summary and compare pick it up), a routing change is one entry in `VARIANTS`, a new auto-judge is a new `PairJudge`, `PickJudge` or `ImageRater`.
+- **L** - any implementation can stand in for another of its interface. Contracts: `test/jev/decision-client.contract.ts` (HTTP client and test fake) `test/routing/router.contract.ts` (decision and keyword routers) `test/judging/pick-judge.contract.ts` (Jev picker) `test/judging/image-rater.contract.ts` (Jev rater) and `test/locating/locator.contract.ts` (Jev locator). A new implementation must pass its contract too.
+- **I** - small interfaces: `Router` has only `route`, `DecisionClient` only `decide`, `PairJudge` only `judge`, `PickJudge` only `pick`, `ImageRater` only `rate`, `Locator` only `locate`; metrics take the narrowest prediction type they need.
 - **D** - high-level code depends on abstractions: `runEval` takes a `Router`, the router takes a `DecisionClient`, the demo and `autoJudgeRun` take a `PairJudge`, the demo takes a `Locator`, the client takes config and `fetch`. Only `cli/` picks implementations.
 
 Clean Code conventions: intention-revealing names, small single-purpose functions, named constants instead of magic numbers, errors that name the offending field, and comments only for the "why".
@@ -88,7 +88,7 @@ Rules the checks can't enforce:
 - Body: `{ model: "jev-latest", state: string|object, questions: { [id]: { type, instructions, criteria } } }`.
 - Types: `choice` (criteria = { optionId: description }, 1–255 options),
   `score` (2–10 ordered levels), `noul` (yes/no), `box` (where something is in an image; no criteria).
-  The client parses `choice`, `box` and `noul` answers; `score` isn't used yet.
+  The client parses all four.
 - Response envelope (confirmed live against `jev-1.14.0`, 2026-10-31):
   `{ model: "jev-1.14.0", answers: { [questionId]: { type: "choice", choice, confidence, probabilities } }, usage: { input_tokens, output_tokens } }`.
   - `model` is the resolved version, not the requested alias (`jev-latest`).
@@ -97,6 +97,8 @@ Rules the checks can't enforce:
 - Box and noul answers (confirmed live against `jev-1.14.0`, 2026-11-01): `{ type: "box", box: { top, bottom, left, right }, confidence }` with edges as fractions of the image from its top-left corner,
   and `{ type: "noul", noul }`, the probability of yes. A box question needs an image and the images header.
   A box always comes back, even when the target is missing, so ask a noul question alongside it.
+- Score answers (confirmed live against `jev-1.14.0`, 2026-11-04): `{ type: "score", score, confidence, legend, probabilities }`, where `criteria` is an array of levels from low to high, `score` is the mean level and `probabilities` is keyed by level index.
+- Questions in one request don't sway each other: over 8 repeats on 4 briefs, a choice's numbers overlapped with and without six nouls beside it (2026-11-04).
 - `parseDecisionResponse` in `src/jev/parse.ts` validates this shape and throws on any mismatch. `DEBUG_JEV=1` logs the raw body.
   A recorded live response lives in `test/fixtures/jev-choice-response.json`; tests never call the API.
 
@@ -117,10 +119,11 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   Don't read its misses while iterating, don't tune against it, and never move briefs between splits.
   Score it only on a final candidate (or a small shortlist fixed in advance), against the current default in the same session.
 - A change is a variant in `src/routing/variants.ts` (instructions + roster). `DEFAULT_VARIANT` is what routes use; `baseline` stays as the original reference.
-- Run each config with `--repeats 3` (Jev's choices were stable across repeats, but its probabilities jitter by about ±0.01), then `npm run compare -- <default run> <candidate run>`.
+- Run each config with `--repeats 3` (Jev's choices were stable across repeats, but its probabilities jitter by about ±0.01 on clear briefs and ±0.05 on unsure ones), then `npm run compare -- <default run> <candidate run>`.
   It prints paired deltas with bootstrap 95% CIs over briefs and an exact McNemar test on majority-vote correctness (a brief whose repeats tie has no majority and counts as wrong).
 - Adopt a candidate only if, on test: log-loss improves (CI below 0), confident misses (wrong at >= 0.85) don't rise,
   and clear-brief accuracy drops by at most one brief.
+- A variant that keeps the choice question and only adds checks beside it can't improve log-loss, so that bar doesn't apply: it is adopted if on test and hard no majority choice flips and no metric gets worse. `reasonBacksChoice` says how often a route's own check agrees with it.
 - Label fixes are decided by the rules above, before seeing any run that uses them.
 - Check a new brief set's difficulty with `npm run eval -- --router keyword --data <file>` (no API calls).
   The keyword router is a fixed, naive rule list; a set it scores highly on is too explicit to tell routers apart.
@@ -150,6 +153,9 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   It prints how often the best image came from the routed model, the expected category's model and the default, against chance (1 / models), and writes `<dir>/picks.html`, a contact sheet for checking the picks by eye.
   The results page (`/results` in the demo) shows the newest shootout run the picker has picked, brief by brief.
   Nothing has measured the picker against people yet, so treat its picks as Jev's opinion, not ground truth.
+- `npm run rate-jev -- <dir>` marks every image of a shootout on a rubric (`src/judging/jev-rater.ts`): one request per image, so no image is seen beside another, with a score question each for Brief, Style and Craft, plus Text when a noul says the brief asks for words.
+  The total is the plain mean, in code. Marks append to `<dir>/ratings.jsonl` and resume under the same rubric.
+  It is a second opinion from the same model, not ground truth, and it is reported beside the picks even where it disagrees. A pass costs about 170k tokens for 50 images, and top marks held on 9 of 10 briefs across 3 passes.
 - The home page keeps numbers off the page on purpose: the only one it shows is the confidence, because that is the product. Everything else belongs on `/results`, with its caveats.
   `data/home-briefs.json` chooses its briefs, each with a label and a subject to find. Keep the share of routing hits close to the shootout's, not just the wins.
   `npm run bake-home` asks Jev for each subject's box in the brief's best image (and the runner-up of an unsure route), into `<run>/home-stories.json`, skipping what is unchanged. Check the boxes by eye: a box always comes back.

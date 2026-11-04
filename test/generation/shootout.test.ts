@@ -6,7 +6,7 @@ import { createFakeGenerator } from "../support/fake-generator.ts";
 
 const router: Router = {
   async route() {
-    return { choice: "photo", confidence: 0.7, probabilities: { photo: 0.7 }, model: "fake-1", inputTokens: 1, latencyMs: 1 };
+    return { choice: "photo", confidence: 0.7, probabilities: { photo: 0.7 }, reasons: [], model: "fake-1", inputTokens: 1, latencyMs: 1 };
   },
 };
 

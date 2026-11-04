@@ -1,12 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expectArray, expectNumber, expectProbabilities, expectProbability, expectRecord, expectString, withSource } from "../shared/validate.ts";
+import type { Reason } from "../routing/reasons.ts";
 import type { Result } from "./result.ts";
 import type { RunMeta, Summary } from "./summary.ts";
 
 export type RunFile = { summary: Summary; results: Result[] };
 
-/** What reading a run guarantees. Older run files predate `Summary.metrics`, so only metadata is promised. */
+/** What reading a run guarantees. Older run files predate `Summary.metrics` and `reasons`, so only metadata is promised, and reasons default to none. */
 export type LoadedRun = { summary: RunMeta & { model: string }; results: Result[] };
 
 export async function saveRun(dir: string, run: RunFile, at = new Date()): Promise<string> {
@@ -44,8 +45,18 @@ function parseResult(raw: unknown, path: string): Result {
     choice: expectString(r.choice, `${path}.choice`),
     confidence: expectProbability(r.confidence, `${path}.confidence`),
     probabilities: expectProbabilities(r.probabilities, `${path}.probabilities`),
+    reasons: expectArray(r.reasons ?? [], `${path}.reasons`).map((reason, i) => parseReason(reason, `${path}.reasons[${i}]`)),
     latencyMs: expectNumber(r.latencyMs, `${path}.latencyMs`),
     inputTokens: expectNumber(r.inputTokens, `${path}.inputTokens`),
     model: expectString(r.model, `${path}.model`),
+  };
+}
+
+function parseReason(raw: unknown, path: string): Reason {
+  const reason = expectRecord(raw, path);
+  return {
+    category: expectString(reason.category, `${path}.category`),
+    label: expectString(reason.label, `${path}.label`),
+    probability: expectProbability(reason.probability, `${path}.probability`),
   };
 }

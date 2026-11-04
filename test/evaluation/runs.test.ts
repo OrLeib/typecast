@@ -10,7 +10,7 @@ afterAll(() => rm(dir, { recursive: true, force: true }));
 
 describe("run store", () => {
   it("round-trips a run under a timestamped, variant-named file", async () => {
-    const results = [{ id: "a", repeat: 0, expected: "x", choice: "x", confidence: 1, probabilities: { x: 1 }, latencyMs: 1, inputTokens: 1, model: "m" }];
+    const results = [{ id: "a", repeat: 0, expected: "x", choice: "x", confidence: 1, probabilities: { x: 1 }, reasons: [], latencyMs: 1, inputTokens: 1, model: "m" }];
     const summary = summarize(results, [{ id: "a", brief: "b", expected: "x" }], { data: "d", variant: "baseline", repeats: 1, commit: "c" }, 0);
     const file = await saveRun(dir, { summary, results }, new Date("2026-10-31T12:00:00.000Z"));
 
@@ -27,7 +27,7 @@ describe("run store", () => {
   it("names the field of a malformed result", async () => {
     const file = join(dir, "bad.json");
     const summary = { data: "d", variant: "v", repeats: 1, commit: "c", model: "m" };
-    const result = { id: "a", repeat: 0, expected: "x", choice: "x", confidence: 1.5, probabilities: { x: 1 }, latencyMs: 1, inputTokens: 1, model: "m" };
+    const result = { id: "a", repeat: 0, expected: "x", choice: "x", confidence: 1.5, probabilities: { x: 1 }, reasons: [], latencyMs: 1, inputTokens: 1, model: "m" };
     await writeFile(file, JSON.stringify({ summary, results: [result] }));
     await expect(loadRun(file)).rejects.toThrow(/results\[0\]\.confidence must be between 0 and 1, got 1.5/);
   });

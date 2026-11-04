@@ -1,4 +1,5 @@
 // POST /api/route: route a brief and recommend picking or comparing, cached so asking again costs no API call.
+import { explain, type Explanation } from "../routing/reasons.ts";
 import { recommend, type Recommendation } from "../routing/recommendation.ts";
 import type { Route, Router } from "../routing/router.ts";
 import type { Variant } from "../routing/variants.ts";
@@ -18,12 +19,13 @@ export type RouteApiConfig = {
 export const routerIdOf = (variant: Variant, jev: { model: string; baseUrl: string }) => JSON.stringify({ variant, model: jev.model, baseUrl: jev.baseUrl });
 
 export function createRouteApi({ router, routerId, inputPricePerMillion, cacheDir }: RouteApiConfig) {
-  const cache = createDiskCache<Route & { recommendation: Recommendation }>(cacheDir);
+  const cache = createDiskCache<Route & { recommendation: Recommendation; explanation: Explanation }>(cacheDir);
   return async (body: Record<string, unknown>) => {
     const brief = briefFrom(body);
     const route = await cachedOrCompute(cache, `${routerId}\n${brief}`, async () => {
       const fresh = await router.route(brief);
-      return { ...fresh, recommendation: recommend(fresh) };
+      const recommendation = recommend(fresh);
+      return { ...fresh, recommendation, explanation: explain(fresh, recommendation) };
     });
     return { ...route, costUsd: route.cached ? 0 : inputCostUsd(route.inputTokens, inputPricePerMillion) };
   };

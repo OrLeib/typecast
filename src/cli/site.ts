@@ -20,6 +20,7 @@ import { createLocalLineup } from "../generation/local-lineup.ts";
 import { createJevClient, JEV_INPUT_PRICE_PER_MILLION } from "../jev/client.ts";
 import { withRetries } from "../jev/retry.ts";
 import { createJevPicker } from "../judging/jev-picker.ts";
+import { createJevRater } from "../judging/jev-rater.ts";
 import { createJevLocator, JEV_LOCATE_RETRIES } from "../locating/locator.ts";
 import { DEFAULT_VARIANT, getVariant } from "../routing/variants.ts";
 import { jevConfigFromEnv } from "./config.ts";
@@ -40,8 +41,8 @@ const run = promisify(execFile);
 const jevConfig = jevConfigFromEnv();
 const jev = createJevClient(jevConfig);
 
-// Only the picker's id and prompt version are used, to read back its picks; nothing is picked here.
-const shootout = await loadShootoutEvidence(join("runs", "shootout"), createJevPicker(jev));
+// Only the judges' ids and prompt versions are used, to read back their work; nothing is picked or rated here.
+const shootout = await loadShootoutEvidence(join("runs", "shootout"), createJevPicker(jev), createJevRater(jev));
 if (!shootout) {
   console.error("No picked shootout under runs/shootout. Run `npm run generate -- --shootout`, then `npm run pick-jev -- <dir>`.");
   process.exit(1);

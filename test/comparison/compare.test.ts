@@ -6,6 +6,7 @@ import { RUN_METRICS } from "../../src/evaluation/run-metrics.ts";
 const result = (id: string, choice: string, expected: string, { repeat = 0, confidence = 0.9 } = {}): Result => ({
   id, repeat, expected, choice, confidence,
   probabilities: { [choice]: confidence, ...(choice === expected ? {} : { [expected]: 1 - confidence }) },
+  reasons: [{ category: choice, label: "reason", probability: confidence }],
   latencyMs: 100, inputTokens: 500, model: "jev-test",
 });
 

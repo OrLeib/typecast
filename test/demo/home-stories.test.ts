@@ -21,7 +21,7 @@ const shootout = async (): Promise<Pick<LoadedShootout, "dir" | "evidence" | "fi
 
 const deps = () => ({
   locator: { locate: vi.fn(async (_image: Buffer, _target: string) => ({ box: BOX, confidence: 0.9, presence: 0.9, model: "m", inputTokens: 1, latencyMs: 1 })) },
-  router: { route: vi.fn(async () => ({ choice: "photo", confidence: 0.5, probabilities: { photo: 0.5, draw: 0.3, video: 0.2 }, model: "m", latencyMs: 1, inputTokens: 1, outputTokens: 1 })) },
+  router: { route: vi.fn(async () => ({ choice: "photo", confidence: 0.5, probabilities: { photo: 0.5, draw: 0.3, video: 0.2 }, reasons: [], model: "m", latencyMs: 1, inputTokens: 1, outputTokens: 1 })) },
   readImage: async (path: string) => Buffer.from(path),
 });
 

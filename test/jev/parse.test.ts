@@ -8,6 +8,8 @@ const clone = () => structuredClone(fixture);
 // Recorded live from jev-1.14.0: the person's face in a full-body photo, and whether a face is visible.
 const boxFixture = JSON.parse(readFileSync(new URL("../fixtures/jev-box-response.json", import.meta.url), "utf8"));
 const cloneBox = () => structuredClone(boxFixture);
+// Recorded live from jev-1.14.0: a score and a noul about one shootout image.
+const scoreFixture = JSON.parse(readFileSync(new URL("../fixtures/jev-score-response.json", import.meta.url), "utf8"));
 
 describe("parseDecisionResponse", () => {
   it("parses the recorded response", () => {
@@ -16,6 +18,11 @@ describe("parseDecisionResponse", () => {
     expect(r.usage).toEqual({ input_tokens: 474, output_tokens: 69 });
     expect(r.answers.model).toMatchObject({ type: "choice", choice: "product", confidence: 0.98 });
     expect(Object.keys((r.answers.model as { probabilities: object }).probabilities)).toHaveLength(6);
+  });
+
+  it("parses the recorded score response", () => {
+    const { answers } = parseDecisionResponse(scoreFixture);
+    expect(answers.craft).toEqual({ type: "score", score: 1.41, confidence: 0.24, probabilities: { 0: 0.05, 1: 0.49, 2: 0.46 } });
   });
 
   it("parses the recorded box and noul response", () => {
@@ -39,7 +46,7 @@ describe("parseDecisionResponse", () => {
     ["missing usage", () => ({ ...clone(), usage: undefined }), /usage must be an object/],
     ["missing model", () => ({ ...clone(), model: undefined }), /model must be a string/],
     ["answers at top level", () => { const { answers, ...rest } = clone(); return { ...rest, ...answers }; }, /answers must be an object/],
-    ["unknown answer type", () => { const b = clone(); b.answers.model.type = "score"; return b; }, /answers\.model\.type must be "choice", "box" or "noul", got "score"/],
+    ["unknown answer type", () => { const b = clone(); b.answers.model.type = "rank"; return b; }, /answers\.model\.type must be "choice", "box", "noul" or "score", got "rank"/],
     ["choice outside options", () => { const b = clone(); b.answers.model.choice = "audio"; return b; }, /"audio" is not in probabilities/],
     ["non-numeric probability", () => { const b = clone(); b.answers.model.probabilities.video = "0"; return b; }, /probabilities\.video must be a number/],
     ["probability above 1", () => { const b = clone(); b.answers.model.probabilities.video = 1.2; return b; }, /probabilities\.video must be between 0 and 1, got 1\.2/],

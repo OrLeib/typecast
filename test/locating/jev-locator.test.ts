@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { DecisionClient } from "../../src/jev/client.ts";
 import type { BoxAnswer } from "../../src/jev/parse.ts";
 import { createJevLocator } from "../../src/locating/locator.ts";
-import { createFakeDecisionClient } from "../support/fake-decision-client.ts";
+import { createFakeDecisionClient, FAKE_SIGHT } from "../support/fake-decision-client.ts";
 import { locatorContract, testImage } from "./locator.contract.ts";
 
 const FACE: BoxAnswer = { type: "box", box: { top: 0.22, bottom: 0.33, left: 0.51, right: 0.63 }, confidence: 0.87 };
@@ -45,7 +45,7 @@ describe("createJevLocator", () => {
 
   it("returns the box, its confidence, the presence probability, what the request cost and how long it took", async () => {
     const ticks = [1000, 1840];
-    const locator = createJevLocator(createFakeDecisionClient(noChoices, { box: FACE, noul: 0.97 }), { now: () => ticks.shift()! });
+    const locator = createJevLocator(createFakeDecisionClient(noChoices, { ...FAKE_SIGHT, box: FACE, noul: 0.97 }), { now: () => ticks.shift()! });
     const location = await locator.locate(await testImage(), "a face");
     expect(location).toEqual({ box: FACE.box, confidence: 0.87, presence: 0.97, model: "fake-1.0.0", inputTokens: 100, latencyMs: 840 });
   });

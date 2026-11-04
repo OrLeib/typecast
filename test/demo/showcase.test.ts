@@ -34,6 +34,21 @@ describe("showcasePage", () => {
     expect(html).toContain("20 held-out briefs");
   });
 
+  it("shows each image's marks and reports the second look, even when it disagrees with the pick", () => {
+    const rated = brief("a", "mflux:photo@q8", "mflux:photo@q8");
+    rated.shots[0].rating = { scores: { Brief: 0.6, Craft: 0.4 }, total: 0.5 };
+    rated.shots[2].rating = { scores: { Brief: 0.9, Craft: 0.7 }, total: 0.8 };
+    const html = showcasePage({ evidence, shootout: { ...shootout([rated]), rubric: { briefs: 1, topWas: { routed: 0, default: 1 }, agreesWithPick: 0 } } });
+    expect(html).toContain("the routed model topped 0 of 1, the default 1");
+    expect(html).toContain("Top marks went to dflt.");
+    expect(html).toContain('<dt class="">Craft</dt>');
+    expect(html).toContain("<dd class=\"\">40</dd>");
+  });
+
+  it("says nothing of marks for a run with none", () => {
+    expect(page([brief("a", "mflux:photo@q8", "mflux:photo@q8")])).not.toContain("second look");
+  });
+
   it("links the pages, marking this one", () => {
     const html = page([]);
     expect(html).toContain('<a href="/results" aria-current="page">Results</a>');

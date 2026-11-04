@@ -56,6 +56,11 @@ ${BASE_STYLE}
   .confidence b { font-size: 44px; font-weight: 650; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
   .confidence span { color: var(--text-2); }
   .explain { color: var(--text-2); margin: 0; font-size: 14px; }
+  .reasons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .reasons[hidden] { display: none; }
+  .reasons-title { width: 100%; font-size: 13px; font-weight: 550; color: var(--text-2); }
+  .reason { font-size: 13px; line-height: 1.3; padding: 3px 10px; border-radius: 999px; color: var(--text-2); background: var(--track); }
+  .reason.deciding { color: var(--accent-text); background: var(--accent-soft); font-weight: 600; }
   .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 13px; margin-top: auto; padding-top: 8px; font-variant-numeric: tabular-nums; }
   .meta strong { color: var(--text-2); font-weight: 550; }
   .bars { padding: 24px; }
@@ -193,6 +198,7 @@ ${BASE_STYLE}
           <div class="track meter"><div class="fill" id="confidence-fill"></div><div class="threshold" id="pick-mark"></div></div>
           <p class="pick-line"><i></i><span id="threshold-label"></span></p>
           <p class="explain" id="explain"></p>
+          <div class="reasons" id="reasons" hidden></div>
           <p class="label-check" id="label-check" hidden></p>
           <div class="meta" id="meta"></div>
         </div>
@@ -417,6 +423,7 @@ ${BASE_STYLE}
     $("explain").textContent = compare
       ? "Below the " + pct(config.pickThreshold) + " pick line, so the UI should render both and let the user choose."
       : "At or above the " + pct(config.pickThreshold) + " pick line, so the UI can use this model without asking.";
+    showReasons(r.explanation);
     var meta = $("meta"); meta.textContent = "";
     [[r.cached ? "Latency, cached" : "Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model, "version"]].forEach(function (m) {
       var span = el("span"), strong = el("strong", null, m[1]);
@@ -436,6 +443,17 @@ ${BASE_STYLE}
     });
     showLabelCheck(rec);
     if (CAN_RENDER) showRenderPlan(rec);
+  }
+
+  /** A pick's reasons, or what an unsure route is waiting to hear. Stays hidden when the checks don't back the pick. */
+  function showReasons(explanation) {
+    var box = $("reasons"), open = explanation.open.length > 0, shown = open ? explanation.open : explanation.because;
+    box.textContent = ""; box.hidden = !shown.length;
+    if (!shown.length) return;
+    box.appendChild(el("span", "reasons-title", open ? "Say which applies to settle it" : "Why"));
+    shown.forEach(function (reason, i) {
+      box.appendChild(el("span", "reason" + (!open && i === 0 ? " deciding" : ""), reason.label + (open ? " · " + pct(reason.probability) : "")));
+    });
   }
 
   /** The model a category routes to, named first, since the question is which model; categories without a local model name only the category. */

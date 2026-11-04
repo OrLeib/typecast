@@ -3,8 +3,8 @@ import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ShootoutManifest } from "../generation/manifest.ts";
 import type { ShootoutItem } from "../generation/shootout.ts";
-import { readTextIfAny } from "../shared/files.ts";
-import { expectProbabilities, expectProbability, expectString, parseJsonLine } from "../shared/validate.ts";
+import { loadJsonLines } from "../shared/files.ts";
+import { expectProbabilities, expectProbability, expectString } from "../shared/validate.ts";
 import { loadImage } from "./pair-judge.ts";
 import type { PickJudge, PickVerdict } from "./pick-judge.ts";
 
@@ -63,10 +63,7 @@ export function currentPicks(picks: PickRecord[], judge: Pick<PickJudge, "id" | 
   return new Map(picks.filter((p) => p.judge === judge.id && p.version === judge.version).map((p) => [p.id, p]));
 }
 
-export async function loadPicks(file: string): Promise<PickRecord[]> {
-  const text = await readTextIfAny(file);
-  return text.split("\n").flatMap((line, i) => (line.trim() ? [parsePick(parseJsonLine(line, `${file}:${i + 1}`), `${file}:${i + 1}`)] : []));
-}
+export const loadPicks = (file: string): Promise<PickRecord[]> => loadJsonLines(file, parsePick);
 
 function parsePick(row: Record<string, unknown>, where: string): PickRecord {
   const field = (name: string) => `${where}: ${name}`;

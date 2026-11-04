@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { Manifest, ShootoutManifest } from "../../src/generation/manifest.ts";
 import type { GenerationItem } from "../../src/generation/runner.ts";
 
@@ -23,3 +25,9 @@ export const shootoutOf = (items: { id: string; choice: string; expected?: strin
     shots: ["photo-gen", "draw-gen", "dflt"].map((generator) => ({ generator, image: `images/${id}-${generator}.png`, latencyMs: 1 })),
   })),
 });
+
+/** Writes every image of a shootout into `dir`, each file's bytes naming its brief and generator. */
+export async function writeShootoutImages(dir: string, manifest: ShootoutManifest) {
+  await mkdir(join(dir, "images"));
+  for (const item of manifest.items) for (const shot of item.shots) await writeFile(join(dir, shot.image), `${item.id}-${shot.generator}`);
+}

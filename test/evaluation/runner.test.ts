@@ -10,7 +10,7 @@ const briefs: Brief[] = [
 const router: Router = {
   route: async (brief) => ({
     choice: brief.includes("clip") ? "video" : "product", confidence: 0.7,
-    probabilities: { video: 0.7, product: 0.3 }, model: "m", inputTokens: 10, latencyMs: 5,
+    probabilities: { video: 0.7, product: 0.3 }, reasons: [], model: "m", inputTokens: 10, latencyMs: 5,
   }),
 };
 
@@ -21,7 +21,7 @@ describe("runEval", () => {
     expect(seen).toEqual(["a#0", "b#0", "a#1", "b#1"]);
     expect(results[1]).toEqual({
       id: "b", repeat: 0, expected: "typography", choice: "product", confidence: 0.7,
-      probabilities: { video: 0.7, product: 0.3 }, latencyMs: 5, inputTokens: 10, model: "m",
+      probabilities: { video: 0.7, product: 0.3 }, reasons: [], latencyMs: 5, inputTokens: 10, model: "m",
     });
   });
 });

@@ -10,6 +10,7 @@ const CONTRACT_QUESTIONS: Record<string, Question> = {
   model: CHOICE,
   face: { type: "box", instructions: "the person's face in `photo`" },
   present: { type: "noul", instructions: "Is a human face visible in `photo`?" },
+  craft: { type: "score", instructions: "How clean does `photo` look?", criteria: ["Broken", "Flawed", "Clean"] },
 };
 
 const PHOTO: Record<string, ImageAsset> = { "asset-photo": { type: "image", format: "png", data_base64: "iVBORw0KGgo=" } };
@@ -44,6 +45,15 @@ export function decisionClientContract(name: string, makeClient: () => DecisionC
       const answer = (await ask()).answers.present;
       if (answer.type !== "noul") throw new Error(`expected a noul answer, got ${answer.type}`);
       inRange(answer.noul);
+    });
+
+    it("answers a score question on its scale, with a probability per level", async () => {
+      const answer = (await ask()).answers.craft;
+      if (answer.type !== "score") throw new Error(`expected a score answer, got ${answer.type}`);
+      expect(Object.keys(answer.probabilities).sort()).toEqual(["0", "1", "2"]);
+      expect(answer.score).toBeGreaterThanOrEqual(0);
+      expect(answer.score).toBeLessThanOrEqual(2);
+      inRange(answer.confidence);
     });
 
     it("reports the resolved model, token usage and a non-negative latency", async () => {

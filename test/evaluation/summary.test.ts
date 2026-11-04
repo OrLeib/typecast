@@ -11,7 +11,7 @@ const briefs: Brief[] = [
   { id: "b", brief: "borderline one", expected: "x", note: "why" },
 ];
 const result = (id: string, repeat: number, choice: string): Result => ({
-  id, repeat, expected: "x", choice, confidence: 0.9, probabilities: { x: choice === "x" ? 0.9 : 0.1, y: choice === "x" ? 0.1 : 0.9 },
+  id, repeat, expected: "x", choice, confidence: 0.9, probabilities: { x: choice === "x" ? 0.9 : 0.1, y: choice === "x" ? 0.1 : 0.9 }, reasons: [],
   latencyMs: 100 * (repeat + 1), inputTokens: 500, model: "jev-test",
 });
 const results = [result("a", 0, "x"), result("b", 0, "y"), result("a", 1, "x"), result("b", 1, "x")];

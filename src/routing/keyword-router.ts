@@ -30,7 +30,7 @@ export function createKeywordRouter(categories: readonly string[]): Router {
       const text = brief.toLowerCase();
       const choice = KEYWORD_RULES.find((r) => r.pattern.test(text))?.category ?? FALLBACK;
       const probabilities = Object.fromEntries(categories.map((c) => [c, c === choice ? 1 : 0]));
-      return { choice, confidence: 1, probabilities, model: KEYWORD_ROUTER_MODEL, inputTokens: 0, latencyMs: 0 };
+      return { choice, confidence: 1, probabilities, reasons: [], model: KEYWORD_ROUTER_MODEL, inputTokens: 0, latencyMs: 0 };
     },
   };
 }

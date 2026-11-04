@@ -23,12 +23,13 @@
 Media tools offer dozens of models, and users guess which one fits their brief.
 Typecast asks a decision model (TypeSafe's Jev, or a Jev-compatible open model) for a typed, calibrated choice.
 At 85% confidence or more the product just uses the pick; below that it shows the top two side by side.
+The same request asks a yes/no check per category, so a pick comes with its reason and an unsure route says what would settle it.
 
 ## Results
 
 On 240 held-out briefs, never tuned against, 3 runs each (`jev-1.14.0`):
 
-| 604 / 604 | 113 / 116 | 207ms | $0.026 |
+| 602 / 604 | 113 / 116 | 204ms | $0.032 |
 |:---:|:---:|:---:|:---:|
 | confident picks were the right model | unsure routes had the right model in the top two | median time to route a brief | per 1,000 routes |
 
@@ -37,18 +38,22 @@ On 240 held-out briefs, never tuned against, 3 runs each (`jev-1.14.0`):
 
 | Held out | Accuracy | ECE | Log-loss | Confident misses | p50 | p95 |
 |---|---|---|---|---|---|---|
-| `test` | 100% | 0.031 | 0.029 | 0 | 199ms | 307ms |
-| `hard` | 91.7% | 0.050 | 0.210 | 0 | 214ms | 324ms |
+| `test` | 100% | 0.030 | 0.029 | 0 | 204ms | 273ms |
+| `hard` | 91.9% | 0.046 | 0.209 | 2 | 205ms | 319ms |
 
 `test` was written blind to the briefs we iterate on.
 `hard` hides its deciding cue, so a keyword baseline that scores 85-88% elsewhere gets 9% on it.
-Against the original prompt, the current one lifts `hard` from 83.1% to 91.7% and confident misses from 5.7 to 0 per run (McNemar p = 0.003).
+Against the original prompt, the current one lifts `hard` from 83.1% to about 92% and confident misses from 5.7 to under 1 per run (McNemar p = 0.003).
+The two confident misses are one brief that sits on the 85% line, wrong in two of three runs.
+The checks flipped no brief's majority choice on either set and added about 3ms; they are why a route now costs $0.032, not $0.026.
+A route's own check agreed with it 96% of the time on `test` and 84% on `hard`; when it doesn't, the demo shows no reason at all.
 </details>
 
 ### Does routing make better images?
 
 Ten briefs, each rendered by all five local models with the same prompt and seed.
 Jev, blind to which model made which, picked the routed model's image 7 times, the default's twice (chance is 2).
+A second look is less kind: marking each image alone on a rubric (brief, style, craft, and text when asked for) put the routed model on top 4 times and the default 3, and the top-marked image was the pick on 7 of 10.
 A small sample of briefs routing was tuned on, judged by Jev rather than people: a signal, not proof.
 
 <p align="center">
