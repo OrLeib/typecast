@@ -184,7 +184,7 @@ describe("demo server", () => {
   it("serves the home page, even with no stories baked yet", async () => {
     const page = await (await get("/")).text();
     expect(page).toContain("Which model, which image, where in the frame");
-    expect(page).toContain('<a href="/demo">Route a brief</a>');
+    expect(page).toContain('<a href="/demo">Which model</a>');
   });
 
   it("serves a page script that parses", async () => {
@@ -256,7 +256,7 @@ describe("demo server: find and crop", () => {
 
   it("serves the find-and-crop page with a script that parses", async () => {
     const page = await (await get("/locate")).text();
-    expect(page).toContain('aria-current="page">Find and crop');
+    expect(page).toContain('aria-current="page">Find the subject');
     const script = /<script>([\s\S]*)<\/script>/.exec(page)?.[1] ?? "";
     expect(script).not.toBe("");
     expect(() => new Function(script)).not.toThrow();
@@ -278,9 +278,9 @@ describe("demo server with a shootout", () => {
 
   it("shows the shootout on the results page, linked from the other pages", async () => {
     const results = await (await local.get("/results")).text();
-    expect(results).toContain('aria-current="page">Results');
+    expect(results).toContain('aria-current="page">The numbers');
     expect(results).toContain("Does routing make better images?");
-    expect(await (await local.get("/demo")).text()).toContain('<a href="/results">Results</a>');
+    expect(await (await local.get("/demo")).text()).toContain('<a href="/results">The numbers</a>');
   });
 
   it("serves the shootout's images and nothing else under its prefix", async () => {

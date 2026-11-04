@@ -3,7 +3,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Location, Locator } from "../locating/locator.ts";
-import { PICK_THRESHOLD, recommend } from "../routing/recommendation.ts";
+import { explain, type Explanation } from "../routing/reasons.ts";
+import { recommend } from "../routing/recommendation.ts";
 import type { Router } from "../routing/router.ts";
 import { readTextIfAny } from "../shared/files.ts";
 import { expectArray, expectRecord, expectString, withSource } from "../shared/validate.ts";
@@ -12,7 +13,7 @@ import type { LoadedShootout, ShootoutBrief, ShootoutShot } from "./shootout-evi
 type StoryPlan = { id: string; label: string; target: string };
 
 /** What baking kept for one brief. `generator` and `target` say what the box answers, so a changed pick is asked again. */
-type StoryAnswer = { generator: string; target: string; box: Location["box"]; runnerUp?: string };
+type StoryAnswer = { generator: string; target: string; box: Location["box"]; confidence: number; explanation: Explanation; runnerUp?: string };
 
 export type HomeStory = {
   brief: ShootoutBrief;
@@ -20,6 +21,8 @@ export type HomeStory = {
   target: string;
   box: Location["box"];
   best: ShootoutShot;
+  confidence: number;
+  explanation: Explanation;
   routed?: ShootoutShot;
   /** Set when routing was unsure: the runner-up's image, shown beside the routed one. */
   second?: ShootoutShot;
@@ -55,16 +58,18 @@ export async function bakeStories(plan: StoryPlan[], { dir, evidence, files }: P
     if (!best || !image) throw new Error(`brief ${id} has no best image`);
     if (answers[id]?.target === target && answers[id].generator === best.generator) continue;
     const { box, presence } = await deps.locator.locate(await deps.readImage(image), target);
-    answers[id] = { generator: best.generator, target, box, runnerUp: await runnerUpOf(brief, deps.router) };
+    answers[id] = { generator: best.generator, target, box, ...(await routeAgain(brief, deps.router)) };
     await writeFile(join(dir, ANSWERS_FILE), JSON.stringify(answers, null, 2));
     onBaked?.(id, presence);
   }
 }
 
-/** The manifest keeps only the routed choice, so an unsure route is asked again for the rest of its top two. */
-async function runnerUpOf(brief: ShootoutBrief, router: Pick<Router, "route">) {
-  if (brief.confidence >= PICK_THRESHOLD) return undefined;
-  return recommend(await router.route(brief.brief)).shortlist[1];
+/** The manifest keeps only the routed choice, so each brief is asked again for its reasons and its top two. Another choice wouldn't match the images. */
+async function routeAgain(brief: ShootoutBrief, router: Pick<Router, "route">) {
+  const route = await router.route(brief.brief);
+  if (route.choice !== brief.routed) throw new Error(`brief ${brief.id} now routes to ${route.choice}, not ${brief.routed}`);
+  const recommendation = recommend(route);
+  return { confidence: route.confidence, explanation: explain(route, recommendation), runnerUp: recommendation.mode === "compare" ? recommendation.shortlist[1] : undefined };
 }
 
 /** The plan's briefs with their baked answers, in the plan's order. A brief without a current answer is left out. */
@@ -75,7 +80,7 @@ export function toStories(plan: StoryPlan[], evidence: LoadedShootout["evidence"
     const answer = answers[id];
     if (!brief || !best || answer?.target !== target || answer.generator !== best.generator) return [];
     const shotOf = (generator?: string) => brief.shots.find((shot) => shot.generator === generator);
-    return [{ brief, label, target, box: answer.box, best, routed: shotOf(brief.routedGenerator), second: shotOf(evidence.lineup[answer.runnerUp ?? ""]) }];
+    return [{ brief, label, target, box: answer.box, best, confidence: answer.confidence, explanation: answer.explanation, routed: shotOf(brief.routedGenerator), second: shotOf(evidence.lineup[answer.runnerUp ?? ""]) }];
   });
 }
 

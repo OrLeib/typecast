@@ -26,13 +26,12 @@ const deps = () => ({
 });
 
 describe("bakeStories", () => {
-  it("boxes each brief's best image, and asks for a runner-up only when routing was unsure", async () => {
+  it("boxes each brief's best image and routes it again", async () => {
     const run = await shootout();
     const baked = deps();
     await bakeStories(PLAN, run, baked);
     expect(baked.locator.locate.mock.calls.map(([image, target]) => [image.toString(), target])).toEqual([["sure.png", "the shoe"], ["unsure.png", "the logo"]]);
-    expect(baked.router.route).toHaveBeenCalledTimes(1);
-    expect(baked.router.route).toHaveBeenCalledWith("brief unsure");
+    expect(baked.router.route.mock.calls).toEqual([["brief sure"], ["brief unsure"]]);
   });
 
   it("asks nothing again for answers it already has, and again when a target changes", async () => {
@@ -43,6 +42,12 @@ describe("bakeStories", () => {
     expect(again.locator.locate).not.toHaveBeenCalled();
     await bakeStories([{ ...PLAN[0], target: "the lace" }], run, again);
     expect(again.locator.locate).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a route that no longer matches the images", async () => {
+    const changed = deps();
+    changed.router.route.mockResolvedValueOnce({ ...(await deps().router.route()), choice: "draw" });
+    await expect(bakeStories(PLAN, await shootout(), changed)).rejects.toThrow("sure now routes to draw, not photo");
   });
 
   it("names a planned brief the shootout doesn't have", async () => {
@@ -65,8 +70,9 @@ describe("loadHomeStories", () => {
     expect(sure.box).toEqual(BOX);
     expect(sure.best.generator).toBe("draw-model");
     expect(sure.routed?.generator).toBe("photo-model");
-    expect(sure.second).toBeUndefined();
     expect(unsure.second?.generator).toBe("draw-model");
+    expect(unsure.confidence).toBe(0.5);
+    expect(unsure.explanation).toEqual({ because: [], open: [] });
   });
 
   it("leaves out a brief whose answer is for another target", async () => {

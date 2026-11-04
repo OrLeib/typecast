@@ -1,8 +1,8 @@
 [
   { "id": "b18", "label": "Running shoes", "target": "the front running shoe" },
   { "id": "b22", "label": "Sneaker burst", "target": "the sneaker" },
-  { "id": "b23", "label": "Burger menu", "target": "the burger" },
-  { "id": "b57", "label": "Bakery logo", "target": "the bakery's name" },
+  { "id": "b23", "label": "Burger menu", "target": "the top left burger" },
+  { "id": "b57", "label": "Bakery logo", "target": "the ampersand" },
   { "id": "b17", "label": "Perfume bottle", "target": "the perfume bottle" },
-  { "id": "b71", "label": "City block", "target": "the cafe" }
+  { "id": "b71", "label": "City block", "target": "the smaller cafe building" }
 ]

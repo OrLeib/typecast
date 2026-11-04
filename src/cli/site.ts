@@ -34,7 +34,10 @@ const SAMPLES_DIR = join("data", "locating");
 const BAKED_ANSWERS_DIR = join("build", "locate-answers");
 /** The baked answers hold boxes, not crops, so any padding works; this is just what the bake request needs. */
 const BAKE_PADDING = 0.5;
-const OG_SOURCE = join("docs", "readme", "shootout-dark.jpg");
+/** The brief whose best image fronts a shared link, and what is said beside it. */
+const OG_STORY = "b17";
+const OG_TEXT = ["A decision layer for", "AI image tools: it picks", "the model, picks the best", "image and finds the subject."];
+const OG_BACKGROUND = "#121211";
 
 const { values: args } = parseArgs({ options: { out: { type: "string", default: "site" } } });
 const run = promisify(execFile);
@@ -68,7 +71,7 @@ if (!stories.length) {
   console.error("No home stories yet. Run `npm run bake-home`.");
   process.exit(1);
 }
-await sharp(OG_SOURCE).resize(OG_SIZE.width, OG_SIZE.height, { fit: "cover", position: "top" }).jpeg({ quality: 82 }).toFile(join(args.out, OG_IMAGE_PATH.slice(1)));
+await writePreviewImage((stories.find((story) => story.brief.id === OG_STORY) ?? stories[0]).best.url, join(args.out, OG_IMAGE_PATH.slice(1)));
 
 await writePage(PAGE_PATHS.home, homePage({ stories, defaultGenerator: hostedShootout.defaultGenerator }));
 await writePage(PAGE_PATHS.results, showcasePage({ evidence, shootout: hostedShootout }));
@@ -104,6 +107,18 @@ console.log(`Sample answers in ${BAKED_ANSWERS_DIR}/ (${bakeCost ? `asked Jev, $
 console.log("Preview with: vercel deploy    Production: vercel deploy --prod");
 
 /** A page at `path` is `path/index.html`, so its URL needs no extension. */
+/** The picture a shared link shows: what Typecast is in words, beside one of its images. */
+async function writePreviewImage(imageUrl: string, file: string) {
+  const { width, height } = OG_SIZE;
+  const lines = OG_TEXT.map((line, i) => `<text x="56" y="${340 + i * 46}" font-size="32" fill="#c3c2b7">${line}</text>`).join("");
+  const words = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" font-family="Helvetica, Arial, sans-serif"><text x="56" y="250" font-size="76" font-weight="700" fill="#f0efec">Typecast</text>${lines}</svg>`;
+  const image = await sharp(join(args.out, imageUrl.slice(1))).resize(height, height).toBuffer();
+  await sharp({ create: { width, height, channels: 3, background: OG_BACKGROUND } })
+    .composite([{ input: image, left: width - height, top: 0 }, { input: Buffer.from(words), left: 0, top: 0 }])
+    .jpeg({ quality: 82 })
+    .toFile(file);
+}
+
 async function writePage(path: string, html: string) {
   await mkdir(join(args.out, path), { recursive: true });
   await writeFile(join(args.out, path, "index.html"), html);

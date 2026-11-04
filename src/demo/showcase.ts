@@ -100,7 +100,7 @@ function routingSection(evidence: Evidence[]) {
   if (!heldOut.length) return "";
   const s = heldOutStats(heldOut);
   return `<section>
-  <h2>Its confidence tells the UI what to do</h2>
+  <h2>The confidence says when to just pick</h2>
   <p class="sub">At ${PERCENT(PICK_THRESHOLD)} or more, just use the model. Below that, put the top two side by side and let the user choose. Measured on ${s.briefs} held-out briefs that were never tuned against, ${s.routes / s.briefs} runs each:</p>
   <div class="stats">
     ${stat(`${s.pickedRight}/${s.picked}`, "confident picks matched the labelled category")}
@@ -148,10 +148,10 @@ const thumb = (brief: ShootoutBrief, defaultGenerator: string) => (shot: Shootou
 function pairOf(brief: ShootoutBrief, defaultGenerator: string) {
   const routed = brief.shots.find((shot) => shot.generator === brief.routedGenerator);
   if (brief.routedGenerator !== defaultGenerator) {
-    return bigShot(brief, routed, "Routed") + bigShot(brief, brief.shots.find((shot) => shot.generator === defaultGenerator), "Default");
+    return bigShot(brief, routed, "Typecast's pick") + bigShot(brief, brief.shots.find((shot) => shot.generator === defaultGenerator), "Default");
   }
   const [other] = brief.shots.filter((shot) => shot !== routed).toSorted((a, b) => b.probability - a.probability);
-  return bigShot(brief, routed, "Routed, also the default") + bigShot(brief, other, other?.picked ? "Judge's pick" : "Runner-up");
+  return bigShot(brief, routed, "Typecast's pick, also the default") + bigShot(brief, other, other?.picked ? "Judge's pick" : "Runner-up");
 }
 
 const routedWon = (brief: ShootoutBrief) => brief.shots.some((shot) => shot.picked && shot.generator === brief.routedGenerator);
@@ -209,7 +209,7 @@ export function showcasePage({ evidence, shootout }: ShowcaseInput): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Typecast: results</title>
+<title>Typecast: the numbers</title>
 ${FAVICON_LINK}
 <style>${BASE_STYLE}${LIGHTBOX_STYLE}${STYLE}</style>
 </head>
@@ -218,7 +218,7 @@ ${FAVICON_LINK}
 <header class="top">
   ${pageNav("results")}
   <h1>The numbers</h1>
-  <p class="lede">How well the routing holds up on briefs it never saw, and what it does for the images.</p>
+  <p class="lede">How well the routing holds up on briefs it never saw, and what it does for the images. Finding the subject isn't measured yet.</p>
 </header>
 ${routingSection(evidence)}
 ${imagesSection(shootout)}

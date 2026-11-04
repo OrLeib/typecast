@@ -10,6 +10,7 @@ export const LIGHTBOX_STYLE = `
   button.frame:focus-visible { outline-color: var(--accent); }
   button.frame img { transition: transform .25s ease; }
   button.frame:hover img { transform: scale(1.03); }
+  @media (prefers-reduced-motion: reduce) { button.frame img { transition: none; } }
   #lightbox { padding: 0; border: 0; margin: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; background: transparent; color: #f0efec; }
   #lightbox::backdrop { background: rgba(10, 10, 9, .96); backdrop-filter: blur(8px); }
   .lb-stage { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 56px 72px 24px; }
@@ -90,10 +91,10 @@ export const modelName = (generator: string) => generator.replace(/^[^:]+:/, "")
 export const frame = (shot: ShootoutShot, index: number, alt: string, caption = "") =>
   `<button class="frame" type="button" data-shot="${index}"${caption && ` data-caption="${escapeHtml(caption)}"`}><img src="${escapeHtml(shot.url)}" alt="${escapeHtml(alt)}" loading="lazy"></button>`;
 
-/** "krea2 · routed · judge's pick": what the lightbox says about an image. */
+/** "krea2 · Typecast's pick · judge's pick": what the lightbox says about an image. */
 export function shotCaption(brief: ShootoutBrief, shot: ShootoutShot, defaultGenerator: string) {
   const roles = [
-    shot.generator === brief.routedGenerator && "routed",
+    shot.generator === brief.routedGenerator && "Typecast's pick",
     shot.generator === defaultGenerator && "default",
     shot.picked && "judge's pick",
   ].filter(Boolean);

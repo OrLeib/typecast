@@ -10,7 +10,7 @@ export const locatePage = ({ hosted }: { hosted: boolean }) => `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Typecast: find and crop</title>
+<title>Typecast: find the subject</title>
 ${FAVICON_LINK}
 <style>
 ${BASE_STYLE}
@@ -73,7 +73,7 @@ ${BASE_STYLE}
   <header class="top">
     ${pageNav("locate")}
     <h1>Where is it in the image?</h1>
-    <p class="lede">Name a target. One Jev request returns its box and whether it is there at all, and the page cuts a square around it, centred and padded: the crop a face or detail pass starts from.</p>
+    <p class="lede">Name what you're looking for. Typecast finds it and cuts a square around it, ready to re-render in sharper detail.</p>
   </header>
 
   <div class="card">
@@ -103,7 +103,7 @@ ${BASE_STYLE}
         <p class="stage-empty" id="stage-empty">Pick a sample or upload an image.</p>
       </div>
     </div>
-    <div class="legend"><span>Jev's box</span><span class="crop">Square crop</span></div>
+    <div class="legend"><span>Found</span><span class="crop">Square crop</span></div>
   </div>
   <p id="error" role="alert"></p>
 
@@ -113,10 +113,10 @@ ${BASE_STYLE}
       <div class="crop-frame"><img id="crop" alt="The square crop around the target"><p id="crop-size"></p></div>
       <div class="readout">
         <div class="scores">
-          <div class="score"><div class="label">Box confidence</div><div class="value" id="confidence"></div><p>How sure Jev is of the edges</p></div>
+          <div class="score"><div class="label">Box confidence</div><div class="value" id="confidence"></div><p>How sure it is of the edges</p></div>
           <div class="score"><div class="label">Target present</div><div class="value" id="presence"></div><p>A yes/no check asked alongside the box</p></div>
         </div>
-        <p class="absent-note">Jev thinks the target is probably not in this image, so this box is likely a guess.</p>
+        <p class="absent-note">It's probably not in this image, so this box is likely a guess. Try naming it differently.</p>
         <div class="meta" id="meta"></div>
         <p class="why">A box answer always comes back, even when the target is missing, so the presence check says whether to trust it. Moving the padding re-crops from the same answer, without asking again.</p>
       </div>

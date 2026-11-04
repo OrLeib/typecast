@@ -4,7 +4,7 @@ import { logoMark } from "../shared/brand.ts";
 /** Where each page lives, the same run locally and hosted. */
 export const PAGE_PATHS = { home: "/", route: "/demo", locate: "/locate", results: "/results" };
 
-const LABELS = { route: "Route a brief", locate: "Find and crop", results: "Results" };
+const LABELS = { route: "Which model", locate: "Find the subject", results: "The numbers" };
 
 /** The brand, which links home, and the links between pages, with the current one marked for screen readers too. */
 export const pageNav = (current?: keyof typeof LABELS) => {
@@ -63,6 +63,8 @@ export const BASE_STYLE = `
   footer { color: var(--muted); font-size: 13px; padding: 40px 0 48px; }
   @media (max-width: 760px) {
     .wrap { padding: 0 16px; }
+    .pages { display: flex; width: 100%; justify-content: space-between; }
+    .pages a { display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
     header.top { padding: 28px 0 20px; }
     h1 { font-size: 27px; }
   }

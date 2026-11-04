@@ -10,7 +10,7 @@ import { BASE_STYLE, PAGE_PATHS, pageNav } from "./page-style.ts";
 import type { ShootoutShot } from "./shootout-evidence.ts";
 
 const SITE_URL = "https://typecast-ai.vercel.app";
-const DESCRIPTION = "Which model, which image, where in the frame: Typecast makes the three calls AI image tools leave to you.";
+export const DESCRIPTION = "Typecast is a decision layer for AI image tools: give it a brief and it picks the model, picks the best image and finds the subject.";
 export const OG_IMAGE_PATH = "/og.jpg";
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -23,11 +23,11 @@ const STYLE = `
   header.top { padding-bottom: 20px; }
   h1 { margin: 40px 0 10px; font-size: clamp(32px, 5vw, 48px); line-height: 1.06; letter-spacing: -0.03em; font-weight: 680; max-width: 18ch; }
   .lede { font-size: 18px; }
-  .chips { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; padding: 12px 0; margin-bottom: 4px; background: var(--bg); overflow-x: auto; scrollbar-width: none; }
+  .chips { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; padding: 12px 8px; margin: 0 -8px 4px; background: var(--bg); overflow-x: auto; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chips button { flex: none; padding: 7px 14px; border-radius: 999px; font-size: 14px; font-weight: 550; color: var(--text-2); background: transparent; transition: none; }
   .chips button[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--bg); }
-  .step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: center; margin: 0; padding: 44px 0; border-top: 1px solid var(--line); }
+  .step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: start; margin: 0; padding: 44px 0; border-top: 1px solid var(--line); }
   .step:first-child { border-top: 0; padding-top: 20px; }
   h2 { margin: 0 0 12px; font-size: 26px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 660; }
   .step p { margin: 0; color: var(--text-2); max-width: 44ch; text-wrap: pretty; }
@@ -36,10 +36,10 @@ const STYLE = `
   .choice span { color: var(--muted); font-weight: 500; }
   .meter { position: relative; height: 6px; margin: 16px 0 10px; border-radius: 999px; background: var(--track); max-width: 320px; }
   .meter i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent); }
-  .meter b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--muted); }
   .decision { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .decision.pick { color: var(--good-text); }
   .decision.compare { color: var(--warn-text); }
+  .step .why { margin-top: 6px; font-size: 14px; }
   .more { display: inline-block; margin-top: 18px; font-size: 14px; font-weight: 550; color: var(--accent-text); text-decoration: none; }
   .more:hover { text-decoration: underline; }
   .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -47,10 +47,13 @@ const STYLE = `
   figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
   figcaption { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; min-height: 22px; font-size: 13px; color: var(--text-2); }
   code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
-  .tag { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--accent-text); background: var(--accent-soft); }
+  .tag { font-size: 12px; font-weight: 600; padding: 1px 8px; border: 1px solid var(--accent); border-radius: 999px; white-space: nowrap; color: var(--accent-text); }
+  .tag.judge { background: var(--accent-soft); }
+  .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .step.wide { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .step.wide p { max-width: none; }
   .lineup { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .lineup .model { flex-basis: 100%; text-align: center; }
   .found { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--surface-2); }
   .found img { position: absolute; display: block; width: 100%; }
   .found .box { position: absolute; border: 2px solid var(--accent); border-radius: 4px; box-shadow: 0 0 0 999px rgba(0, 0, 0, .35); }
@@ -59,14 +62,13 @@ const STYLE = `
   footer a:not(.more) { color: var(--muted); }
   @media (max-width: 760px) {
     h1 { margin-top: 28px; }
-    .chips { margin-right: -16px; padding-right: 16px; }
+    .chips { margin-inline: -16px; padding-inline: 16px; }
+    .chips button { min-height: 44px; }
+    .more { padding-block: 11px; margin-top: 8px; }
     .step { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 32px 0; }
     .shots.one { max-width: none; }
-    .lineup { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .lineup figure.best { order: -1; }
-    .lineup figcaption .model { display: none; }
-    .lineup figcaption { gap: 4px; flex-wrap: nowrap; }
-    .lineup .tag { font-size: 11px; padding: 1px 6px; }
+    .lineup { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .lineup figure.best { order: -1; grid-column: 1 / -1; }
   }
 `;
 
@@ -74,29 +76,50 @@ const SCRIPT = `
 (function () {
   var chips = Array.prototype.slice.call(document.querySelectorAll(".chips button"));
   var stories = Array.prototype.slice.call(document.querySelectorAll("article"));
+  var bar = document.querySelector(".chips");
+  var status = document.querySelector(".status");
+  // A hidden story's lazy images would only start loading when it opens, and flash in, so load one as soon as it's likely.
+  function prepare(i) {
+    var story = stories[i];
+    if (story) story.querySelectorAll("img").forEach(function (img) { img.loading = "eager"; });
+  }
   chips.forEach(function (chip, i) {
+    chip.addEventListener("pointerenter", function () { prepare(i); });
+    chip.addEventListener("focus", function () { prepare(i); });
     chip.addEventListener("click", function () {
       chips.forEach(function (c, j) { c.setAttribute("aria-pressed", String(j === i)); });
       stories.forEach(function (s, j) { s.hidden = j !== i; });
+      status.textContent = "Showing " + chip.textContent;
+      prepare(i + 1);
+      var top = stories[i].getBoundingClientRect().top - bar.offsetHeight;
+      if (top < 0) window.scrollBy(0, top);
     });
   });
-  // Lazy images in a hidden story would only start loading when it opens, and flash in.
-  window.addEventListener("load", function () {
-    document.querySelectorAll("img[loading]").forEach(function (img) { img.loading = "eager"; });
-  });
+  window.addEventListener("load", function () { prepare(1); });
 })();
 `;
 
 const PERCENT = (x: number) => `${Math.round(x * 100)}%`;
 
-function routeShot(story: HomeStory, shot: ShootoutShot) {
-  const index = story.brief.shots.indexOf(shot);
-  return `<figure>${frame(shot, index, `${modelName(shot.generator)}'s image for this brief`)}<figcaption><code>${escapeHtml(modelName(shot.generator))}</code></figcaption></figure>`;
+/** A calibrated model is never certain, and "100% sure" beside a judge who disagrees reads as a claim it doesn't make. */
+const sureness = (confidence: number) => (confidence > 0.99 ? "99%+" : PERCENT(confidence));
+
+const imageOf = (generator: string) => `${modelName(generator)}'s image for this brief`;
+
+/** With one image the model is already named beside it; with two, each needs its name. */
+function routeShot(story: HomeStory, shot: ShootoutShot, named: boolean) {
+  const caption = named ? `<figcaption><code>${escapeHtml(modelName(shot.generator))}</code></figcaption>` : "";
+  return `<figure>${frame(shot, story.brief.shots.indexOf(shot), imageOf(shot.generator))}${caption}</figure>`;
+}
+
+function reasonLine({ explanation: { because, open } }: HomeStory) {
+  if (open.length) return `<p class="why">Would settle it: ${open.map((reason) => escapeHtml(reason.label)).join(" or ")}</p>`;
+  return because.length ? `<p class="why">Why: ${escapeHtml(because[0].label)}</p>` : "";
 }
 
 function modelStep(story: HomeStory) {
-  const { brief, routed, second } = story;
-  const confident = brief.confidence >= PICK_THRESHOLD;
+  const { brief, confidence, routed, second } = story;
+  const confident = confidence >= PICK_THRESHOLD;
   const shots = [routed, confident ? undefined : second].filter((shot) => shot !== undefined);
   const name = modelName(brief.routedGenerator);
   const secondName = second && !confident ? ` <span>or</span> ${escapeHtml(modelName(second.generator))}` : "";
@@ -105,24 +128,25 @@ function modelStep(story: HomeStory) {
       <h2>Which model?</h2>
       <blockquote>${escapeHtml(brief.brief)}</blockquote>
       <div class="choice">${escapeHtml(name)}${secondName}</div>
-      <div class="meter"><i style="width:${PERCENT(brief.confidence)}"></i><b style="left:${PERCENT(PICK_THRESHOLD)}"></b></div>
-      <div class="decision ${confident ? "pick" : "compare"}">${PERCENT(brief.confidence)} sure: ${confident ? "just use it" : "show the top two"}</div>
-      <a class="more" href="${PAGE_PATHS.route}">Try your own brief &rarr;</a>
+      <div class="meter"><i style="width:${PERCENT(confidence)}"></i></div>
+      <div class="decision ${confident ? "pick" : "compare"}">${sureness(confidence)} sure it fits: ${confident ? "just use it" : "show the top two"}</div>
+      ${reasonLine(story)}
+      <a class="more" href="${PAGE_PATHS.route}">Try your own brief (picks the model, no image) &rarr;</a>
     </div>
-    <div class="shots${shots.length === 1 ? " one" : ""}">${shots.map((shot) => routeShot(story, shot)).join("")}</div>
+    <div class="shots${shots.length === 1 ? " one" : ""}">${shots.map((shot) => routeShot(story, shot, shots.length > 1)).join("")}</div>
   </section>`;
 }
 
 function lineupShot(story: HomeStory, shot: ShootoutShot, index: number, defaultGenerator: string) {
   const routed = shot.generator === story.brief.routedGenerator;
-  const tags = [shot.picked && `<span class="tag">Best</span>`, routed && `<span class="tag">Chosen</span>`].filter(Boolean).join("");
+  const tags = [routed && `<span class="tag">Typecast's pick</span>`, shot.picked && `<span class="tag judge">Judge's pick</span>`].filter(Boolean).join("");
   const name = modelName(shot.generator);
-  return `<figure class="${shot.picked ? "best" : ""}">${frame(shot, index, name, shotCaption(story.brief, shot, defaultGenerator))}<figcaption><code class="model">${escapeHtml(name)}</code>${tags}</figcaption></figure>`;
+  return `<figure class="${shot.picked ? "best" : ""}">${frame(shot, index, imageOf(shot.generator), shotCaption(story.brief, shot, defaultGenerator))}<figcaption><code class="model">${escapeHtml(name)}</code>${tags}</figcaption></figure>`;
 }
 
 function imageStep(story: HomeStory, defaultGenerator: string) {
   const routedWon = story.best.generator === story.brief.routedGenerator;
-  const line = routedWon ? "Five models, same brief. The chosen model also made the best image." : `Five models, same brief. This time the best image came from ${escapeHtml(modelName(story.best.generator))}, not the chosen model.`;
+  const line = routedWon ? "Five models, same brief. Seeing all five, the judge agreed with the pick." : `Five models, same brief. Seeing all five, the judge preferred ${escapeHtml(modelName(story.best.generator))}'s image.`;
   return `<section class="step wide">
     <div>
       <h2>Which image?</h2>
@@ -150,7 +174,7 @@ function subjectStep(story: HomeStory) {
   return `<section class="step">
     <div>
       <h2>Where's the subject?</h2>
-      <p>Asked for ${escapeHtml(target)}. A square crop, ready for a detail pass.</p>
+      <p>Told to find ${escapeHtml(target)}. The crop is ready to re-render in sharper detail.</p>
       <a class="more" href="${PAGE_PATHS.locate}">Try your own image &rarr;</a>
     </div>
     <div class="shots">
@@ -188,10 +212,11 @@ ${FAVICON_LINK}
 <header class="top">
   ${pageNav()}
   <h1>Which model, which image, where in the frame</h1>
-  <p class="lede">Typecast makes the three calls AI image tools leave to you.</p>
+  <p class="lede">${DESCRIPTION}</p>
 </header>
 <main>
 <div class="chips" role="group" aria-label="Choose a brief">${chips}</div>
+<p class="status" role="status"></p>
 ${stories.map((story, i) => storyArticle(story, i, defaultGenerator)).join("\n")}
 </main>
 <footer>

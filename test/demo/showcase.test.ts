@@ -51,7 +51,7 @@ describe("showcasePage", () => {
 
   it("links the pages, marking this one", () => {
     const html = page([]);
-    expect(html).toContain('<a href="/results" aria-current="page">Results</a>');
+    expect(html).toContain('<a href="/results" aria-current="page">The numbers</a>');
     expect(html).toContain('<a class="brand" href="/">');
   });
 
@@ -71,12 +71,12 @@ describe("showcasePage", () => {
   it("escapes briefs and shows the routed image beside the default one", () => {
     const html = page([brief("a", "mflux:photo@q8", "mflux:photo@q8")]);
     expect(html).toContain("brief &lt;a&gt;");
-    expect(html).toMatch(/alt="Routed: photo"[\s\S]*alt="Default: dflt"/);
+    expect(html).toMatch(/alt="Typecast's pick: photo"[\s\S]*alt="Default: dflt"/);
   });
 
   it("fills the second slot with the judge's favourite other image when routing chose the default", () => {
-    expect(page([brief("a", DEFAULT, "mflux:draw@q8")])).toMatch(/Routed, also the default[\s\S]*Judge's pick/);
-    expect(page([brief("a", DEFAULT, DEFAULT)])).toMatch(/Routed, also the default[\s\S]*Runner-up/);
+    expect(page([brief("a", DEFAULT, "mflux:draw@q8")])).toMatch(/Typecast's pick, also the default[\s\S]*Judge's pick/);
+    expect(page([brief("a", DEFAULT, DEFAULT)])).toMatch(/Typecast's pick, also the default[\s\S]*Runner-up/);
   });
 
   it("says outright whether the judge picked the routed model, the default, or neither", () => {

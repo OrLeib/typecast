@@ -9,7 +9,7 @@ export const demoPage = ({ hosted }: { hosted: boolean }) => `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Typecast</title>
+<title>Typecast: which model</title>
 ${FAVICON_LINK}
 <style>
 ${BASE_STYLE}
@@ -166,21 +166,21 @@ ${BASE_STYLE}
   <header class="top">
     ${pageNav("route")}
     <h1>Which image model should make this?</h1>
-    <p class="lede">Describe what you want. A <span data-term="jev">decision model</span> picks the model category in about 200ms, and its confidence says whether to just pick or to show the top two side by side.</p>
+    <p class="lede">Describe what you want. Typecast picks the best kind of model in about 200ms, and shows two if it isn't sure.${hosted ? " This hosted demo picks the model. It doesn't render the image." : ""}</p>
   </header>
 
   <div class="card composer">
     <textarea id="brief" placeholder="e.g. Hero image for a spring sneaker campaign, shoe floating on a pastel backdrop" aria-label="Creative brief"></textarea>
     <div class="composer-foot">
-      <span class="hint"><kbd>⌘</kbd> <kbd>↵</kbd> to route</span>
-      <button class="primary" id="route">Route brief</button>
+      <span class="hint"><kbd>⌘</kbd> <kbd>↵</kbd> to pick</span>
+      <button class="primary" id="route">Pick a model</button>
     </div>
   </div>
   <p id="error" role="alert"></p>
 
   <section aria-labelledby="examples-title">
     <div class="examples-head">
-      <h2 class="section-title" id="examples-title">Try a labelled brief</h2>
+      <h2 class="section-title" id="examples-title">Try an example</h2>
       <div class="filters" id="filters" role="group" aria-label="Filter examples by label"></div>
     </div>
     <div class="examples" id="examples"></div>
@@ -313,7 +313,7 @@ ${BASE_STYLE}
     Array.prototype.forEach.call(document.querySelectorAll("[data-term]"), function (n) { markTerm(n, n.dataset.term); });
     renderFilters();
     renderExamples();
-    $("threshold-label").textContent = "Pick line at " + pct(config.pickThreshold) + ". Below it, compare the top two.";
+    $("threshold-label").textContent = "Just picks at " + pct(config.pickThreshold) + " or more. Below that, shows the top two.";
     $("pick-mark").style.left = pct(config.pickThreshold, 1);
     renderEvidence();
   }
@@ -357,7 +357,7 @@ ${BASE_STYLE}
     shown.forEach(function (ex) {
       var card = el("button", "example");
       var tags = el("span", "example-tags");
-      tags.appendChild(el("span", null, "Labelled"));
+      tags.appendChild(el("span", null, "Expected"));
       tags.appendChild(el("b", null, ex.expected));
       if (ex.note) { tags.appendChild(el("span", "borderline", "borderline")); card.title = ex.note; }
       card.appendChild(tags);
@@ -385,7 +385,7 @@ ${BASE_STYLE}
     check.className = "label-check " + (rank === -1 ? "miss" : "match");
     check.innerHTML = rank === -1 ? ICONS.miss : ICONS.pick;
     var text = el("span");
-    text.appendChild(document.createTextNode("Labelled "));
+    text.appendChild(document.createTextNode("Expected "));
     text.appendChild(el("b", null, ex.expected));
     text.appendChild(document.createTextNode(rank === 0 ? ", same as the pick" : rank === 1 ? ", the second of the two" : ", not in the shortlist"));
     check.appendChild(text);
@@ -394,8 +394,9 @@ ${BASE_STYLE}
 
   async function route() {
     var brief = $("brief").value.trim();
-    if (!brief || busy) return;
-    busy = true; $("route").disabled = true; $("route").textContent = "Routing…"; $("error").textContent = "";
+    if (!brief) { $("error").textContent = "Describe what you want first."; $("brief").focus(); return; }
+    if (busy) return;
+    busy = true; $("route").disabled = true; $("route").textContent = "Picking…"; $("error").textContent = "";
     try {
       lastRoute = await api("/api/route", { brief: brief });
       lastBrief = brief;
@@ -405,7 +406,7 @@ ${BASE_STYLE}
     } catch (e) {
       $("error").textContent = e.message;
     } finally {
-      busy = false; $("route").disabled = false; $("route").textContent = "Route brief";
+      busy = false; $("route").disabled = false; $("route").textContent = "Pick a model";
     }
   }
 
@@ -421,8 +422,8 @@ ${BASE_STYLE}
     $("confidence").textContent = pct(r.confidence);
     growBar($("confidence-fill"), r.confidence);
     $("explain").textContent = compare
-      ? "Below the " + pct(config.pickThreshold) + " pick line, so the UI should render both and let the user choose."
-      : "At or above the " + pct(config.pickThreshold) + " pick line, so the UI can use this model without asking.";
+      ? "Below " + pct(config.pickThreshold) + ", so show both and let the user choose."
+      : "At " + pct(config.pickThreshold) + " or more, so use this model without asking.";
     showReasons(r.explanation);
     var meta = $("meta"); meta.textContent = "";
     [[r.cached ? "Latency, cached" : "Latency", Math.round(r.latencyMs) + " ms"], ["Cost", "$" + r.costUsd.toFixed(6)], ["Model", r.model, "version"]].forEach(function (m) {
