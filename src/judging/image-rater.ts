@@ -1,10 +1,10 @@
 import type { JudgedImage } from "./pair-judge.ts";
 
-/** One image's marks. A rubric can skip a criterion that doesn't apply, so `scores` may not have every one. */
+/** One image's scores. A rubric can skip a criterion that doesn't apply, so `scores` may not have every one. */
 export type ImageRating = {
-  /** Criterion -> mark, from 0 (worst level) to 1 (best). */
+  /** Criterion -> score, from 0 (worst level) to 1 (best). */
   scores: Record<string, number>;
-  /** The marks combined, from 0 to 1. */
+  /** The overall score: the scores combined, from 0 to 1. */
   total: number;
   /** The resolved model that rated, e.g. "jev-1.14.0". */
   model: string;
@@ -12,7 +12,7 @@ export type ImageRating = {
   latencyMs: number;
 };
 
-/** Anything that marks one image against its brief on separate criteria: Jev, a local model, or a test fake. */
+/** Anything that scores one image against its brief on separate criteria: Jev, a local model, or a test fake. */
 export interface ImageRater {
   /** Recorded as `judge` on every rating it makes, e.g. "jev". */
   readonly id: string;

@@ -53,7 +53,7 @@ A route's own check agreed with it 96% of the time on `test` and 84% on `hard`; 
 
 Ten briefs, each rendered by all five local models with the same prompt and seed.
 Jev, blind to which model made which, picked the routed model's image 7 times, the default's twice (chance is 2).
-A second look is less kind: marking each image alone on a rubric (brief, style, craft, and text when asked for) put the routed model on top 4 times and the default 3, and the top-marked image was the pick on 7 of 10.
+A second look is less kind: scoring each image alone on a rubric (brief, style, craft, and text when asked for) gave the routed model the highest overall score 4 times and the default 3, and the top-scoring image was the pick on 7 of 10.
 A small sample of briefs routing was tuned on, judged by Jev rather than people: a signal, not proof.
 
 <p align="center">

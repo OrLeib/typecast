@@ -10,7 +10,7 @@ import { currentRatings, loadRatings, RATINGS_FILE, summarizeRatings, type Ratin
 
 export type ShootoutShot = {
   generator: string; url: string; probability: number; picked: boolean;
-  /** The image's rubric marks, once the run has been rated. */
+  /** The image's rubric scores, once the run has been rated. */
   rating?: Pick<RatingRecord, "scores" | "total">;
 };
 
@@ -28,7 +28,7 @@ export type ShootoutEvidence = Pick<PickSummary, "picked" | "models" | "bestWas"
   /** Model category -> the generator that renders it. */
   lineup: Record<string, string>;
   briefs: ShootoutBrief[];
-  /** How the rubric's top marks stand against the picks, once the run has been rated. */
+  /** How the rubric's top scores stand against the picks, once the run has been rated. */
   rubric?: RatingSummary;
 };
 

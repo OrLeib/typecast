@@ -13,12 +13,12 @@ export function imageRaterContract(name: string, makeRater: () => ImageRater) {
       expect(rater.version).toMatch(/\S/);
     });
 
-    it("marks an image on at least one criterion, every mark and the total between 0 and 1", async () => {
+    it("scores an image on at least one criterion, every score and the total between 0 and 1", async () => {
       const { scores, total } = await makeRater().rate("a red apple", image);
       expect(Object.keys(scores).length).toBeGreaterThan(0);
-      for (const mark of [total, ...Object.values(scores)]) {
-        expect(mark).toBeGreaterThanOrEqual(0);
-        expect(mark).toBeLessThanOrEqual(1);
+      for (const score of [total, ...Object.values(scores)]) {
+        expect(score).toBeGreaterThanOrEqual(0);
+        expect(score).toBeLessThanOrEqual(1);
       }
     });
 

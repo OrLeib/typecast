@@ -46,18 +46,18 @@ const STYLE = `
   .verdict { margin: 16px 0 0; padding: 10px 14px; border-radius: 10px; font-size: 14px; }
   .verdict.hit { background: var(--good-bg); color: var(--good-text); }
   .verdict.miss { background: var(--warn-bg); color: var(--warn-text); }
-  .marks { display: grid; grid-template-columns: auto minmax(0, 1fr) 2ch; align-items: center; gap: 4px 10px; margin: auto 0 0; font-size: 13px; color: var(--text-2); }
-  .marks dt { font-weight: 550; }
-  .marks dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
-  .marks dd.track { height: 6px; background: var(--track); border-radius: 3px; overflow: hidden; }
-  .marks dd.track i { display: block; height: 100%; background: var(--bar-rest); }
-  .marks dt.total, .marks dd.total { color: var(--text); font-weight: 650; }
-  .marks dd.track.total i { background: var(--accent); }
+  .scores { display: grid; grid-template-columns: auto minmax(0, 1fr) 2ch; align-items: center; gap: 4px 10px; margin: auto 0 0; font-size: 13px; color: var(--text-2); }
+  .scores dt { font-weight: 550; }
+  .scores dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+  .scores dd.track { height: 6px; background: var(--track); border-radius: 3px; overflow: hidden; }
+  .scores dd.track i { display: block; height: 100%; background: var(--bar-rest); }
+  .scores dt.total, .scores dd.total { color: var(--text); font-weight: 650; }
+  .scores dd.track.total i { background: var(--accent); }
   .lineup { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto repeat(5, minmax(0, 110px)); align-items: center; gap: 12px; }
   .lineup p { margin: 0; font-size: 13px; color: var(--muted); max-width: 24ch; }
   .lineup figure { gap: 4px; }
   .lineup .frame { border-radius: 6px; outline-width: 2px; outline-offset: 2px; }
-  .lineup figcaption { font-size: 12px; justify-content: center; }
+  .lineup figcaption { font-size: 12px; flex-direction: column; flex-wrap: nowrap; gap: 2px; }
   .lineup code { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   footer { margin: 64px 0 56px; padding: 20px 0 0; border-top: 1px solid var(--line); font-size: 14px; }
   footer p { margin: 0 0 8px; max-width: 80ch; }
@@ -67,6 +67,9 @@ const STYLE = `
     article { padding: 16px; }
     .pair { gap: 10px; }
     .lineup { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    /* Two images fit side by side here, so the longest label would squeeze every bar; the overall score keeps its number. */
+    .scores dd.track.total { display: none; }
+    .scores dt.total { grid-column: span 2; }
     .lineup p { grid-column: 1 / -1; max-width: none; }
   }
 `;
@@ -118,15 +121,15 @@ function routeChip(brief: ShootoutBrief) {
     : `<span class="chip compare">${escapeHtml(categoryName(brief.routed))} · ${PERCENT(brief.confidence)} · show top two</span>`;
 }
 
-const mark = (x: number) => String(Math.round(x * 100));
+const outOf100 = (x: number) => String(Math.round(x * 100));
 
-const markRow = (label: string, value: number, kind = "") => `<dt class="${kind}">${label}</dt><dd class="track ${kind}"><i style="width:${PERCENT(value)}"></i></dd><dd class="${kind}">${mark(value)}</dd>`;
+const scoreRow = (label: string, value: number, kind = "") => `<dt class="${kind}">${label}</dt><dd class="track ${kind}"><i style="width:${PERCENT(value)}"></i></dd><dd class="${kind}">${outOf100(value)}</dd>`;
 
-/** The image's marks out of 100, the total first, so a reader sees where it won or lost. */
-function marksOf(shot: ShootoutShot) {
+/** The image's scores out of 100, the overall score first, so a reader sees where it won or lost. */
+function scoresOf(shot: ShootoutShot) {
   if (!shot.rating) return "";
-  const rows = Object.entries(shot.rating.scores).map(([criterion, value]) => markRow(escapeHtml(criterion), value));
-  return `<dl class="marks">${markRow("Marks", shot.rating.total, "total")}${rows.join("")}</dl>`;
+  const rows = Object.entries(shot.rating.scores).map(([criterion, value]) => scoreRow(escapeHtml(criterion), value));
+  return `<dl class="scores">${scoreRow("Overall score", shot.rating.total, "total")}${rows.join("")}</dl>`;
 }
 
 function bigShot(brief: ShootoutBrief, shot: ShootoutShot | undefined, role: string) {
@@ -135,13 +138,13 @@ function bigShot(brief: ShootoutBrief, shot: ShootoutShot | undefined, role: str
   return `<figure class="${shot.picked ? "best" : ""}">
       ${frame(shot, brief.shots.indexOf(shot), `${role}: ${modelName(shot.generator)}`)}
       <figcaption><b>${role}</b><code>${escapeHtml(modelName(shot.generator))}</code>${pickTag}</figcaption>
-      ${marksOf(shot)}
+      ${scoresOf(shot)}
     </figure>`;
 }
 
 const thumb = (brief: ShootoutBrief, defaultGenerator: string) => (shot: ShootoutShot, index: number) => `<figure class="${shot.picked ? "best" : ""}">
       ${frame(shot, index, modelName(shot.generator), shotCaption(brief, shot, defaultGenerator))}
-      <figcaption><code>${escapeHtml(modelName(shot.generator))}</code>${shot.rating ? ` ${mark(shot.rating.total)}` : ""}</figcaption>
+      <figcaption><code>${escapeHtml(modelName(shot.generator))}</code>${shot.rating ? ` ${outOf100(shot.rating.total)}` : ""}</figcaption>
     </figure>`;
 
 /** Routed beside default; when routing chose the default anyway, the judge's favourite other image takes the second slot. */
@@ -159,18 +162,18 @@ const routedWon = (brief: ShootoutBrief) => brief.shots.some((shot) => shot.pick
 /** Clear routed wins first, then split calls, then losses: the reader meets the claim before its exceptions. */
 const showOrder = (brief: ShootoutBrief) => (routedWon(brief) ? 0 : 2) + (brief.split ? 1 : 0);
 
-/** Where the top marks went, when that isn't the pick: the two looks disagreeing is worth saying on the brief itself. */
-function marksDisagreement(brief: ShootoutBrief) {
+/** Which image scored highest, when that isn't the pick: the two looks disagreeing is worth saying on the brief itself. */
+function scoreDisagreement(brief: ShootoutBrief) {
   const rated = brief.shots.filter((shot) => shot.rating);
   if (!rated.length) return "";
   const [top] = rated.toSorted((a, b) => (b.rating?.total ?? 0) - (a.rating?.total ?? 0));
-  return top.picked ? "" : ` Top marks went to ${escapeHtml(modelName(top.generator))}.`;
+  return top.picked ? "" : ` Highest overall score: ${escapeHtml(modelName(top.generator))}.`;
 }
 
 /** Says outright which image the judge picked, so a reader never has to work out a miss from an outline. */
 function verdict(brief: ShootoutBrief, defaultGenerator: string) {
   const best = modelName(brief.shots.find((shot) => shot.picked)?.generator ?? "");
-  const split = `${brief.split ? ` A split call: most orderings of the images disagreed.` : ""}${marksDisagreement(brief)}`;
+  const split = `${brief.split ? ` A split call: most orderings of the images disagreed.` : ""}${scoreDisagreement(brief)}`;
   if (routedWon(brief)) return `<p class="verdict hit"><b>Judge's pick: the routed model</b> (${escapeHtml(best)}).${split}</p>`;
   const whose = best === modelName(defaultGenerator) ? "the default model" : "neither the routed nor the default model";
   return `<p class="verdict miss"><b>Routing missed.</b> Judge's pick: ${escapeHtml(best)}, ${whose}.${split}</p>`;
@@ -188,7 +191,7 @@ function briefCard(brief: ShootoutBrief, defaultGenerator: string) {
 /** The second look, reported whether or not it flatters the first. */
 function rubricNote({ rubric, briefs }: ShootoutEvidence) {
   if (!rubric) return "";
-  return ` A second look marked each image alone, out of 100, on following the brief, style, craft and any text the brief asks for. Those marks are less kind: the routed model topped ${rubric.topWas.routed} of ${briefs.length}, the default ${rubric.topWas.default}, and the top-marked image was the judge's pick on ${rubric.agreesWithPick}.`;
+  return ` A second look scored each image alone, out of 100, on following the brief, style, craft and any text the brief asks for. Those scores are less kind: the routed model had the highest overall score on ${rubric.topWas.routed} of ${briefs.length}, the default on ${rubric.topWas.default}, and the top-scoring image was the judge's pick on ${rubric.agreesWithPick}.`;
 }
 
 function imagesSection(shootout: ShootoutEvidence | undefined) {

@@ -1,4 +1,4 @@
-// Marking an image with Jev: one request per image, so no image is seen beside another and order can't sway its marks,
+// Scoring an image with Jev: one request per image, so no image is seen beside another and order can't sway its scores,
 // with one score question per criterion. The combining happens here in code, where the weights can be read.
 import { answerOfType, scoreShareFor } from "../jev/answers.ts";
 import type { DecisionClient, DecisionResult } from "../jev/client.ts";
@@ -33,7 +33,7 @@ const RUBRIC: Record<string, ScoreQuestion> = {
   ]),
 };
 
-/** Only marked when the brief asks for words: an image with no text to get wrong shouldn't gain or lose by it. */
+/** Only scored when the brief asks for words: an image with no text to get wrong shouldn't gain or lose by it. */
 const TEXT = "Text";
 const TEXT_QUESTION = score("How well does the image in `image` render the words the brief in `brief` asks for?", [
   "The words are missing or unreadable gibberish",
@@ -62,13 +62,13 @@ export function createJevRater(client: DecisionClient): ImageRater {
     version: JSON.stringify(QUESTIONS),
     async rate(brief, image) {
       const result = await client.decide({ brief, image: IMAGE_REF }, QUESTIONS, { [IMAGE_REF]: toAsset(image) });
-      const scores = marks(result);
+      const scores = scoresFrom(result);
       return { scores, total: mean(Object.values(scores)), model: result.model, inputTokens: result.usage.input_tokens, latencyMs: result.latencyMs };
     },
   };
 }
 
-function marks(result: DecisionResult): Record<string, number> {
+function scoresFrom(result: DecisionResult): Record<string, number> {
   const rubric = { ...RUBRIC, ...(answerOfType(result, WANTS_TEXT, "noul").noul >= YES ? { [TEXT]: TEXT_QUESTION } : {}) };
   return Object.fromEntries(Object.entries(rubric).map(([criterion, question]) => [criterion, scoreShareFor(result, criterion, question)]));
 }

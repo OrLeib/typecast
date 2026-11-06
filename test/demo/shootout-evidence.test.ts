@@ -39,11 +39,11 @@ describe("loadShootoutEvidence", () => {
     expect(files.size).toBe(6);
   });
 
-  it("adds the rubric's marks to their shots, and how they stand against the picks, only for this rubric", async () => {
+  it("adds the rubric's scores to their shots, and how they stand against the picks, only for this rubric", async () => {
     await run("2026-11-02T10", [pick("a", "photo-gen"), pick("b", "dflt")]);
-    const marks = ["photo-gen", "draw-gen", "dflt"].map((generator, i) => ({ id: "a", generator, judge: "jev", version: "v1", model: "m", scores: { Brief: 0.9 - i / 10 }, total: 0.9 - i / 10, at: "t" }));
-    const stale = { ...marks[0], id: "b", version: "old-rubric" };
-    await writeFile(join(dir, "2026-11-02T10", RATINGS_FILE), [...marks, stale].map((m) => JSON.stringify(m)).join("\n"));
+    const ratings = ["photo-gen", "draw-gen", "dflt"].map((generator, i) => ({ id: "a", generator, judge: "jev", version: "v1", model: "m", scores: { Brief: 0.9 - i / 10 }, total: 0.9 - i / 10, at: "t" }));
+    const stale = { ...ratings[0], id: "b", version: "old-rubric" };
+    await writeFile(join(dir, "2026-11-02T10", RATINGS_FILE), [...ratings, stale].map((m) => JSON.stringify(m)).join("\n"));
 
     const { evidence } = (await loadShootoutEvidence(dir, judge, judge))!;
     expect(evidence.briefs[0].shots[1].rating).toEqual({ scores: { Brief: 0.8 }, total: 0.8 });

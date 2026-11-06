@@ -25,7 +25,7 @@ describe("createJevRater", () => {
     for (const question of Object.values(client.calls[0])) expect(question.instructions).not.toContain(ref);
   });
 
-  it("marks text only when the brief asks for words, averaging the criteria it marked", async () => {
+  it("scores text only when the brief asks for words, averaging the criteria it scored", async () => {
     const rated = (noul: number) => createJevRater(createFakeDecisionClient(noChoices, { ...FAKE_SIGHT, noul, scoreShare: 0.5 })).rate("x", image);
     expect(Object.keys((await rated(0.9)).scores)).toEqual(["Brief", "Style", "Craft", "Text"]);
     const without = await rated(0.1);
