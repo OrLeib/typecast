@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Evidence } from "../../src/demo/evidence.ts";
 import { modelName } from "../../src/demo/lightbox.ts";
-import type { ShootoutBrief, ShootoutEvidence } from "../../src/demo/shootout-evidence.ts";
+import type { ShootoutBrief } from "../../src/demo/shootout-evidence.ts";
 import { showcasePage } from "../../src/demo/showcase.ts";
+import { shootoutOf } from "./fixtures.ts";
 
 const GENERATORS = ["mflux:photo@q8", "mflux:draw@q8", "mflux:dflt@q8"];
 const DEFAULT = "mflux:dflt@q8";
@@ -14,10 +15,7 @@ function brief(id: string, routedGenerator: string, best: string, split = false)
   };
 }
 
-const shootout = (briefs: ShootoutBrief[]): ShootoutEvidence => ({
-  run: "r", data: "data/dev.jsonl", defaultGenerator: DEFAULT, lineup: {}, picked: briefs.length, models: 3, meanAgreement: 0.8,
-  bestWas: { routed: 0.5, expected: 0.5, default: 0.25 }, briefs,
-});
+const shootout = (briefs: ShootoutBrief[]) => shootoutOf(briefs, DEFAULT);
 
 const heldOut = (data: string, picked: number, compared: number) =>
   ({ data, n: 10, repeats: 3, metrics: { accuracy: 0.9 } as Evidence["metrics"], latencyP50: 200, costPer1000Usd: 0.026, outcomes: { picked, pickedRight: picked, compared, comparedInShortlist: compared - 1 } }) as unknown as Evidence;

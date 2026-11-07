@@ -6,7 +6,7 @@ import { FAVICON_LINK, REPO_URL } from "../shared/brand.ts";
 import { escapeHtml } from "../shared/format.ts";
 import type { HomeStory } from "./home-stories.ts";
 import { frame, LIGHTBOX, LIGHTBOX_STYLE, modelName, shotCaption } from "./lightbox.ts";
-import { BASE_STYLE, PAGE_PATHS, pageNav } from "./page-style.ts";
+import { BASE_STYLE, PAGE_PATHS, pageNav, WITH_MOTION } from "./page-style.ts";
 import type { ShootoutShot } from "./shootout-evidence.ts";
 
 const SITE_URL = "https://typecast-ai.vercel.app";
@@ -25,8 +25,12 @@ const STYLE = `
   .lede { font-size: 18px; }
   .chips { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; padding: 12px 8px; margin: 0 -8px 4px; background: var(--bg); overflow-x: auto; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chips button { flex: none; padding: 7px 14px; border-radius: 999px; font-size: 14px; font-weight: 550; color: var(--text-2); background: transparent; transition: none; }
+  .chips button { flex: none; padding: 7px 14px; border-radius: 999px; font-size: 14px; font-weight: 550; color: var(--text-2); background: transparent; transition: color .15s; }
   .chips button[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+  .chips.sliding button { position: relative; }
+  .chips.sliding button[aria-pressed="true"] { background: transparent; border-color: transparent; }
+  .pill { position: absolute; left: 0; border-radius: 999px; background: var(--text); }
+  article { animation: fade .25s ease; }
   .step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: start; margin: 0; padding: 44px 0; border-top: 1px solid var(--line); }
   .step:first-child { border-top: 0; padding-top: 20px; }
   h2 { margin: 0 0 12px; font-size: 26px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 660; }
@@ -60,6 +64,24 @@ const STYLE = `
   footer { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; margin-top: 8px; padding: 28px 0 56px; border-top: 1px solid var(--line); font-size: 14px; }
   footer .more { margin: 0; font-size: 16px; }
   footer a:not(.more) { color: var(--muted); }
+  ${WITH_MOTION} {
+    .pill { transition: transform .35s var(--ease), width .35s var(--ease); }
+    .armed .meter i { transform-origin: left; animation: fill .8s var(--ease) both; }
+    .armed :is(.decision, .why) { animation: rise .4s var(--ease) .45s both; }
+    .armed .shots.routed figure { animation: rise .5s var(--ease) calc(var(--i) * 90ms + .1s) both; }
+    .armed .lineup figure { animation: rise .5s var(--ease) calc(var(--i) * 70ms) both; }
+    .armed .lineup .tag { animation: land .45s var(--spring) .55s both; }
+    .armed .lineup .best .frame { animation: ring .3s ease .55s both; }
+    .armed .found .box { animation: land .5s var(--spring) .2s both; }
+    .armed .found img.crop { transform-origin: 0 0; animation: zoom .9s cubic-bezier(.65, 0, .35, 1) .7s both; }
+    /* Held on their first frame until the step is on screen, or they'd play out of sight. Important because the rules above set it too, through the shorthand. */
+    .armed .step:not(.seen) * { animation-play-state: paused !important; }
+    @keyframes fill { from { transform: scaleX(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+    @keyframes land { from { opacity: 0; transform: scale(1.25); } }
+    @keyframes ring { from { outline-color: transparent; } }
+    @keyframes zoom { from { transform: var(--whole); } }
+  }
   @media (max-width: 760px) {
     h1 { margin-top: 28px; }
     .chips { margin-inline: -16px; padding-inline: 16px; }
@@ -78,6 +100,31 @@ const SCRIPT = `
   var stories = Array.prototype.slice.call(document.querySelectorAll("article"));
   var bar = document.querySelector(".chips");
   var status = document.querySelector(".status");
+  if (!chips.length) return;
+  var pill = document.createElement("span");
+  pill.className = "pill";
+  function placePill() {
+    var chip = bar.querySelector('[aria-pressed="true"]');
+    pill.style.cssText = "top:" + chip.offsetTop + "px;height:" + chip.offsetHeight + "px;width:" + chip.offsetWidth + "px;transform:translateX(" + chip.offsetLeft + "px)";
+  }
+  // Placed before it joins the page, so it starts where it belongs instead of sliding in from the left.
+  placePill();
+  bar.prepend(pill);
+  bar.classList.add("sliding");
+  var onScreen = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      // A step taller than the window can never show enough of itself, so filling half the window counts too.
+      if (entry.intersectionRatio < 0.4 && entry.intersectionRect.height < entry.rootBounds.height / 2) return;
+      entry.target.classList.add("seen");
+      onScreen.unobserve(entry.target);
+    });
+  }, { threshold: [0, 0.1, 0.2, 0.3, 0.4] });
+  function watch(story) {
+    story.querySelectorAll(".step").forEach(function (step) {
+      step.classList.remove("seen");
+      onScreen.observe(step);
+    });
+  }
   // A hidden story's lazy images would only start loading when it opens, and flash in, so load one as soon as it's likely.
   function prepare(i) {
     var story = stories[i];
@@ -89,12 +136,16 @@ const SCRIPT = `
     chip.addEventListener("click", function () {
       chips.forEach(function (c, j) { c.setAttribute("aria-pressed", String(j === i)); });
       stories.forEach(function (s, j) { s.hidden = j !== i; });
+      placePill();
+      watch(stories[i]);
       status.textContent = "Showing " + chip.textContent;
       prepare(i + 1);
       var top = stories[i].getBoundingClientRect().top - bar.offsetHeight;
-      if (top < 0) window.scrollBy(0, top);
+      if (top < 0) window.scrollBy({ top: top, behavior: "instant" });
     });
   });
+  watch(stories[0]);
+  window.addEventListener("resize", placePill);
   window.addEventListener("load", function () { prepare(1); });
 })();
 `;
@@ -107,9 +158,9 @@ const sureness = (confidence: number) => (confidence > 0.99 ? "99%+" : PERCENT(c
 const imageOf = (generator: string) => `${modelName(generator)}'s image for this brief`;
 
 /** With one image the model is already named beside it; with two, each needs its name. */
-function routeShot(story: HomeStory, shot: ShootoutShot, named: boolean) {
+function routeShot(story: HomeStory, shot: ShootoutShot, named: boolean, index: number) {
   const caption = named ? `<figcaption><code>${escapeHtml(modelName(shot.generator))}</code></figcaption>` : "";
-  return `<figure>${frame(shot, story.brief.shots.indexOf(shot), imageOf(shot.generator))}${caption}</figure>`;
+  return `<figure style="--i:${index}">${frame(shot, story.brief.shots.indexOf(shot), imageOf(shot.generator))}${caption}</figure>`;
 }
 
 function reasonLine({ explanation: { because, open } }: HomeStory) {
@@ -133,7 +184,7 @@ function modelStep(story: HomeStory) {
       ${reasonLine(story)}
       <a class="more" href="${PAGE_PATHS.route}">Try your own brief (picks the model, no image) &rarr;</a>
     </div>
-    <div class="shots${shots.length === 1 ? " one" : ""}">${shots.map((shot) => routeShot(story, shot, shots.length > 1)).join("")}</div>
+    <div class="shots routed${shots.length === 1 ? " one" : ""}">${shots.map((shot, i) => routeShot(story, shot, shots.length > 1, i)).join("")}</div>
   </section>`;
 }
 
@@ -141,7 +192,7 @@ function lineupShot(story: HomeStory, shot: ShootoutShot, index: number, default
   const routed = shot.generator === story.brief.routedGenerator;
   const tags = [routed && `<span class="tag">Typecast's pick</span>`, shot.picked && `<span class="tag judge">Judge's pick</span>`].filter(Boolean).join("");
   const name = modelName(shot.generator);
-  return `<figure class="${shot.picked ? "best" : ""}">${frame(shot, index, imageOf(shot.generator), shotCaption(story.brief, shot, defaultGenerator))}<figcaption><code class="model">${escapeHtml(name)}</code>${tags}</figcaption></figure>`;
+  return `<figure class="${shot.picked ? "best" : ""}" style="--i:${index}">${frame(shot, index, imageOf(shot.generator), shotCaption(story.brief, shot, defaultGenerator))}<figcaption><code class="model">${escapeHtml(name)}</code>${tags}</figcaption></figure>`;
 }
 
 function imageStep(story: HomeStory, defaultGenerator: string) {
@@ -167,6 +218,12 @@ function cropInside(box: HomeStory["box"]) {
   return { left: inside(crop.left), top: inside(crop.top), size };
 }
 
+/** `--whole` is the transform that shows the whole image in the same frame, which the crop zooms in from. */
+function cropStyle({ left, top, size }: ReturnType<typeof cropInside>) {
+  const whole = `translate(${percentOf(left, CROP_UNITS)}, ${percentOf(top, CROP_UNITS)}) scale(${size / CROP_UNITS})`;
+  return `width:${percentOf(CROP_UNITS, size)};left:${percentOf(-left, size)};top:${percentOf(-top, size)};--whole:${whole}`;
+}
+
 function subjectStep(story: HomeStory) {
   const { box, best, target } = story;
   const crop = cropInside(box);
@@ -179,7 +236,7 @@ function subjectStep(story: HomeStory) {
     </div>
     <div class="shots">
       <figure><div class="found"><img src="${url}" alt="The best image" loading="lazy"><div class="box" style="left:${percentOf(box.left, 1)};top:${percentOf(box.top, 1)};width:${percentOf(box.right - box.left, 1)};height:${percentOf(box.bottom - box.top, 1)}"></div></div><figcaption>Found</figcaption></figure>
-      <figure><div class="found"><img src="${url}" alt="The square crop around ${escapeHtml(target)}" loading="lazy" style="width:${percentOf(CROP_UNITS, crop.size)};left:${percentOf(-crop.left, crop.size)};top:${percentOf(-crop.top, crop.size)}"></div><figcaption>Cropped</figcaption></figure>
+      <figure><div class="found"><img class="crop" src="${url}" alt="The square crop around ${escapeHtml(target)}" loading="lazy" style="${cropStyle(crop)}"></div><figcaption>Cropped</figcaption></figure>
     </div>
   </section>`;
 }
@@ -206,6 +263,7 @@ ${FAVICON_LINK}
 <meta property="og:image:height" content="${OG_SIZE.height}">
 <meta name="twitter:card" content="summary_large_image">
 <style>${BASE_STYLE}${LIGHTBOX_STYLE}${STYLE}</style>
+<script>document.documentElement.classList.add("armed")</script>
 </head>
 <body>
 <div class="wrap">

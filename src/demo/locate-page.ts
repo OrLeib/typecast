@@ -211,7 +211,7 @@ ${BASE_STYLE}
       .then(function (r) {
         if (image !== sent) return;
         show(r);
-        if (firstAnswer) $("result-section").scrollIntoView({ behavior: "smooth", block: "start" });
+        if (firstAnswer) $("result-section").scrollIntoView({ block: "start" });
       })
       .catch(function (e) { if (image === sent) $("error").textContent = e.message; })
       .then(function () { busy = false; $("go").disabled = false; $("go").textContent = "Find and crop"; });

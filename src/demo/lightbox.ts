@@ -1,5 +1,6 @@
 // The lightbox both image pages share: click an image to enlarge it, then step through its brief's lineup.
 import { escapeHtml } from "../shared/format.ts";
+import { WITH_MOTION } from "./page-style.ts";
 import type { ShootoutBrief, ShootoutShot } from "./shootout-evidence.ts";
 
 export const LIGHTBOX_STYLE = `
@@ -8,9 +9,10 @@ export const LIGHTBOX_STYLE = `
   .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
   button.frame { display: block; width: 100%; padding: 0; border: 0; font: inherit; color: inherit; cursor: zoom-in; }
   button.frame:focus-visible { outline-color: var(--accent); }
-  button.frame img { transition: transform .25s ease; }
-  button.frame:hover img { transform: scale(1.03); }
-  @media (prefers-reduced-motion: reduce) { button.frame img { transition: none; } }
+  ${WITH_MOTION} and (hover: hover) {
+    button.frame img { transition: transform .25s ease; }
+    button.frame:hover img { transform: scale(1.03); }
+  }
   #lightbox { padding: 0; border: 0; margin: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; background: transparent; color: #f0efec; }
   #lightbox::backdrop { background: rgba(10, 10, 9, .96); backdrop-filter: blur(8px); }
   .lb-stage { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 56px 72px 24px; }

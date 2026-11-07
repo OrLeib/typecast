@@ -4,6 +4,13 @@ import { logoMark } from "../shared/brand.ts";
 /** Where each page lives, the same run locally and hosted. */
 export const PAGE_PATHS = { home: "/", route: "/demo", locate: "/locate", results: "/results" };
 
+/**
+ * Every movement lives in a block with this query, so a page is static unless the visitor is fine with motion and nothing
+ * can leak past a forgotten override. Fades and colour changes aren't movement, so they stay outside it. CSS owns all of
+ * it: the browser follows a changed setting by itself, which script-driven animation wouldn't.
+ */
+export const WITH_MOTION = "@media screen and (prefers-reduced-motion: no-preference)";
+
 const LABELS = { route: "Which model", locate: "Find the subject", results: "The numbers" };
 
 /** The brand, which links home, and the links between pages, with the current one marked for screen readers too. */
@@ -24,6 +31,9 @@ export const BASE_STYLE = `
     --warn-text: #7a4f00; --warn-bg: #fdf1d6;
     --danger: #d03b3b;
     --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+    --ease: cubic-bezier(.2, .8, .2, 1);
+    /* A damped spring, sampled: CSS has no spring() yet. */
+    --spring: linear(0, .151, .45, .738, .944, 1.056, 1.094, 1.086, 1.06, 1.031, 1.009, .997, .992, .991, .994, .996, 1);
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -34,6 +44,13 @@ export const BASE_STYLE = `
       --good-text: #5fd35f; --good-bg: #16301a; --warn-text: #fbc756; --warn-bg: #3a2e12;
       --shadow: none;
     }
+  }
+  @keyframes fade { from { opacity: 0; } }
+  ${WITH_MOTION} {
+    @view-transition { navigation: auto; }
+    html { scroll-behavior: smooth; }
+    .topbar { view-transition-name: topbar; }
+    ::view-transition-group(root) { animation-duration: .2s; }
   }
   * { box-sizing: border-box; }
   html { background: var(--bg); }

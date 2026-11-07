@@ -1,7 +1,7 @@
 // The demo page. Self-contained: no build step, no external assets, works offline.
 // Page script avoids template literals so this file can stay one template string.
 import { FAVICON_LINK } from "../shared/brand.ts";
-import { BASE_STYLE, pageNav } from "./page-style.ts";
+import { BASE_STYLE, pageNav, WITH_MOTION } from "./page-style.ts";
 
 /** Hosted, there is no Mac to render on, so the page routes but hides rendering, comparing and judging. */
 export const demoPage = ({ hosted }: { hosted: boolean }) => `<!doctype html>
@@ -71,7 +71,7 @@ ${BASE_STYLE}
   .bar-label { font-size: 14px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bar-row.on .bar-label { color: var(--text); font-weight: 600; }
   .track { position: relative; height: 10px; background: var(--track); border-radius: 5px; }
-  .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--bar-rest); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--bar-rest); }
   .bar-row.on .fill { background: var(--accent); }
   .bar-row.second .fill { background: var(--accent-2); }
   .bar-row.second .bar-label { color: var(--text); }
@@ -87,13 +87,18 @@ ${BASE_STYLE}
   .shot { display: flex; flex-direction: column; gap: 8px; }
   .frame { aspect-ratio: 1; border-radius: 10px; background: var(--surface-2); overflow: hidden; display: grid; place-items: center; position: relative; }
   .frame img { width: 100%; height: 100%; object-fit: cover; display: block; animation: fade .4s ease; }
-  @keyframes fade { from { opacity: 0; } }
   .frame .state { color: var(--muted); font-size: 13px; text-align: center; padding: 16px; font-variant-numeric: tabular-nums; }
-  .spinner { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--text-2); animation: spin .8s linear infinite; margin: 0 auto 10px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--text-2); animation: pulse .9s ease-in-out infinite alternate; margin: 0 auto 10px; }
+  @keyframes pulse { from { opacity: .35; } }
   .progress { width: 140px; height: 3px; margin: 10px auto 0; border-radius: 2px; background: var(--track); overflow: hidden; visibility: hidden; }
   .progress.known { visibility: visible; }
-  .progress-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
+  .progress-fill { height: 100%; width: 0; background: var(--accent); }
+  ${WITH_MOTION} {
+    .fill { transition: width .5s var(--ease); }
+    .spinner { animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-fill { transition: width .3s ease; }
+  }
   .shot-caption { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-2); }
   .shot-caption code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); white-space: nowrap; }
   .shot.winner .frame { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -402,7 +407,7 @@ ${BASE_STYLE}
       lastBrief = brief;
       showRoute(lastRoute);
       markActiveExample();
-      $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("result").scrollIntoView({ block: "start" });
     } catch (e) {
       $("error").textContent = e.message;
     } finally {

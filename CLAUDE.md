@@ -173,6 +173,17 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - A function takes at most 4.5 MB a request, so the find-and-crop page shrinks uploads to 1568px JPEG before sending; boxes and crops come from that copy.
 - Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
 
+## Motion
+- Pages are static unless the visitor is fine with motion: every movement sits in a `WITH_MOTION` block (`src/demo/page-style.ts`), and `test/demo/motion.test.ts` fails if one leaks out.
+  Fades and colour changes aren't movement by WCAG's definition, so they stay outside it.
+  With reduced motion the home page's zoom is a plain swap, and the spinner pulses.
+- CSS owns the motion and script only sets state: the browser follows a changed setting by itself, which it won't do for script-driven animation.
+  Animate `transform` and `opacity`, which stay on the compositor. `width` is only for absolutely positioned bars and the chip pill, where layout stays local.
+- The HTML always holds the final state.
+  Home adds `armed` in the head, which holds a step's animations on their first frame until the step is on screen (`seen`); without script nothing is held.
+- `@view-transition` works inside `@media` (checked in Chromium 145).
+  Firefox only has cross-page transitions in preview, so there it navigates normally.
+
 ## Finding and cropping
 - The demo's `/locate` page finds a target in one image (`src/locating/locator.ts`): one request with a box question for where the target is and a noul question for whether it is there.
   If several images are ever needed, send one request per image in parallel, not one request with all of them: eight in one request cost the same tokens but loosened the boxes (a cyclist's face came back as a body-height strip at 0.23 confidence, against a tight box at 0.82 alone).
