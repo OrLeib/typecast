@@ -169,6 +169,7 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
 - `.vercelignore` is an allowlist: the CLI uploads the working folder, and `.env`, `.env.local` and `runs/` (with images that aren't ours) must never go up.
 - Functions in `api/` run the `src/` TypeScript directly on Node 26; `vercel.json` ships `src/`, the samples and the baked answers beside them. A file in `api/` whose name starts with `_` isn't served.
 - `TYPESAFE_API_KEY` is set in the project for Production and Preview. Live calls are not capped.
+- Every call to `/api/route` and `/api/locate` logs one `{"usage": ...}` JSON line (`src/hosting/usage-log.ts`): endpoint, status, the text inputs, cached or not, billed input tokens and cost, and the visitor as Vercel's headers describe them (IP cut to its /24 or /48, country, region, city, user agent, referer). Read them with `vercel logs --json`; Vercel keeps runtime logs only briefly, so anything worth keeping needs a log drain.
 - A function takes at most 4.5 MB a request, so the find-and-crop page shrinks uploads to 1568px JPEG before sending; boxes and crops come from that copy.
 - Fix the sample and lineup before generating. Don't swap lineup models after seeing judgments and rejudge the same briefs.
 

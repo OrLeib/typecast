@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDiskCache } from "../../src/demo/disk-cache.ts";
 import { locateCacheKey, locatorIdOf } from "../../src/demo/locate-api.ts";
 import { createHostedApi } from "../../src/hosting/api.ts";
+import type { UsageEntry } from "../../src/hosting/usage-log.ts";
 
 const choice = JSON.parse(readFileSync(new URL("../fixtures/jev-choice-response.json", import.meta.url), "utf8"));
 const box = JSON.parse(readFileSync(new URL("../fixtures/jev-box-response.json", import.meta.url), "utf8"));
@@ -28,7 +29,8 @@ const samplesDir = join(dir, "samples");
 const bakedAnswersDir = join(dir, "baked");
 const png = (background: string) => sharp({ create: { width: 1000, height: 800, channels: 3, background } }).png().toBuffer();
 
-const api = createHostedApi({ jev: JEV, samplesDir, bakedAnswersDir, cacheDir: join(dir, "tmp") }, { fetch: fakeJev });
+let usage: UsageEntry[] = [];
+const api = createHostedApi({ jev: JEV, samplesDir, bakedAnswersDir, cacheDir: join(dir, "tmp"), logUsage: (entry) => usage.push(entry) }, { fetch: fakeJev });
 /** Vercel hands functions a request whose JSON body it already parsed into `req.body`. */
 const asVercel = (handler: RequestListener, body: unknown): RequestListener => (req, res) => handler(Object.assign(req, { body }) as IncomingMessage, res);
 const routes: Record<string, RequestListener> = {
@@ -55,9 +57,19 @@ afterAll(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-const post = (path: string, body: unknown) => fetch(base + path, { method: "POST", body: JSON.stringify(body) });
+const post = (path: string, body: unknown, headers: Record<string, string> = {}) => fetch(base + path, { method: "POST", body: JSON.stringify(body), headers });
 const reset = () => {
   jevCalls = 0;
+  usage = [];
+};
+/** The headers Vercel adds to a request from a visitor in Tel Aviv. */
+const VISITOR_HEADERS = {
+  "x-forwarded-for": "203.0.113.57, 10.0.0.1",
+  "x-vercel-ip-country": "IL",
+  "x-vercel-ip-country-region": "TA",
+  "x-vercel-ip-city": "Tel%20Aviv",
+  "user-agent": "Mozilla/5.0 (Macintosh)",
+  referer: "https://typecast-ai.vercel.app/demo",
 };
 
 describe("hosted API", () => {
@@ -99,5 +111,46 @@ describe("hosted API", () => {
       ],
     });
     expect((await fetch(base + "/route")).status).toBe(405);
+  });
+
+  it("logs who called a live endpoint and what it cost", async () => {
+    reset();
+    await post("/route", { brief: "A neon sign that reads OPEN, at night" }, VISITOR_HEADERS);
+    expect(usage).toEqual([
+      {
+        endpoint: "route",
+        status: 200,
+        latencyMs: expect.any(Number),
+        input: { brief: "A neon sign that reads OPEN, at night" },
+        cached: false,
+        model: "jev-1.14.0",
+        billedInputTokens: expect.any(Number),
+        costUsd: expect.any(Number),
+        visitor: { ipPrefix: "203.0.113.0/24", country: "IL", region: "TA", city: "Tel Aviv", userAgent: "Mozilla/5.0 (Macintosh)", referer: "https://typecast-ai.vercel.app/demo" },
+      },
+    ]);
+    expect(usage[0].billedInputTokens).toBeGreaterThan(0);
+  });
+
+  it("logs a cached answer as costing nothing, and never logs an uploaded image", async () => {
+    reset();
+    await post("/locate", { sample: "baked.png", target: TARGET, padding: 0.5 });
+    await post("/locate", { image: "data:image/png;base64,AAAA", target: TARGET, padding: 0.5 });
+    expect(usage.map(({ input, cached, billedInputTokens, costUsd }) => ({ input, cached, billedInputTokens, costUsd }))).toEqual([
+      { input: { sample: "baked.png", target: TARGET }, cached: true, billedInputTokens: 0, costUsd: 0 },
+      { input: { image: "upload", target: TARGET }, cached: undefined, billedInputTokens: 0, costUsd: 0 },
+    ]);
+  });
+
+  it("logs a refused request with its status", async () => {
+    reset();
+    await post("/route", { brief: "" });
+    expect(usage).toMatchObject([{ endpoint: "route", status: 400, error: "brief must be a non-empty string", billedInputTokens: 0, costUsd: 0 }]);
+  });
+
+  it("keeps only an IPv6 visitor's /48", async () => {
+    reset();
+    await post("/route", { brief: "A spring sneaker campaign hero shot" }, { "x-forwarded-for": "2001:db8:85a3:8d3:1319:8a2e:370:7348" });
+    expect(usage[0].visitor.ipPrefix).toBe("2001:db8:85a3::/48");
   });
 });

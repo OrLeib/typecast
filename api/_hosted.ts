@@ -10,4 +10,6 @@ export const hosted = createHostedApi({
   samplesDir: join(process.cwd(), "data", "locating"),
   bakedAnswersDir: join(process.cwd(), "build", "locate-answers"),
   cacheDir: join(tmpdir(), "typecast"),
+  // One JSON line per call, so `vercel logs --json` can be filtered and summed with jq.
+  logUsage: (entry) => console.log(JSON.stringify({ usage: entry })),
 });
