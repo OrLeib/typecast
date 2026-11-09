@@ -34,6 +34,8 @@ const STYLE = `
   code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
   .tag { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--accent-text); background: var(--accent-soft); }
   .verdict { margin: 16px 0 0; padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+  .other-job { margin: 8px 0 0; padding: 0 14px; font-size: 14px; color: var(--text-2); }
+  .other-job b { color: var(--text); font-weight: 600; }
   .verdict.hit { background: var(--good-bg); color: var(--good-text); }
   .verdict.miss { background: var(--warn-bg); color: var(--warn-text); }
   .scores { display: grid; grid-template-columns: auto minmax(0, 1fr) 2ch; align-items: center; gap: 4px 10px; margin: auto 0 0; font-size: 13px; color: var(--text-2); }
@@ -131,11 +133,28 @@ function verdict(brief: ShootoutBrief, defaultGenerator: string) {
   return `<p class="verdict miss"><b>Routing missed.</b> Judge's pick: ${escapeHtml(best)}, ${whose}.${split}</p>`;
 }
 
-function briefCard(brief: ShootoutBrief, defaultGenerator: string) {
+/** Where a brief's kind of image suggests another use of the same picker. Keyed by the brief's label, since that is what the brief asks for. */
+const OTHER_JOB: Record<string, string> = {
+  product: "put the brand's palette, logo and tone in the question, and it picks the image that follows them.",
+  typography: "ask which image spells the headline as written and keeps it legible.",
+  "fast-draft": "a batch of quick variants gets one pick instead of a person comparing them by eye.",
+  illustration: "pick the storyboard frame worth turning into video before paying for the render.",
+};
+
+function otherJob(brief: ShootoutBrief, noted: boolean) {
+  const job = noted ? OTHER_JOB[brief.expected] : undefined;
+  return job ? `<p class="other-job"><b>Same judge, other job:</b> ${job}</p>` : "";
+}
+
+/** Each other job is noted once, on the first brief of its kind, so the page doesn't repeat itself. */
+const firstOfItsKind = (briefs: ShootoutBrief[], index: number) => briefs.findIndex((b) => b.expected === briefs[index].expected) === index;
+
+function briefCard(brief: ShootoutBrief, defaultGenerator: string, noted: boolean) {
   return `<article>
   <div class="brief-head"><blockquote>${escapeHtml(brief.brief)}</blockquote>${routeChip(brief)}</div>
   <div class="pair">${pairOf(brief, defaultGenerator)}</div>
   ${verdict(brief, defaultGenerator)}
+  ${otherJob(brief, noted)}
   <div class="lineup"><p>All 5 models, same prompt and seed. Outlined: the judge's pick. Click any image to enlarge.</p>${brief.shots.map(thumb(brief, defaultGenerator)).join("")}</div>
 </article>`;
 }
@@ -143,18 +162,19 @@ function briefCard(brief: ShootoutBrief, defaultGenerator: string) {
 /** The second look, reported whether or not it flatters the first. */
 function rubricNote({ rubric, briefs }: ShootoutEvidence) {
   if (!rubric) return "";
-  return ` A second look scored each image alone, out of 100, on following the brief, style, craft and any text the brief asks for. Those scores are less kind: the routed model had the highest overall score on ${rubric.topWas.routed} of ${briefs.length}, the default on ${rubric.topWas.default}, and the top-scoring image was the judge's pick on ${rubric.agreesWithPick}.`;
+  return ` Scored alone out of 100, the routed image came top on ${rubric.topWas.routed} of ${briefs.length} and the default on ${rubric.topWas.default}.`;
 }
 
 function imagesSection(shootout: ShootoutEvidence | undefined) {
   if (!shootout) return "";
   const briefs = shootout.briefs.length;
   const count = (share: number) => Math.round(share * briefs);
+  const shownBriefs = shootout.briefs.toSorted((a, b) => showOrder(a) - showOrder(b));
   return `<section>
   <h2>Does routing make better images?</h2>
-  <p class="sub">${briefs} briefs, each rendered by all ${shootout.models} models in a local lineup. A vision judge picked the best image of each without knowing which was routed. The routed model made the best image for <b>${count(shootout.bestWas.routed)} of ${briefs}</b> briefs; one fixed default model managed ${count(shootout.bestWas.default)}, and chance would be ${count(1 / shootout.models)}.${rubricNote(shootout)} Every brief is shown, none filtered.</p>
-  <div class="briefs">${shootout.briefs.toSorted((a, b) => showOrder(a) - showOrder(b)).map((b) => briefCard(b, shootout.defaultGenerator)).join("\n")}</div>
-  <p class="note">A small, early sample: ${briefs} briefs that routing was tuned on, judged by a model (Jev reading the images in every order), not yet checked against people. The lineup is open-weight models run locally, standing in for a real product's roster.</p>
+  <p class="sub">All ${shootout.models} models rendered each of ${briefs} briefs, and a judge blind to routing picked one image. It was the routed model's on <b>${count(shootout.bestWas.routed)} of ${briefs}</b>, the default's on ${count(shootout.bestWas.default)}, against ${count(1 / shootout.models)} by chance.${rubricNote(shootout)} Every brief is below.</p>
+  <div class="briefs">${shownBriefs.map((b, i) => briefCard(b, shootout.defaultGenerator, firstOfItsKind(shownBriefs, i))).join("\n")}</div>
+  <p class="note">A small, early sample: ${briefs} briefs that routing was tuned on, judged by a model (Jev reading the images in every order), not yet checked against people. The other jobs noted on some briefs aren't measured at all. The lineup is open-weight models run locally, standing in for a real product's roster.</p>
 </section>`;
 }
 

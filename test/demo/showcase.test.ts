@@ -24,14 +24,21 @@ describe("showcasePage", () => {
     rated.shots[0].rating = { scores: { Brief: 0.6, Craft: 0.4 }, total: 0.5 };
     rated.shots[2].rating = { scores: { Brief: 0.9, Craft: 0.7 }, total: 0.8 };
     const html = showcasePage({ shootout: { ...shootout([rated]), rubric: { briefs: 1, topWas: { routed: 0, default: 1 }, agreesWithPick: 0 } } });
-    expect(html).toContain("the routed model had the highest overall score on 0 of 1, the default on 1");
+    expect(html).toContain("the routed image came top on 0 of 1 and the default on 1");
     expect(html).toContain("Highest overall score: dflt.");
     expect(html).toContain('<dt class="">Craft</dt>');
     expect(html).toContain("<dd class=\"\">40</dd>");
   });
 
   it("says nothing of scores for a run with none", () => {
-    expect(page([brief("a", "mflux:photo@q8", "mflux:photo@q8")])).not.toContain("second look");
+    expect(page([brief("a", "mflux:photo@q8", "mflux:photo@q8")])).not.toContain("Scored alone");
+  });
+
+  it("notes another job for the picker only where the brief's kind suggests one", () => {
+    const typography = { ...brief("a", "mflux:photo@q8", "mflux:photo@q8"), expected: "typography" };
+    expect(page([typography])).toContain("Same judge, other job:</b> ask which image spells the headline");
+    expect(page([brief("b", "mflux:photo@q8", "mflux:photo@q8")])).not.toContain("Same judge, other job");
+    expect(page([typography, { ...typography, id: "c" }]).match(/Same judge, other job/g)).toHaveLength(1);
   });
 
   it("links the pages, marking this one", () => {
