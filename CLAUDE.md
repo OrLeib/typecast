@@ -183,6 +183,8 @@ Borderline briefs carry a `note` explaining which rule decided. Briefs are Engli
   Home adds `armed` in the head, which holds a step's animations on their first frame until the step is on screen (`seen`); without script nothing is held.
 - `@view-transition` works inside `@media` (checked in Chromium 145).
   Firefox only has cross-page transitions in preview, so there it navigates normally.
+- Between pages only the top bar transitions; the rest swaps at once.
+  Crossfading two unrelated layouts washed the page out, and once flashed it white, because the root snapshots aren't opaque.
 
 ## Finding and cropping
 - The demo's `/locate` page finds a target in one image (`src/locating/locator.ts`): one request with a box question for where the target is and a noul question for whether it is there.

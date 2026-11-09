@@ -51,7 +51,9 @@ export const BASE_STYLE = `
     @view-transition { navigation: auto; }
     html { scroll-behavior: smooth; }
     .topbar { view-transition-name: topbar; }
-    ::view-transition-group(root) { animation-duration: .2s; }
+    /* Pages share only the top bar. Crossfading the rest overlays two unrelated layouts through snapshots that aren't opaque, which flashes. */
+    ::view-transition-old(root) { display: none; }
+    ::view-transition-new(root) { animation: none; }
   }
   * { box-sizing: border-box; }
   html { background: var(--bg); }

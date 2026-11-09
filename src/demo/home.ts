@@ -30,7 +30,8 @@ const STYLE = `
   .chips.sliding button { position: relative; }
   .chips.sliding button[aria-pressed="true"] { background: transparent; border-color: transparent; }
   .pill { position: absolute; left: 0; border-radius: 999px; background: var(--text); }
-  article { animation: fade .25s ease; }
+  /* Only after a switch: on arrival the steps bring themselves in, and fading the whole story too reads as a flash. */
+  .chips.switched ~ article { animation: fade .25s ease; }
   .step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px; align-items: start; margin: 0; padding: 44px 0; border-top: 1px solid var(--line); }
   .step:first-child { border-top: 0; padding-top: 20px; }
   h2 { margin: 0 0 12px; font-size: 26px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 660; }
@@ -135,6 +136,7 @@ const SCRIPT = `
     chip.addEventListener("click", function () {
       chips.forEach(function (c, j) { c.setAttribute("aria-pressed", String(j === i)); });
       stories.forEach(function (s, j) { s.hidden = j !== i; });
+      bar.classList.add("switched");
       placePill();
       watch(stories[i]);
       status.textContent = "Showing " + chip.textContent;

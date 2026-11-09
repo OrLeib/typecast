@@ -83,3 +83,16 @@ it("the guard sees through nested blocks", () => {
   const css = `a { color: red; } ${WITH_MOTION} { @keyframes x { from { opacity: 0; } } b { top: 0; } } c { color: blue; }`;
   expect(withoutBlocks(css, WITH_MOTION)).toBe("a { color: red; }  c { color: blue; }");
 });
+
+describe.each(Object.entries(PAGES))("arriving on the %s page", (_, html) => {
+  // Overlaying two unrelated layouts through snapshots that aren't opaque washes the page out, and once flashed it white.
+  it("swaps the page in place of crossfading it", () => {
+    expect(html).toContain("@view-transition { navigation: auto; }");
+    expect(html).toContain("::view-transition-old(root) { display: none; }");
+    expect(html).toContain("::view-transition-new(root) { animation: none; }");
+  });
+
+  it("doesn't fade a whole story in on arrival", () => {
+    expect(html).not.toMatch(/(^|[{};/])\s*article\s*\{[^}]*animation/m);
+  });
+});
