@@ -108,26 +108,21 @@ ${BASE_STYLE}
   .verdict-line .odds { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-variant-numeric: tabular-nums; }
   .verdict-line .odds span { color: var(--muted); }
   .verdict-line .odds b { color: var(--text-2); font-weight: 550; }
-  .evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-  .evidence-head .section-title { margin: 0; }
   .set-about { margin: -4px 0 12px; font-size: 14px; color: var(--text-2); max-width: 62ch; }
-  .segmented { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
-  .segmented button { border: 0; background: transparent; padding: 5px 12px; font-size: 13px; color: var(--text-2); border-radius: 7px; }
-  .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
   .evidence-headline { margin: 0; padding: 22px 24px 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.01em; max-width: 64ch; text-wrap: pretty; }
   .outcomes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px 24px 24px; }
   .outcome { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 12px; background: var(--surface-2); }
   .outcome .value { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
   .outcome .value span { font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--text-2); }
   .outcome p { margin: 0; font-size: 13px; color: var(--text-2); text-wrap: pretty; }
-  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; border-top: 1px solid var(--line); }
-  .evidence-foot { margin: 0; padding: 0 24px 18px; font-size: 13px; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 8px; }
+  .evidence-foot { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
   .evidence-foot b { color: var(--text-2); font-weight: 550; }
   .term { border-bottom: 1px dotted currentColor; cursor: help; }
   .term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
-  .tile { padding: 16px; }
+  .tile { padding: 12px 16px 12px 0; }
   .tile .label { font-size: 13px; color: var(--text-2); }
-  .tile .value { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .tile .value { color: var(--text); font-size: 26px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .tile .sub { font-size: 12px; color: var(--muted); }
   .chart { padding: 12px 0 4px; max-width: 520px; }
   .chart p { margin: 0 0 10px; font-size: 13px; color: var(--text-2); max-width: 62ch; }
@@ -151,7 +146,6 @@ ${BASE_STYLE}
     .evidence-headline { padding: 18px 16px 0; font-size: 17px; }
     .outcomes { grid-template-columns: 1fr; padding: 14px 16px 18px; }
     .stats { grid-template-columns: 1fr 1fr; }
-    .evidence-foot { padding: 0 16px 16px; }
     details { padding: 14px 16px; }
     .shots { grid-template-columns: 1fr; }
     /* The placeholder wraps to three lines on a phone; this keeps it from scrolling. */
@@ -221,10 +215,7 @@ ${BASE_STYLE}
   </section>
 
   <section id="evidence">
-    <div class="evidence-head">
-      <h2 class="section-title">Why trust the confidence</h2>
-      <div class="segmented" id="sets" role="group" aria-label="Brief set"></div>
-    </div>
+    <h2 class="section-title">Why trust the confidence</h2>
     <p class="set-about" id="set-about"></p>
     <div class="card" id="evidence-card"></div>
   </section>
@@ -242,11 +233,8 @@ ${BASE_STYLE}
     miss: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
     compare: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="5" height="10" rx="1.2"/><rect x="9" y="3" width="5" height="10" rx="1.2"/></svg>'
   };
-  // Only held-out sets: dev was tuned against, so its numbers would flatter the router.
-  var HELD_OUT_SETS = [
-    { data: "data/test.jsonl", name: "Test", about: "Everyday briefs, written blind and never tuned against." },
-    { data: "data/hard.jsonl", name: "Hard", about: "Tricky briefs whose deciding cue is implied, buried or contradicted. Never tuned against." }
-  ];
+  // The hard held-out set: never tuned against, and its briefs are built to mislead, so the confidence has to earn its numbers there.
+  var EVIDENCE_SET = { data: "data/hard.jsonl", about: "Tricky briefs whose deciding cue is implied, buried or contradicted. Never tuned against." };
 
   function termText(key) {
     return {
@@ -707,30 +695,24 @@ ${BASE_STYLE}
     frame.appendChild(state);
   }
 
-  var currentSet = null;
   function renderEvidence() {
-    var sets = HELD_OUT_SETS.map(function (h) {
-      var run = config.evidence.find(function (e) { return e.data === h.data; });
-      return run && Object.assign({ name: h.name, about: h.about }, run);
-    }).filter(Boolean);
-    if (!sets.length) {
-      $("evidence-card").innerHTML = '<div class="empty">No held-out eval runs yet. Run <kbd>npm run eval -- --repeats 3 --data data/test.jsonl</kbd> and reload to see accuracy and calibration here.</div>';
+    var s = config.evidence.find(function (e) { return e.data === EVIDENCE_SET.data; });
+    if (!s) {
+      $("evidence-card").innerHTML = '<div class="empty">No eval run on the hard set yet. Run <kbd>npm run eval -- --repeats 3 --data ' + EVIDENCE_SET.data + '</kbd> and reload to see accuracy and calibration here.</div>';
       return;
     }
-    var preferred = sets.find(function (s) { return s.data === "data/hard.jsonl"; }) || sets[0];
-    currentSet = currentSet || preferred.data;
-    var group = $("sets"); group.textContent = "";
-    sets.forEach(function (s) {
-      var b = el("button", null, s.name);
-      b.setAttribute("aria-pressed", String(s.data === currentSet));
-      b.addEventListener("click", function () { currentSet = s.data; renderEvidence(); });
-      group.appendChild(b);
-    });
-    var s = sets.find(function (x) { return x.data === currentSet; });
-    $("set-about").textContent = s.about + " " + s.n + " briefs, each routed " + s.repeats + " times.";
+    $("set-about").textContent = EVIDENCE_SET.about + " " + s.n + " briefs, each routed " + s.repeats + " times.";
     var card = $("evidence-card"); card.textContent = "";
     card.appendChild(el("p", "evidence-headline", evidenceHeadline(s.outcomes)));
     card.appendChild(outcomeTiles(s.outcomes, s.n * s.repeats));
+    card.appendChild(moreNumbers(s));
+  }
+
+  function seconds(ms) { return (ms / 1000).toFixed(2) + " s"; }
+
+  /** Everything past the headline and the two outcomes, folded away: the outcomes are the claim, these are its fine print. */
+  function moreNumbers(s) {
+    var details = el("details"); details.appendChild(el("summary", null, "More numbers"));
     var stats = el("div", "stats");
     [
       ["Right overall", pct(s.metrics.accuracy), "first pick matched the label", null],
@@ -738,7 +720,7 @@ ${BASE_STYLE}
       ["Speed", seconds(s.latencyP50), "95% within " + seconds(s.latencyP95), "latency"],
       ["Cost", "$" + s.costPer1000Usd.toFixed(3), "per 1,000 decisions", "cost"]
     ].forEach(function (t) { stats.appendChild(tile(t[3] ? term(t[0], t[3]) : t[0], t[1], t[2])); });
-    card.appendChild(stats);
+    details.appendChild(stats);
     var foot = el("p", "evidence-foot");
     foot.appendChild(document.createTextNode("Decided by "));
     foot.appendChild(term("Jev", "jev"));
@@ -747,11 +729,11 @@ ${BASE_STYLE}
     foot.appendChild(document.createTextNode(" using the "));
     foot.appendChild(markTerm(el("b", null, s.variant), "variant"));
     foot.appendChild(document.createTextNode(" wording."));
-    card.appendChild(foot);
-    card.appendChild(calibrationDetails(s.bins));
+    details.appendChild(foot);
+    details.appendChild(reliabilityChart(s.bins));
+    details.appendChild(binTable(s.bins));
+    return details;
   }
-
-  function seconds(ms) { return (ms / 1000).toFixed(2) + " s"; }
 
   /** The takeaway in one or two sentences, worded from the numbers so it can't overclaim. */
   function evidenceHeadline(o) {
@@ -792,13 +774,6 @@ ${BASE_STYLE}
     l.appendChild(typeof label === "string" ? document.createTextNode(label) : label);
     t.appendChild(l); t.appendChild(el("div", "value", value)); t.appendChild(el("div", "sub", sub));
     return t;
-  }
-
-  function calibrationDetails(bins) {
-    var details = el("details"); details.appendChild(el("summary", null, "How sure vs. how often right"));
-    details.appendChild(reliabilityChart(bins));
-    details.appendChild(binTable(bins));
-    return details;
   }
 
   function reliabilityChart(bins) {
