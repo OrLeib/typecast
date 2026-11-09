@@ -63,7 +63,7 @@ describe("homePage", () => {
     expect(page()).toContain('<p class="lede">Typecast is a decision layer for AI image tools');
   });
 
-  it("has no numbers besides the confidence, and links to them", () => {
+  it("has no numbers besides the confidence, and links to where they are", () => {
     const html = page(story("x", 0.95, "a", "a"));
     expect(html).toContain('href="/results"');
     expect(html).not.toContain("604");

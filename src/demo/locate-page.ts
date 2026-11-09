@@ -10,7 +10,7 @@ export const locatePage = ({ hosted }: { hosted: boolean }) => `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Typecast: find the subject</title>
+<title>Typecast: where in the frame</title>
 ${FAVICON_LINK}
 <style>
 ${BASE_STYLE}
@@ -123,7 +123,7 @@ ${BASE_STYLE}
     </div>
   </section>
 
-  <footer>${hosted ? "Locating calls the Jev decision API live with the image; samples answer from saved results, so trying them costs nothing." : "Runs locally. Locating calls the Jev decision API with the image; cropping happens on this Mac."}</footer>
+  <footer>${hosted ? "Locating calls the Jev decision API live with the image; samples answer from saved results, so trying them costs nothing. How tight the boxes are isn't measured yet." : "Runs locally. Locating calls the Jev decision API with the image; cropping happens on this Mac. How tight the boxes are isn't measured yet."}</footer>
 </div>
 
 <script>

@@ -1,22 +1,16 @@
-// The numbers behind the home page: held-out routing results, and every brief of the latest judged shootout with the
-// routed and default images side by side.
+// Which image: every brief of the latest judged shootout, with the routed and default images side by side and the judge's
+// pick among all five.
 import { PICK_THRESHOLD } from "../routing/recommendation.ts";
 import { FAVICON_LINK, REPO_URL } from "../shared/brand.ts";
 import { escapeHtml } from "../shared/format.ts";
-import type { Evidence } from "./evidence.ts";
 import { frame, LIGHTBOX, LIGHTBOX_STYLE, modelName, shotCaption } from "./lightbox.ts";
 import { BASE_STYLE, pageNav } from "./page-style.ts";
 import type { ShootoutBrief, ShootoutEvidence, ShootoutShot } from "./shootout-evidence.ts";
 
 export type ShowcaseInput = {
-  /** Every brief set's latest run; only the held-out ones are shown. */
-  evidence: Evidence[];
   /** The latest judged shootout, if any. */
   shootout?: ShootoutEvidence;
 };
-
-/** Sets never tuned against (see "Measuring a change without overfitting" in CLAUDE.md), so their numbers are the honest ones. */
-const HELD_OUT = new Set(["data/test.jsonl", "data/hard.jsonl"]);
 
 const STYLE = `
   body { font-size: 16px; }
@@ -25,10 +19,6 @@ const STYLE = `
   section { margin-top: 56px; }
   h2 { margin: 0 0 8px; font-size: 22px; line-height: 1.25; letter-spacing: -0.015em; font-weight: 650; text-wrap: balance; }
   .sub { margin: 0 0 20px; color: var(--text-2); max-width: 70ch; text-wrap: pretty; }
-  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
-  .stat b { font-size: 30px; font-weight: 680; letter-spacing: -0.025em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  .stat span { font-size: 14px; color: var(--text-2); line-height: 1.4; }
   .note { margin: 14px 0 0; font-size: 13px; color: var(--muted); max-width: 80ch; }
   .briefs { display: flex; flex-direction: column; gap: 20px; }
   article { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
@@ -63,7 +53,6 @@ const STYLE = `
   footer p { margin: 0 0 8px; max-width: 80ch; }
   a { color: var(--accent-text); }
   @media (max-width: 760px) {
-    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     article { padding: 16px; }
     .pair { gap: 10px; }
     .lineup { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -77,43 +66,6 @@ const STYLE = `
 const PERCENT = (x: number) => `${Math.round(x * 100)}%`;
 
 const categoryName = (category: string) => category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ");
-
-const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
-const mean = (values: number[]) => sum(values) / values.length;
-
-function heldOutStats(heldOut: Evidence[]) {
-  const total = (key: keyof Evidence["outcomes"]) => sum(heldOut.map((e) => e.outcomes[key]));
-  return {
-    briefs: sum(heldOut.map((e) => e.n)),
-    routes: sum(heldOut.map((e) => e.n * e.repeats)),
-    picked: total("picked"),
-    pickedRight: total("pickedRight"),
-    compared: total("compared"),
-    comparedInShortlist: total("comparedInShortlist"),
-    latencyMs: Math.round(mean(heldOut.map((e) => e.latencyP50))),
-    costPer1000Usd: mean(heldOut.map((e) => e.costPer1000Usd)),
-    accuracy: sum(heldOut.map((e) => (e.metrics.accuracy ?? 0) * e.n)) / sum(heldOut.map((e) => e.n)),
-  };
-}
-
-const stat = (value: string, label: string) => `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
-
-function routingSection(evidence: Evidence[]) {
-  const heldOut = evidence.filter((e) => HELD_OUT.has(e.data));
-  if (!heldOut.length) return "";
-  const s = heldOutStats(heldOut);
-  return `<section>
-  <h2>The confidence says when to just pick</h2>
-  <p class="sub">At ${PERCENT(PICK_THRESHOLD)} or more, just use the model. Below that, put the top two side by side and let the user choose. Measured on ${s.briefs} held-out briefs that were never tuned against, ${s.routes / s.briefs} runs each:</p>
-  <div class="stats">
-    ${stat(`${s.pickedRight}/${s.picked}`, "confident picks matched the labelled category")}
-    ${stat(`${s.comparedInShortlist}/${s.compared}`, "unsure routes had the labelled category in the top two")}
-    ${stat(`${s.latencyMs}ms`, "median time to route a brief")}
-    ${stat(`$${s.costPer1000Usd.toFixed(3)}`, "per 1,000 routes")}
-  </div>
-  <p class="note">Half the held-out briefs are deliberately hard: the deciding cue is implied, buried or corrected mid-brief, and a brief was kept only if a keyword baseline routed it wrong. First picks matched the label on ${PERCENT(s.accuracy)} of all routes.</p>
-</section>`;
-}
 
 function routeChip(brief: ShootoutBrief) {
   return brief.confidence >= PICK_THRESHOLD
@@ -206,13 +158,13 @@ function imagesSection(shootout: ShootoutEvidence | undefined) {
 </section>`;
 }
 
-export function showcasePage({ evidence, shootout }: ShowcaseInput): string {
+export function showcasePage({ shootout }: ShowcaseInput): string {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Typecast: the numbers</title>
+<title>Typecast: which image</title>
 ${FAVICON_LINK}
 <style>${BASE_STYLE}${LIGHTBOX_STYLE}${STYLE}</style>
 </head>
@@ -220,11 +172,10 @@ ${FAVICON_LINK}
 <div class="wrap">
 <header class="top">
   ${pageNav("results")}
-  <h1>The numbers</h1>
-  <p class="lede">How well the routing holds up on briefs it never saw, and what it does for the images. Finding the subject isn't measured yet.</p>
+  <h1>Which image?</h1>
+  <p class="lede">Every model renders the same brief, and a vision judge picks one image without knowing which model routing chose.</p>
 </header>
-${routingSection(evidence)}
-${imagesSection(shootout)}
+${imagesSection(shootout) || '<p class="note">No judged shootout yet.</p>'}
 <footer>
   <p>Routing runs on Jev, a decision model from TypeSafe that returns a typed choice with probabilities instead of text. The router knows nothing about any product: a roster is a list of categories and descriptions.</p>
   <p>Code, data and every number's method: <a href="${REPO_URL}">${REPO_URL.replace(/^https:\/\//, "")}</a></p>

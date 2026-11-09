@@ -74,7 +74,7 @@ if (!stories.length) {
 await writePreviewImage((stories.find((story) => story.brief.id === OG_STORY) ?? stories[0]).best.url, join(args.out, OG_IMAGE_PATH.slice(1)));
 
 await writePage(PAGE_PATHS.home, homePage({ stories, defaultGenerator: hostedShootout.defaultGenerator }));
-await writePage(PAGE_PATHS.results, showcasePage({ evidence, shootout: hostedShootout }));
+await writePage(PAGE_PATHS.results, showcasePage({ shootout: hostedShootout }));
 await writePage(PAGE_PATHS.route, demoPage({ hosted: true }));
 await writePage(PAGE_PATHS.locate, locatePage({ hosted: true }));
 

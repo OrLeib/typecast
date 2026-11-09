@@ -62,7 +62,6 @@ const STYLE = `
   .found img { position: absolute; display: block; width: 100%; }
   .found .box { position: absolute; border: 2px solid var(--accent); border-radius: 4px; box-shadow: 0 0 0 999px rgba(0, 0, 0, .35); }
   footer { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; margin-top: 8px; padding: 28px 0 56px; border-top: 1px solid var(--line); font-size: 14px; }
-  footer .more { margin: 0; font-size: 16px; }
   footer a:not(.more) { color: var(--muted); }
   ${WITH_MOTION} {
     .pill { transition: transform .35s var(--ease), width .35s var(--ease); }
@@ -182,7 +181,7 @@ function modelStep(story: HomeStory) {
       <div class="meter"><i style="width:${PERCENT(confidence)}"></i></div>
       <div class="decision ${confident ? "pick" : "compare"}">${sureness(confidence)} sure it fits: ${confident ? "just use it" : "show the top two"}</div>
       ${reasonLine(story)}
-      <a class="more" href="${PAGE_PATHS.route}">Try your own brief (picks the model, no image) &rarr;</a>
+      <a class="more" href="${PAGE_PATHS.route}">Try your own brief &rarr;</a>
     </div>
     <div class="shots routed${shots.length === 1 ? " one" : ""}">${shots.map((shot, i) => routeShot(story, shot, shots.length > 1, i)).join("")}</div>
   </section>`;
@@ -202,6 +201,7 @@ function imageStep(story: HomeStory, defaultGenerator: string) {
     <div>
       <h2>Which image?</h2>
       <p>${line}</p>
+      <a class="more" href="${PAGE_PATHS.results}">See every brief judged &rarr;</a>
     </div>
     <div class="lineup">${story.brief.shots.map((shot, i) => lineupShot(story, shot, i, defaultGenerator)).join("")}</div>
   </section>`;
@@ -278,7 +278,6 @@ ${FAVICON_LINK}
 ${stories.map((story, i) => storyArticle(story, i, defaultGenerator)).join("\n")}
 </main>
 <footer>
-  <a class="more" href="${PAGE_PATHS.results}">See the numbers &rarr;</a>
   <a href="${REPO_URL}">Code and method</a>
 </footer>
 </div>

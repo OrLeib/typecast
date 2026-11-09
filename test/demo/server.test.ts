@@ -256,7 +256,7 @@ describe("demo server: find and crop", () => {
 
   it("serves the find-and-crop page with a script that parses", async () => {
     const page = await (await get("/locate")).text();
-    expect(page).toContain('aria-current="page">Find the subject');
+    expect(page).toContain('aria-current="page">Where in the frame');
     const script = /<script>([\s\S]*)<\/script>/.exec(page)?.[1] ?? "";
     expect(script).not.toBe("");
     expect(() => new Function(script)).not.toThrow();
@@ -276,11 +276,11 @@ describe("demo server with a shootout", () => {
   });
   const local = listenForTests(withShootout, { setup: () => writeFile(image, "shot-png") });
 
-  it("shows the shootout on the results page, linked from the other pages", async () => {
+  it("shows the shootout on the which-image page, linked from the other pages", async () => {
     const results = await (await local.get("/results")).text();
-    expect(results).toContain('aria-current="page">The numbers');
+    expect(results).toContain('aria-current="page">Which image');
     expect(results).toContain("Does routing make better images?");
-    expect(await (await local.get("/demo")).text()).toContain('<a href="/results">The numbers</a>');
+    expect(await (await local.get("/demo")).text()).toContain('<a href="/results">Which image</a>');
   });
 
   it("serves the shootout's images and nothing else under its prefix", async () => {

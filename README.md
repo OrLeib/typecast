@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://typecast-ai.vercel.app">Home</a> · <a href="https://typecast-ai.vercel.app/demo">Which model</a> · <a href="https://typecast-ai.vercel.app/locate">Find the subject</a> · <a href="https://typecast-ai.vercel.app/results">The numbers</a>
+  <a href="https://typecast-ai.vercel.app">Home</a> · <a href="https://typecast-ai.vercel.app/demo">Which model</a> · <a href="https://typecast-ai.vercel.app/results">Which image</a> · <a href="https://typecast-ai.vercel.app/locate">Where in the frame</a>
 </p>
 
 <p align="center">

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { Evidence } from "../../src/demo/evidence.ts";
 import { modelName } from "../../src/demo/lightbox.ts";
 import type { ShootoutBrief } from "../../src/demo/shootout-evidence.ts";
 import { showcasePage } from "../../src/demo/showcase.ts";
@@ -17,26 +16,14 @@ function brief(id: string, routedGenerator: string, best: string, split = false)
 
 const shootout = (briefs: ShootoutBrief[]) => shootoutOf(briefs, DEFAULT);
 
-const heldOut = (data: string, picked: number, compared: number) =>
-  ({ data, n: 10, repeats: 3, metrics: { accuracy: 0.9 } as Evidence["metrics"], latencyP50: 200, costPer1000Usd: 0.026, outcomes: { picked, pickedRight: picked, compared, comparedInShortlist: compared - 1 } }) as unknown as Evidence;
-
-const evidence = [heldOut("data/test.jsonl", 25, 5), heldOut("data/hard.jsonl", 20, 10), heldOut("data/dev.jsonl", 30, 0)];
-
-const page = (briefs: ShootoutBrief[]) => showcasePage({ evidence, shootout: shootout(briefs) });
+const page = (briefs: ShootoutBrief[]) => showcasePage({ shootout: shootout(briefs) });
 
 describe("showcasePage", () => {
-  it("sums the held-out outcomes into the headline numbers", () => {
-    const html = page([brief("a", "mflux:photo@q8", "mflux:photo@q8")]);
-    expect(html).toContain("<b>45/45</b>");
-    expect(html).toContain("<b>13/15</b>");
-    expect(html).toContain("20 held-out briefs");
-  });
-
   it("shows each image's scores and reports the second look, even when it disagrees with the pick", () => {
     const rated = brief("a", "mflux:photo@q8", "mflux:photo@q8");
     rated.shots[0].rating = { scores: { Brief: 0.6, Craft: 0.4 }, total: 0.5 };
     rated.shots[2].rating = { scores: { Brief: 0.9, Craft: 0.7 }, total: 0.8 };
-    const html = showcasePage({ evidence, shootout: { ...shootout([rated]), rubric: { briefs: 1, topWas: { routed: 0, default: 1 }, agreesWithPick: 0 } } });
+    const html = showcasePage({ shootout: { ...shootout([rated]), rubric: { briefs: 1, topWas: { routed: 0, default: 1 }, agreesWithPick: 0 } } });
     expect(html).toContain("the routed model had the highest overall score on 0 of 1, the default on 1");
     expect(html).toContain("Highest overall score: dflt.");
     expect(html).toContain('<dt class="">Craft</dt>');
@@ -49,20 +36,17 @@ describe("showcasePage", () => {
 
   it("links the pages, marking this one", () => {
     const html = page([]);
-    expect(html).toContain('<a href="/results" aria-current="page">The numbers</a>');
+    expect(html).toContain('<a href="/results" aria-current="page">Which image</a>');
     expect(html).toContain('<a class="brand" href="/">');
   });
 
-  it("says what the numbers count, and that the image sample was tuned on", () => {
-    const html = page([brief("a", "mflux:photo@q8", "mflux:photo@q8")]);
-    expect(html).toContain("matched the labelled category");
-    expect(html).toContain("First picks matched the label on 90%");
-    expect(html).toContain("briefs that routing was tuned on");
+  it("says the image sample was tuned on", () => {
+    expect(page([brief("a", "mflux:photo@q8", "mflux:photo@q8")])).toContain("briefs that routing was tuned on");
   });
 
-  it("leaves out the images when no shootout is picked yet", () => {
-    const html = showcasePage({ evidence });
-    expect(html).toContain("<b>45/45</b>");
+  it("says so when no shootout is picked yet", () => {
+    const html = showcasePage({});
+    expect(html).toContain("No judged shootout yet.");
     expect(html).not.toContain("Does routing make better images?");
   });
 

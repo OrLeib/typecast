@@ -11,7 +11,8 @@ export const PAGE_PATHS = { home: "/", route: "/demo", locate: "/locate", result
  */
 export const WITH_MOTION = "@media screen and (prefers-reduced-motion: no-preference)";
 
-const LABELS = { route: "Which model", locate: "Find the subject", results: "The numbers" };
+/** The three decisions home walks through, in its order. */
+const LABELS = { route: "Which model", results: "Which image", locate: "Where in the frame" };
 
 /** The brand, which links home, and the links between pages, with the current one marked for screen readers too. */
 export const pageNav = (current?: keyof typeof LABELS) => {
@@ -80,8 +81,9 @@ export const BASE_STYLE = `
   footer { color: var(--muted); font-size: 13px; padding: 40px 0 48px; }
   @media (max-width: 760px) {
     .wrap { padding: 0 16px; }
-    .pages { display: flex; width: 100%; justify-content: space-between; }
-    .pages a { display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
+    .pages { display: flex; width: 100%; }
+    /* Each link takes a share of the bar, so the labels sit evenly and the longest still fits at 375px. */
+    .pages a { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 5px 8px; white-space: nowrap; }
     header.top { padding: 28px 0 20px; }
     h1 { font-size: 27px; }
   }

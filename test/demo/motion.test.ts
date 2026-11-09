@@ -14,7 +14,7 @@ const PAGES = {
   home: homePage({ stories: [sureStory, unsureStory], defaultGenerator: "c" }),
   route: demoPage({ hosted: false }),
   locate: locatePage({ hosted: false }),
-  results: showcasePage({ evidence: [], shootout: shootoutOf([sureStory.brief, unsureStory.brief], "c") }),
+  results: showcasePage({ shootout: shootoutOf([sureStory.brief, unsureStory.brief], "c") }),
 };
 
 /** Not motion by WCAG's definition, so these may change for everyone. */

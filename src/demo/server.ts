@@ -1,5 +1,5 @@
 // Local demo: the home page's three decisions, a page that routes a brief live, shows the pick-or-compare recommendation,
-// renders with the routed model(s) and shows the eval evidence, and a results page with the latest best-of-N shootout.
+// renders with the routed model(s) and shows the eval evidence, and a which-image page with the latest best-of-N shootout.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { basename, extname, join } from "node:path";
 import { PICK_THRESHOLD } from "../routing/recommendation.ts";
@@ -47,7 +47,7 @@ export const demoConfigOf = (config: Pick<DemoConfig, "roster" | "generators" | 
 export function createDemoServer(config: DemoConfig): Server {
   const pages: Record<string, string> = {
     [PAGE_PATHS.home]: homePage({ stories: config.stories, defaultGenerator: config.defaultGenerator.name }),
-    [PAGE_PATHS.results]: showcasePage({ evidence: config.evidence, shootout: config.shootout?.evidence }),
+    [PAGE_PATHS.results]: showcasePage({ shootout: config.shootout?.evidence }),
     [PAGE_PATHS.route]: demoPage({ hosted: false }),
     [PAGE_PATHS.locate]: locatePage({ hosted: false }),
   };
