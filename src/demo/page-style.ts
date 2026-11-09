@@ -19,7 +19,7 @@ export const pageNav = (current?: keyof typeof LABELS) => {
   const links = (Object.keys(LABELS) as (keyof typeof LABELS)[])
     .map((page) => `<a href="${PAGE_PATHS[page]}"${page === current ? ' aria-current="page"' : ""}>${LABELS[page]}</a>`)
     .join("");
-  return `<nav class="topbar" aria-label="Pages"><a class="brand" href="${PAGE_PATHS.home}">${logoMark(22)}Typecast</a><div class="pages">${links}</div></nav>`;
+  return `<nav class="topbar" aria-label="Pages"><a class="brand" href="${PAGE_PATHS.home}" aria-label="Typecast home">${logoMark(22)}Typecast</a><div class="pages">${links}</div></nav>`;
 };
 
 export const BASE_STYLE = `
@@ -59,7 +59,9 @@ export const BASE_STYLE = `
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   header.top { padding: 40px 0 28px; }
   .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; color: inherit; text-decoration: none; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; color: inherit; text-decoration: none; border-radius: 6px; }
+  .brand:hover { opacity: .72; }
+  .brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
   .pages { display: inline-flex; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; gap: 2px; }
   .pages a { padding: 5px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); text-decoration: none; border-radius: 7px; }
   .pages a:hover { color: var(--text); }

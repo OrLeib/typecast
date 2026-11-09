@@ -37,7 +37,7 @@ describe("showcasePage", () => {
   it("links the pages, marking this one", () => {
     const html = page([]);
     expect(html).toContain('<a href="/results" aria-current="page">Which image</a>');
-    expect(html).toContain('<a class="brand" href="/">');
+    expect(html).toContain('<a class="brand" href="/" aria-label="Typecast home">');
   });
 
   it("says the image sample was tuned on", () => {
